@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storage Rack | Login</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-body">
+
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="brand">
+        <div class="brand-icon">📦</div>
+        <h1>Storage Rack</h1>
+        <p class="brand-sub">Warehouse Inventory Management</p>
+      </div>
+
+      <form id="loginForm" class="login-form" novalidate>
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username" value="admin" required>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" value="admin123" required>
+        </div>
+
+        <div class="field-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="remember">
+            <span>Remember me</span>
+          </label>
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <p id="errorMsg" class="error-msg" hidden>Invalid username or password. Try admin / admin123.</p>
+
+        <button type="submit" class="btn-primary">Sign In</button>
+
+        <p class="hint">Demo credentials pre-filled: <strong>admin</strong> / <strong>admin123</strong></p>
+      </form>
+    </div>
+  </div>
+
+<script src="js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storage Rack | All Racks</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dash-body" data-page="racks">
+
+  <div class="app-shell">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-icon small">📦</span>
+        <span>Storage Rack</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item" data-route="overview">
+          <span class="nav-icon">🏠</span> Overview
+        </a>
+        <a href="racks.html" class="nav-item" data-route="racks">
+          <span class="nav-icon">🗄️</span> All Racks
+        </a>
+        <a href="add-rack.html" class="nav-item" data-route="add">
+          <span class="nav-icon">➕</span> Add Rack
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-chip" id="userChip">👤 Admin</div>
+        <button class="btn-logout" id="logoutBtn">Logout</button>
+      </div>
+    </aside>
+
+    <div class="main-area">
+
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" title="Menu">☰</button>
+        <div class="topbar-search">
+          <input type="text" id="idSearchInput" placeholder="Find a rack by ID, e.g. RK-1001">
+          <button class="btn-search" id="idSearchBtn">🔍 Search</button>
+        </div>
+      </header>
+
+      <main class="dash-main">
+
+        <div class="toolbar">
+          <div>
+            <h2>All Racks</h2>
+            <p class="muted">Manage your storage racks and track item capacity</p>
+          </div>
+          <a href="add-rack.html" class="btn-primary btn-add">+ Add Rack</a>
+        </div>
+
+        <div class="filters-bar">
+          <input type="text" id="filterSearch" placeholder="Search by name, ID or location">
+          <select id="filterStatus">
+            <option value="all">All Status</option>
+            <option value="available">Available</option>
+            <option value="warning">Nearly Full</option>
+            <option value="full">Full</option>
+          </select>
+          <button class="btn-secondary" id="filterReset">Reset</button>
+        </div>
+
+        <section class="rack-grid" id="rackGrid"></section>
+        <p class="empty-state" id="emptyState" hidden>No racks match your filters.</p>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Edit Rack Modal -->
+  <div class="modal-overlay" id="editModalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Rack</h3>
+        <button class="modal-close" id="editModalClose">&times;</button>
+      </div>
+      <form id="editRackForm" class="modal-form">
+        <div class="field">
+          <label for="editRackId">Rack ID</label>
+          <input type="text" id="editRackId" disabled>
+        </div>
+        <div class="field">
+          <label for="editRackName">Rack Name</label>
+          <input type="text" id="editRackName" required>
+        </div>
+        <div class="field">
+          <label for="editRackLocation">Location</label>
+          <input type="text" id="editRackLocation">
+        </div>
+        <div class="field">
+          <label for="editRackCategory">Item Category</label>
+          <input type="text" id="editRackCategory" placeholder="e.g. Electronics, Spare Parts">
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <label for="editRackRows">Rows</label>
+            <input type="number" id="editRackRows" min="1" required>
+          </div>
+          <div class="field">
+            <label for="editRackColumns">Columns</label>
+            <input type="number" id="editRackColumns" min="1" required>
+          </div>
+        </div>
+        <p class="field-hint" id="editRackCapacityPreview">Total capacity: — slots</p>
+        <p id="editRackError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="editRackCancel">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="js/common.js"></script>
+<script src="js/racks.js"></script>
+</body>
+</html>

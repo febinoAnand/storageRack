@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storage Rack | Overview</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dash-body" data-page="overview">
+
+  <div class="app-shell">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-icon small">📦</span>
+        <span>Storage Rack</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item" data-route="overview">
+          <span class="nav-icon">🏠</span> Overview
+        </a>
+        <a href="racks.html" class="nav-item" data-route="racks">
+          <span class="nav-icon">🗄️</span> All Racks
+        </a>
+        <a href="add-rack.html" class="nav-item" data-route="add">
+          <span class="nav-icon">➕</span> Add Rack
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-chip" id="userChip">👤 Admin</div>
+        <button class="btn-logout" id="logoutBtn">Logout</button>
+      </div>
+    </aside>
+
+    <div class="main-area">
+
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" title="Menu">☰</button>
+        <div class="topbar-search">
+          <input type="text" id="idSearchInput" placeholder="Find a rack by ID, e.g. RK-1001">
+          <button class="btn-search" id="idSearchBtn">🔍 Search</button>
+        </div>
+      </header>
+
+      <main class="dash-main">
+
+        <div class="view-head">
+          <h2>Overview</h2>
+          <p class="muted">A snapshot of your entire storage rack network</p>
+        </div>
+
+        <section class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon c-blue">🗄️</div>
+            <div>
+              <div class="stat-value" id="statRacks">0</div>
+              <div class="stat-label">Total Racks</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-violet">📥</div>
+            <div>
+              <div class="stat-value" id="statCapacity">0</div>
+              <div class="stat-label">Total Capacity</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-amber">📦</div>
+            <div>
+              <div class="stat-value" id="statItems">0</div>
+              <div class="stat-label">Items Stored</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon c-green">✅</div>
+            <div>
+              <div class="stat-value" id="statFree">0</div>
+              <div class="stat-label">Free Slots</div>
+            </div>
+          </div>
+        </section>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Racks Needing Attention</h3>
+            <a href="racks.html" class="link-more">View all racks →</a>
+          </div>
+          <div id="attentionList" class="rack-row-list"></div>
+          <p class="empty-state" id="attentionEmpty" hidden>No racks are nearly full or full right now.</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Recently Added</h3>
+            <a href="racks.html" class="link-more">View all racks →</a>
+          </div>
+          <div id="recentList" class="rack-row-list"></div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+<script src="js/common.js"></script>
+<script src="js/overview.js"></script>
+</body>
+</html>
