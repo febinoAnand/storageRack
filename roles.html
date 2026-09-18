@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Storage | Overview</title>
+<title>Storage | Roles & Permissions</title>
 <script src="js/theme.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="dash-body" data-page="overview">
+<body class="dash-body" data-page="roles">
 
   <div class="app-shell">
 
@@ -60,65 +60,53 @@
 
       <main class="dash-main">
 
-        <div class="view-head">
-          <h2>Overview</h2>
-          <p class="muted">A snapshot of your entire storage network</p>
+        <div class="toolbar">
+          <div>
+            <h2>Roles & Permissions</h2>
+            <p class="muted">Define what each role can Create, Read, Update and Delete</p>
+          </div>
+          <button class="btn-primary btn-add" id="addRoleBtn">+ Add Role</button>
         </div>
 
-        <section class="stats-row">
-          <div class="stat-card">
-            <div class="stat-icon c-blue">🗄️</div>
-            <div>
-              <div class="stat-value" id="statRacks">0</div>
-              <div class="stat-label">Total Storages</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-violet">🚪</div>
-            <div>
-              <div class="stat-value" id="statRooms">0</div>
-              <div class="stat-label">Store Rooms</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-amber">📦</div>
-            <div>
-              <div class="stat-value" id="statItems">0</div>
-              <div class="stat-label">Items Stored</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-green">🧩</div>
-            <div>
-              <div class="stat-value" id="statTypes">0</div>
-              <div class="stat-label">Storage Types in Use</div>
-            </div>
-          </div>
-        </section>
-
-        <div class="panel">
-          <div class="panel-head">
-            <h3>Empty Storage Units</h3>
-            <a href="storage.html" class="link-more">View all storages →</a>
-          </div>
-          <div id="attentionList" class="rack-row-list"></div>
-          <p class="empty-state" id="attentionEmpty" hidden>Every storage unit has at least one item.</p>
-        </div>
-
-        <div class="panel">
-          <div class="panel-head">
-            <h3>Recently Added</h3>
-            <a href="storage.html" class="link-more">View all storages →</a>
-          </div>
-          <div id="recentList" class="rack-row-list"></div>
-        </div>
+        <section class="rack-grid" id="roleGrid"></section>
+        <p class="empty-state" id="emptyState" hidden>No roles yet.</p>
 
       </main>
     </div>
   </div>
 
+  <!-- Add / Edit Role Modal -->
+  <div class="modal-overlay" id="roleModalOverlay" hidden>
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3 id="roleModalTitle">Add Role</h3>
+        <button class="modal-close" id="roleModalClose">&times;</button>
+      </div>
+      <form id="roleForm" class="modal-form">
+        <input type="hidden" id="roleId">
+        <div class="field">
+          <label for="roleName">Role Name</label>
+          <input type="text" id="roleName" placeholder="e.g. Manager" required>
+        </div>
+        <div class="field">
+          <label for="roleDescription">Description</label>
+          <input type="text" id="roleDescription" placeholder="What is this role for?">
+        </div>
+        <div class="field">
+          <label>Permissions</label>
+          <div class="perm-matrix" id="permMatrix"></div>
+        </div>
+        <p id="roleError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="roleCancel">Cancel</button>
+          <button type="submit" class="btn-primary" id="roleSave">Add Role</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 <script src="js/toast.js"></script>
 <script src="js/common.js"></script>
-<script src="js/overview.js"></script>
+<script src="js/roles.js"></script>
 </body>
 </html>

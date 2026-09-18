@@ -24,9 +24,14 @@ loginForm.addEventListener("submit", function (e) {
     } else {
       localStorage.removeItem("srRememberedUser");
     }
+    setFlashMessage(`Welcome back, ${username}!`, "success");
     window.location.href = "dashboard.html";
   } else {
     errorMsg.hidden = false;
+    const card = document.querySelector(".login-card");
+    card.classList.remove("shake");
+    void card.offsetWidth;
+    card.classList.add("shake");
   }
 });
 
@@ -38,3 +43,21 @@ window.addEventListener("DOMContentLoaded", function () {
     document.getElementById("remember").checked = true;
   }
 });
+
+// ---------- Theme toggle ----------
+const themeFab = document.getElementById("themeFab");
+
+function syncThemeFab() {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  themeFab.textContent = isDark ? "☀️" : "🌙";
+}
+
+themeFab.addEventListener("click", function () {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const next = isDark ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("srTheme", next);
+  syncThemeFab();
+});
+
+syncThemeFab();

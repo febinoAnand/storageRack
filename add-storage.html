@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Storage | Overview</title>
+<title>Storage | Add Storage</title>
 <script src="js/theme.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="dash-body" data-page="overview">
+<body class="dash-body" data-page="storage">
 
   <div class="app-shell">
 
@@ -61,57 +61,40 @@
       <main class="dash-main">
 
         <div class="view-head">
-          <h2>Overview</h2>
-          <p class="muted">A snapshot of your entire storage network</p>
+          <h2>Add New Storage</h2>
+          <p class="muted">Register a new storage unit. You'll build out its internal structure (levels, drawers, sections...) after creating it.</p>
         </div>
 
-        <section class="stats-row">
-          <div class="stat-card">
-            <div class="stat-icon c-blue">🗄️</div>
-            <div>
-              <div class="stat-value" id="statRacks">0</div>
-              <div class="stat-label">Total Storages</div>
-            </div>
+        <form id="addRackForm" class="panel form-panel">
+          <div class="field">
+            <label for="newRackId">Storage ID <span class="req">*</span></label>
+            <input type="text" id="newRackId" placeholder="e.g. ST-101 or A1-05" required>
+            <p class="field-hint">A unique ID used to find this storage later.</p>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon c-violet">🚪</div>
-            <div>
-              <div class="stat-value" id="statRooms">0</div>
-              <div class="stat-label">Store Rooms</div>
-            </div>
+          <div class="field">
+            <label for="newRackName">Storage Name <span class="req">*</span></label>
+            <input type="text" id="newRackName" placeholder="e.g. Rack A1" required>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon c-amber">📦</div>
-            <div>
-              <div class="stat-value" id="statItems">0</div>
-              <div class="stat-label">Items Stored</div>
-            </div>
+          <div class="field">
+            <label for="newRackType">Storage Type <span class="req">*</span></label>
+            <select id="newRackType" required></select>
+            <p class="field-hint" id="typeHint"></p>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon c-green">🧩</div>
-            <div>
-              <div class="stat-value" id="statTypes">0</div>
-              <div class="stat-label">Storage Types in Use</div>
-            </div>
+          <div class="field">
+            <label for="newRackRoom">Store Room <span class="req">*</span></label>
+            <select id="newRackRoom" required></select>
+            <p class="field-hint">No store room yet? <a href="storerooms.html">Create one first →</a></p>
           </div>
-        </section>
-
-        <div class="panel">
-          <div class="panel-head">
-            <h3>Empty Storage Units</h3>
-            <a href="storage.html" class="link-more">View all storages →</a>
+          <div class="field">
+            <label for="newRackCategory">Item Category</label>
+            <input type="text" id="newRackCategory" placeholder="e.g. Electronics, Spare Parts">
           </div>
-          <div id="attentionList" class="rack-row-list"></div>
-          <p class="empty-state" id="attentionEmpty" hidden>Every storage unit has at least one item.</p>
-        </div>
-
-        <div class="panel">
-          <div class="panel-head">
-            <h3>Recently Added</h3>
-            <a href="storage.html" class="link-more">View all storages →</a>
+          <p id="addRackError" class="error-msg" hidden></p>
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" id="addRackCancel">Cancel</button>
+            <button type="submit" class="btn-primary">Create Storage</button>
           </div>
-          <div id="recentList" class="rack-row-list"></div>
-        </div>
+        </form>
 
       </main>
     </div>
@@ -119,6 +102,6 @@
 
 <script src="js/toast.js"></script>
 <script src="js/common.js"></script>
-<script src="js/overview.js"></script>
+<script src="js/add-storage.js"></script>
 </body>
 </html>

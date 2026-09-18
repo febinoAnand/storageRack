@@ -3,32 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Storage Rack | Rack Detail</title>
+<title>Storage | Storage Details</title>
+<script src="js/theme.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="dash-body" data-page="racks">
+<body class="dash-body" data-page="storage">
 
   <div class="app-shell">
 
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
         <span class="brand-icon small">📦</span>
-        <span>Storage Rack</span>
+        <span>Storage</span>
       </div>
 
       <nav class="sidebar-nav">
         <a href="dashboard.html" class="nav-item" data-route="overview">
           <span class="nav-icon">🏠</span> Overview
         </a>
-        <a href="racks.html" class="nav-item" data-route="racks">
-          <span class="nav-icon">🗄️</span> All Racks
+        <a href="storage.html" class="nav-item" data-route="storage">
+          <span class="nav-icon">🗄️</span> All Storages
         </a>
-        <a href="add-rack.html" class="nav-item" data-route="add">
-          <span class="nav-icon">➕</span> Add Rack
+        <a href="items.html" class="nav-item" data-route="items">
+          <span class="nav-icon">🏷️</span> All Items
+        </a>
+        <a href="storerooms.html" class="nav-item" data-route="rooms">
+          <span class="nav-icon">🚪</span> Store Rooms
+        </a>
+        <a href="users.html" class="nav-item" data-route="users">
+          <span class="nav-icon">👥</span> Users
+        </a>
+        <a href="roles.html" class="nav-item" data-route="roles">
+          <span class="nav-icon">🔐</span> Roles & Permissions
         </a>
       </nav>
 
       <div class="sidebar-footer">
+        <button class="theme-toggle" id="themeToggle" title="Toggle light/dark theme">
+          <span id="themeToggleLabel">Dark Mode</span>
+          <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+        </button>
         <div class="user-chip" id="userChip">👤 Admin</div>
         <button class="btn-logout" id="logoutBtn">Logout</button>
       </div>
@@ -39,7 +53,7 @@
       <header class="topbar">
         <button class="menu-toggle" id="menuToggle" title="Menu">☰</button>
         <div class="topbar-search">
-          <input type="text" id="idSearchInput" placeholder="Find a rack by ID, e.g. RK-1001">
+          <input type="text" id="idSearchInput" placeholder="Find a storage by ID, e.g. ST-1001">
           <button class="btn-search" id="idSearchBtn">🔍 Search</button>
         </div>
       </header>
@@ -50,41 +64,36 @@
     </div>
   </div>
 
-  <!-- Edit Rack Modal -->
+  <!-- Edit Storage Unit Modal -->
   <div class="modal-overlay" id="editModalOverlay" hidden>
     <div class="modal">
       <div class="modal-header">
-        <h3>Edit Rack</h3>
+        <h3>Edit Storage</h3>
         <button class="modal-close" id="editModalClose">&times;</button>
       </div>
       <form id="editRackForm" class="modal-form">
-        <div class="field">
-          <label for="editRackId">Rack ID</label>
-          <input type="text" id="editRackId" disabled>
+        <div class="field-group">
+          <div class="field">
+            <label for="editRackId">Storage ID</label>
+            <input type="text" id="editRackId" disabled>
+          </div>
+          <div class="field">
+            <label for="editRackType">Type</label>
+            <input type="text" id="editRackType" disabled>
+          </div>
         </div>
         <div class="field">
-          <label for="editRackName">Rack Name</label>
+          <label for="editRackName">Storage Name</label>
           <input type="text" id="editRackName" required>
         </div>
         <div class="field">
-          <label for="editRackLocation">Location</label>
-          <input type="text" id="editRackLocation">
+          <label for="editRackRoom">Store Room</label>
+          <select id="editRackRoom" required></select>
         </div>
         <div class="field">
           <label for="editRackCategory">Item Category</label>
           <input type="text" id="editRackCategory" placeholder="e.g. Electronics, Spare Parts">
         </div>
-        <div class="field-group">
-          <div class="field">
-            <label for="editRackRows">Rows</label>
-            <input type="number" id="editRackRows" min="1" required>
-          </div>
-          <div class="field">
-            <label for="editRackColumns">Columns</label>
-            <input type="number" id="editRackColumns" min="1" required>
-          </div>
-        </div>
-        <p class="field-hint" id="editRackCapacityPreview">Total capacity: — slots</p>
         <p id="editRackError" class="error-msg" hidden></p>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="editRackCancel">Cancel</button>
@@ -108,7 +117,7 @@
           <input type="text" id="itemName" placeholder="e.g. Circuit Boards - Box 12" required>
         </div>
         <div class="field">
-          <label for="itemQuantity">Quantity (slots used)</label>
+          <label for="itemQuantity">Quantity</label>
           <input type="number" id="itemQuantity" min="1" placeholder="e.g. 5" required>
         </div>
         <p id="itemError" class="error-msg" hidden></p>
@@ -120,7 +129,29 @@
     </div>
   </div>
 
+  <!-- Add / Rename Node Modal -->
+  <div class="modal-overlay" id="nodeModalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="nodeModalTitle">Add Level</h3>
+        <button class="modal-close" id="nodeModalClose">&times;</button>
+      </div>
+      <form id="nodeForm" class="modal-form">
+        <div class="field">
+          <label for="nodeName">Name</label>
+          <input type="text" id="nodeName" placeholder="e.g. Level 1" required>
+        </div>
+        <p id="nodeError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="nodeCancel">Cancel</button>
+          <button type="submit" class="btn-primary" id="nodeSave">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="js/toast.js"></script>
 <script src="js/common.js"></script>
-<script src="js/rack-detail.js"></script>
+<script src="js/storage-detail.js"></script>
 </body>
 </html>

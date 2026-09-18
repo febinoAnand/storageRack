@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Storage | Overview</title>
+<title>Storage | All Items</title>
 <script src="js/theme.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="dash-body" data-page="overview">
+<body class="dash-body" data-page="items">
 
   <div class="app-shell">
 
@@ -60,57 +60,27 @@
 
       <main class="dash-main">
 
-        <div class="view-head">
-          <h2>Overview</h2>
-          <p class="muted">A snapshot of your entire storage network</p>
+        <div class="toolbar">
+          <div>
+            <h2>All Items</h2>
+            <p class="muted">Every item across every storage unit, in one place</p>
+          </div>
         </div>
 
-        <section class="stats-row">
-          <div class="stat-card">
-            <div class="stat-icon c-blue">🗄️</div>
-            <div>
-              <div class="stat-value" id="statRacks">0</div>
-              <div class="stat-label">Total Storages</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-violet">🚪</div>
-            <div>
-              <div class="stat-value" id="statRooms">0</div>
-              <div class="stat-label">Store Rooms</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-amber">📦</div>
-            <div>
-              <div class="stat-value" id="statItems">0</div>
-              <div class="stat-label">Items Stored</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon c-green">🧩</div>
-            <div>
-              <div class="stat-value" id="statTypes">0</div>
-              <div class="stat-label">Storage Types in Use</div>
-            </div>
-          </div>
-        </section>
-
-        <div class="panel">
-          <div class="panel-head">
-            <h3>Empty Storage Units</h3>
-            <a href="storage.html" class="link-more">View all storages →</a>
-          </div>
-          <div id="attentionList" class="rack-row-list"></div>
-          <p class="empty-state" id="attentionEmpty" hidden>Every storage unit has at least one item.</p>
+        <div class="filters-bar">
+          <input type="text" id="itemFilterSearch" placeholder="Search by item, storage, category or location">
+          <select id="itemFilterType">
+            <option value="all">All Types</option>
+          </select>
+          <button class="btn-secondary" id="itemFilterReset">Reset</button>
         </div>
 
         <div class="panel">
           <div class="panel-head">
-            <h3>Recently Added</h3>
-            <a href="storage.html" class="link-more">View all storages →</a>
+            <h3 id="itemListHeading">Items</h3>
           </div>
-          <div id="recentList" class="rack-row-list"></div>
+          <div id="itemList" class="rack-row-list"></div>
+          <p class="empty-state" id="itemEmptyState" hidden>No items match your filters.</p>
         </div>
 
       </main>
@@ -119,6 +89,6 @@
 
 <script src="js/toast.js"></script>
 <script src="js/common.js"></script>
-<script src="js/overview.js"></script>
+<script src="js/items.js"></script>
 </body>
 </html>

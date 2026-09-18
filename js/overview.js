@@ -1,25 +1,22 @@
 const totalRacks = racks.length;
-const totalCapacity = racks.reduce(function (s, r) { return s + r.capacity; }, 0);
-const totalItems = racks.reduce(function (s, r) { return s + filledOf(r); }, 0);
-const freeSlots = totalCapacity - totalItems;
+const totalRooms = rooms.length;
+const totalItems = racks.reduce(function (s, r) { return s + unitItemCount(r); }, 0);
+const typesInUse = new Set(racks.map(function (r) { return r.type; })).size;
 
-document.getElementById("statRacks").textContent = totalRacks;
-document.getElementById("statCapacity").textContent = totalCapacity;
-document.getElementById("statItems").textContent = totalItems;
-document.getElementById("statFree").textContent = freeSlots;
+animateNumber(document.getElementById("statRacks"), totalRacks);
+animateNumber(document.getElementById("statRooms"), totalRooms);
+animateNumber(document.getElementById("statItems"), totalItems);
+animateNumber(document.getElementById("statTypes"), typesInUse);
 
-const attention = racks
-  .map(function (r) { return { rack: r, status: statusOf(r) }; })
-  .filter(function (x) { return x.status.cls === "warning" || x.status.cls === "full"; })
-  .sort(function (a, b) { return b.status.pct - a.status.pct; });
+const empty = racks.filter(function (r) { return unitItemCount(r) === 0; });
 
 const attentionList = document.getElementById("attentionList");
 const attentionEmpty = document.getElementById("attentionEmpty");
-if (attention.length === 0) {
+if (empty.length === 0) {
   attentionEmpty.hidden = false;
 } else {
   attentionEmpty.hidden = true;
-  attention.forEach(function (x) { attentionList.appendChild(buildRackRow(x.rack)); });
+  empty.forEach(function (r) { attentionList.appendChild(buildRackRow(r)); });
 }
 
 const recent = racks.slice().sort(function (a, b) { return b.createdAt - a.createdAt; }).slice(0, 5);

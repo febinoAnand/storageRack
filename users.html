@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storage | Users</title>
+<script src="js/theme.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dash-body" data-page="users">
+
+  <div class="app-shell">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-icon small">📦</span>
+        <span>Storage</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item" data-route="overview">
+          <span class="nav-icon">🏠</span> Overview
+        </a>
+        <a href="storage.html" class="nav-item" data-route="storage">
+          <span class="nav-icon">🗄️</span> All Storages
+        </a>
+        <a href="items.html" class="nav-item" data-route="items">
+          <span class="nav-icon">🏷️</span> All Items
+        </a>
+        <a href="storerooms.html" class="nav-item" data-route="rooms">
+          <span class="nav-icon">🚪</span> Store Rooms
+        </a>
+        <a href="users.html" class="nav-item" data-route="users">
+          <span class="nav-icon">👥</span> Users
+        </a>
+        <a href="roles.html" class="nav-item" data-route="roles">
+          <span class="nav-icon">🔐</span> Roles & Permissions
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="theme-toggle" id="themeToggle" title="Toggle light/dark theme">
+          <span id="themeToggleLabel">Dark Mode</span>
+          <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+        </button>
+        <div class="user-chip" id="userChip">👤 Admin</div>
+        <button class="btn-logout" id="logoutBtn">Logout</button>
+      </div>
+    </aside>
+
+    <div class="main-area">
+
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" title="Menu">☰</button>
+        <div class="topbar-search">
+          <input type="text" id="idSearchInput" placeholder="Find a storage by ID, e.g. ST-1001">
+          <button class="btn-search" id="idSearchBtn">🔍 Search</button>
+        </div>
+      </header>
+
+      <main class="dash-main">
+
+        <div class="toolbar">
+          <div>
+            <h2>Users</h2>
+            <p class="muted">Everyone with access, and the role they're assigned</p>
+          </div>
+          <button class="btn-primary btn-add" id="addUserBtn">+ Add User</button>
+        </div>
+
+        <div class="filters-bar">
+          <input type="text" id="userFilterSearch" placeholder="Search by name, username or email">
+          <select id="userFilterRole">
+            <option value="all">All Roles</option>
+          </select>
+          <button class="btn-secondary" id="userFilterReset">Reset</button>
+        </div>
+
+        <section class="rack-grid" id="userGrid"></section>
+        <p class="empty-state" id="emptyState" hidden>No users match your filters.</p>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Add / Edit User Modal -->
+  <div class="modal-overlay" id="userModalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="userModalTitle">Add User</h3>
+        <button class="modal-close" id="userModalClose">&times;</button>
+      </div>
+      <form id="userForm" class="modal-form">
+        <input type="hidden" id="userId">
+        <div class="field">
+          <label for="userName">Full Name</label>
+          <input type="text" id="userName" placeholder="e.g. Jane Manager" required>
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <label for="userUsername">Username</label>
+            <input type="text" id="userUsername" placeholder="e.g. jane.m" required>
+          </div>
+          <div class="field">
+            <label for="userStatus">Status</label>
+            <select id="userStatus">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="userEmail">Email</label>
+          <input type="email" id="userEmail" placeholder="e.g. jane@example.com">
+        </div>
+        <div class="field">
+          <label for="userRole">Role</label>
+          <select id="userRole" required></select>
+          <p class="field-hint">No role yet? <a href="roles.html">Create one first →</a></p>
+        </div>
+        <p id="userError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="userCancel">Cancel</button>
+          <button type="submit" class="btn-primary" id="userSave">Add User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="js/toast.js"></script>
+<script src="js/common.js"></script>
+<script src="js/users.js"></script>
+</body>
+</html>

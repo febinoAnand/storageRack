@@ -12,11 +12,188 @@ document.getElementById("logoutBtn").addEventListener("click", function () {
   window.location.href = "index.html";
 });
 
-// ---------- Rack data ----------
-const STORAGE_KEY = "srRacksV2";
+// ---------- Storage types ----------
+const STORAGE_TYPES = {
+  shelf: { label: "Shelf", icon: "📚", rootAdd: [{ kind: "level", label: "Shelf Level" }], childAdd: {} },
+  rack: { label: "Rack", icon: "🗄️", rootAdd: [{ kind: "level", label: "Level" }], childAdd: { level: [{ kind: "section", label: "Section" }] } },
+  cupboard: { label: "Cupboard", icon: "🚪", rootAdd: [{ kind: "shelf", label: "Shelf" }, { kind: "drawer", label: "Drawer" }], childAdd: {} },
+  bureau: { label: "Bureau", icon: "🗃️", rootAdd: [{ kind: "drawer", label: "Drawer" }], childAdd: {} },
+  wardrobe: { label: "Wardrobe", icon: "👕", rootAdd: [{ kind: "hanging", label: "Hanging Section" }, { kind: "shelf", label: "Shelf" }], childAdd: {} },
+  cabinet: { label: "Cabinet", icon: "🗄️", rootAdd: [{ kind: "shelf", label: "Shelf" }, { kind: "compartment", label: "Compartment" }], childAdd: {} },
+  box: { label: "Box", icon: "📦", rootAdd: [], childAdd: {}, singleSpace: true },
+  custom: { label: "Custom", icon: "🧩", rootAdd: [{ kind: "node", label: "Node" }], childAdd: {}, freeNesting: true },
+};
 
+function typeInfo(type) {
+  return STORAGE_TYPES[type] || STORAGE_TYPES.custom;
+}
+
+// ---------- IDs ----------
 function itemId() {
   return "it_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+function nodeId() {
+  return "nd_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+function makeNode(name, kind) {
+  return { id: nodeId(), name: name, kind: kind, children: [], items: [] };
+}
+
+function makeItem(name, quantity) {
+  return { id: itemId(), name: name, quantity: quantity };
+}
+
+// ---------- Store rooms ----------
+const ROOMS_KEY = "srRoomsV1";
+
+function loadRooms() {
+  const raw = localStorage.getItem(ROOMS_KEY);
+  if (raw) return JSON.parse(raw);
+  const seed = [
+    { id: "SR-1001", name: "Store Room 1", location: "Warehouse 1", createdAt: Date.now() - 6 * 86400000 },
+    { id: "SR-1002", name: "Store Room 2", location: "Warehouse 2", createdAt: Date.now() - 5 * 86400000 },
+  ];
+  saveRooms(seed);
+  return seed;
+}
+
+function saveRooms(data) {
+  localStorage.setItem(ROOMS_KEY, JSON.stringify(data));
+}
+
+let rooms = loadRooms();
+
+function findRoom(id) {
+  return rooms.find(function (r) { return r.id === id; });
+}
+
+function roomLabel(id) {
+  const room = findRoom(id);
+  return room ? room.name : "No store room";
+}
+
+// ---------- Roles & permissions ----------
+const PERMISSION_MODULES = [
+  { key: "storage", label: "Storage Units" },
+  { key: "items", label: "Items" },
+  { key: "rooms", label: "Store Rooms" },
+  { key: "users", label: "Users" },
+  { key: "roles", label: "Roles & Permissions" },
+];
+const PERMISSION_ACTIONS = ["create", "read", "update", "delete"];
+
+function emptyPermissions(defaultValue) {
+  const perms = {};
+  PERMISSION_MODULES.forEach(function (m) {
+    perms[m.key] = {};
+    PERMISSION_ACTIONS.forEach(function (a) { perms[m.key][a] = !!defaultValue; });
+  });
+  return perms;
+}
+
+const ROLES_KEY = "srRolesV1";
+
+function loadRoles() {
+  const raw = localStorage.getItem(ROLES_KEY);
+  if (raw) return JSON.parse(raw);
+
+  const adminPerms = emptyPermissions(true);
+
+  const managerPerms = emptyPermissions(false);
+  ["storage", "items", "rooms"].forEach(function (k) {
+    managerPerms[k] = { create: true, read: true, update: true, delete: true };
+  });
+  managerPerms.users = { create: false, read: true, update: false, delete: false };
+  managerPerms.roles = { create: false, read: true, update: false, delete: false };
+
+  const viewerPerms = emptyPermissions(false);
+  PERMISSION_MODULES.forEach(function (m) { viewerPerms[m.key].read = true; });
+
+  const seed = [
+    { id: "RL-1001", name: "Administrator", description: "Full access to every module.", permissions: adminPerms, createdAt: Date.now() - 6 * 86400000 },
+    { id: "RL-1002", name: "Manager", description: "Can manage storage, items and rooms. Read-only on users and roles.", permissions: managerPerms, createdAt: Date.now() - 5 * 86400000 },
+    { id: "RL-1003", name: "Viewer", description: "Read-only access across the app.", permissions: viewerPerms, createdAt: Date.now() - 4 * 86400000 },
+  ];
+  saveRoles(seed);
+  return seed;
+}
+
+function saveRoles(data) {
+  localStorage.setItem(ROLES_KEY, JSON.stringify(data));
+}
+
+let roles = loadRoles();
+
+function findRole(id) {
+  return roles.find(function (r) { return r.id === id; });
+}
+
+function roleLabel(id) {
+  const role = findRole(id);
+  return role ? role.name : "No role";
+}
+
+function permissionSummary(permissions) {
+  return PERMISSION_MODULES.map(function (m) {
+    const p = permissions[m.key];
+    const letters = PERMISSION_ACTIONS.map(function (a) {
+      return p[a] ? a.charAt(0).toUpperCase() : "·";
+    }).join("");
+    return `<span class="perm-chip"><strong>${m.label}</strong> ${letters}</span>`;
+  }).join("");
+}
+
+// ---------- Users ----------
+const USERS_KEY = "srUsersV1";
+
+function loadUsers() {
+  const raw = localStorage.getItem(USERS_KEY);
+  if (raw) return JSON.parse(raw);
+
+  const seed = [
+    { id: "US-1001", name: "Admin User", username: "admin", email: "admin@storage.app", roleId: "RL-1001", status: "active", createdAt: Date.now() - 6 * 86400000 },
+    { id: "US-1002", name: "Jane Manager", username: "jane.m", email: "jane@storage.app", roleId: "RL-1002", status: "active", createdAt: Date.now() - 4 * 86400000 },
+    { id: "US-1003", name: "Sam Viewer", username: "sam.v", email: "sam@storage.app", roleId: "RL-1003", status: "active", createdAt: Date.now() - 2 * 86400000 },
+  ];
+  saveUsers(seed);
+  return seed;
+}
+
+function saveUsers(data) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(data));
+}
+
+let users = loadUsers();
+
+function findUser(id) {
+  return users.find(function (u) { return u.id === id; });
+}
+
+function nextUserId() {
+  let max = 1000;
+  users.forEach(function (u) {
+    const m = /^US-(\d+)$/.exec(u.id);
+    if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+  });
+  return "US-" + (max + 1);
+}
+
+function nextRoleId() {
+  let max = 1000;
+  roles.forEach(function (r) {
+    const m = /^RL-(\d+)$/.exec(r.id);
+    if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+  });
+  return "RL-" + (max + 1);
+}
+
+// ---------- Storage units ----------
+const STORAGE_KEY = "srStorageV4";
+
+function seedRack(id, name, storeRoomId, type, category, nodes, daysAgo) {
+  return { id: id, name: name, storeRoomId: storeRoomId, type: type, category: category, nodes: nodes, createdAt: Date.now() - daysAgo * 86400000 };
 }
 
 function loadRacks() {
@@ -24,57 +201,56 @@ function loadRacks() {
   if (raw) return JSON.parse(raw);
 
   const seed = [
-    {
-      id: "RK-1001", name: "Rack A1", location: "Warehouse 1, Aisle 1", category: "Hardware",
-      rows: 5, columns: 10, capacity: 50,
-      createdAt: Date.now() - 6 * 86400000,
-      items: [
-        { id: itemId(), name: "Steel Bolts - Crate 12", quantity: 20 },
-        { id: itemId(), name: "Packaging Foam", quantity: 12 },
-      ],
-    },
-    {
-      id: "RK-1002", name: "Rack A2", location: "Warehouse 1, Aisle 2", category: "Electronics",
-      rows: 4, columns: 10, capacity: 40,
-      createdAt: Date.now() - 5 * 86400000,
-      items: [
-        { id: itemId(), name: "Circuit Boards - Pallet A", quantity: 25 },
-        { id: itemId(), name: "Circuit Boards - Pallet B", quantity: 15 },
-      ],
-    },
-    {
-      id: "RK-1003", name: "Rack B1", location: "Warehouse 2, Aisle 1", category: "Spare Parts",
-      rows: 6, columns: 10, capacity: 60,
-      createdAt: Date.now() - 4 * 86400000,
-      items: [
-        { id: itemId(), name: "Spare Motors", quantity: 15 },
-      ],
-    },
-    {
-      id: "RK-1004", name: "Rack B2", location: "Warehouse 2, Aisle 2", category: "Packaging",
-      rows: 5, columns: 8, capacity: 40,
-      createdAt: Date.now() - 3 * 86400000,
-      items: [
-        { id: itemId(), name: "Bubble Wrap Rolls", quantity: 18 },
-        { id: itemId(), name: "Cardboard Boxes - Small", quantity: 10 },
-        { id: itemId(), name: "Cardboard Boxes - Large", quantity: 6 },
-      ],
-    },
-    {
-      id: "RK-1005", name: "Rack C1", location: "Warehouse 3, Aisle 1", category: "Tools",
-      rows: 4, columns: 6, capacity: 24,
-      createdAt: Date.now() - 2 * 86400000,
-      items: [
-        { id: itemId(), name: "Cordless Drills", quantity: 8 },
-        { id: itemId(), name: "Wrench Sets", quantity: 5 },
-      ],
-    },
-    {
-      id: "RK-1006", name: "Rack C2", location: "Warehouse 3, Aisle 2", category: "Safety Equipment",
-      rows: 3, columns: 10, capacity: 30,
-      createdAt: Date.now() - 1 * 86400000,
-      items: [],
-    },
+    seedRack("ST-1001", "Rack A", "SR-1001", "rack", "Files & Books", [
+      (function () {
+        const level1 = makeNode("Level 1", "level");
+        level1.children = [
+          Object.assign(makeNode("Section 1", "section"), { items: [makeItem("Files", 20)] }),
+          Object.assign(makeNode("Section 2", "section"), { items: [makeItem("Books", 15)] }),
+        ];
+        return level1;
+      })(),
+      Object.assign(makeNode("Level 2", "level"), { items: [makeItem("Boxes", 10)] }),
+    ], 8),
+
+    seedRack("ST-1002", "Cupboard A", "SR-1001", "cupboard", "Office Supplies", [
+      Object.assign(makeNode("Shelf 1", "shelf"), { items: [makeItem("Documents", 12)] }),
+      Object.assign(makeNode("Drawer 1", "drawer"), { items: [makeItem("Electronics", 8)] }),
+    ], 7),
+
+    seedRack("ST-1003", "Bureau A", "SR-1001", "bureau", "Stationery", [
+      Object.assign(makeNode("Drawer 1", "drawer"), { items: [makeItem("Pens", 30)] }),
+      Object.assign(makeNode("Drawer 2", "drawer"), { items: [makeItem("Tools", 10)] }),
+    ], 6),
+
+    seedRack("ST-1004", "Wardrobe A", "SR-1001", "wardrobe", "Apparel", [
+      Object.assign(makeNode("Hanging Section", "hanging"), { items: [makeItem("Clothes", 25)] }),
+      Object.assign(makeNode("Shelf 1", "shelf"), { items: [makeItem("Accessories", 14)] }),
+    ], 5),
+
+    seedRack("ST-1005", "Shelf B", "SR-1002", "shelf", "Books", [
+      Object.assign(makeNode("Level 1", "level"), { items: [makeItem("Manuals", 18)] }),
+      Object.assign(makeNode("Level 2", "level"), { items: [makeItem("Magazines", 9)] }),
+    ], 4),
+
+    seedRack("ST-1006", "Cabinet A", "SR-1002", "cabinet", "Hardware", [
+      Object.assign(makeNode("Shelf 1", "shelf"), { items: [makeItem("Cables", 22)] }),
+      Object.assign(makeNode("Compartment 1", "compartment"), { items: [makeItem("Screws", 50)] }),
+    ], 3),
+
+    seedRack("ST-1007", "Box A", "SR-1002", "box", "Miscellaneous", [
+      Object.assign(makeNode("Internal Space", "space"), { items: [makeItem("Spare Parts", 6)] }),
+    ], 2),
+
+    seedRack("ST-1008", "Custom A", "SR-1002", "custom", "Lab Equipment", [
+      (function () {
+        const zone = makeNode("Zone A", "node");
+        zone.children = [
+          Object.assign(makeNode("Bin 1", "node"), { items: [makeItem("Samples", 5)] }),
+        ];
+        return zone;
+      })(),
+    ], 1),
   ];
   saveRacks(seed);
   return seed;
@@ -86,6 +262,94 @@ function saveRacks(data) {
 
 let racks = loadRacks();
 
+function findRack(id) {
+  return racks.find(function (r) { return r.id === id; });
+}
+
+function rackDetailUrl(id) {
+  return "storage-detail.html?id=" + encodeURIComponent(id);
+}
+
+// ---------- Node / item helpers ----------
+function walkNodes(nodes, fn) {
+  nodes.forEach(function (node) {
+    fn(node);
+    if (node.children && node.children.length) walkNodes(node.children, fn);
+  });
+}
+
+function unitItemCount(rack) {
+  let total = 0;
+  walkNodes(rack.nodes, function (node) {
+    total += node.items.reduce(function (s, it) { return s + it.quantity; }, 0);
+  });
+  return total;
+}
+
+function unitNodeCount(rack) {
+  let count = 0;
+  walkNodes(rack.nodes, function () { count++; });
+  return count;
+}
+
+function collectAllItems(rack) {
+  const all = [];
+  walkNodes(rack.nodes, function (node) {
+    node.items.forEach(function (it) { all.push(it); });
+  });
+  return all;
+}
+
+function findNodeDeep(nodes, id) {
+  for (let i = 0; i < nodes.length; i++) {
+    if (nodes[i].id === id) return nodes[i];
+    if (nodes[i].children && nodes[i].children.length) {
+      const found = findNodeDeep(nodes[i].children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function findNodePathDeep(nodes, id, trail) {
+  for (let i = 0; i < nodes.length; i++) {
+    const newTrail = trail.concat([nodes[i].name]);
+    if (nodes[i].id === id) return newTrail;
+    if (nodes[i].children && nodes[i].children.length) {
+      const found = findNodePathDeep(nodes[i].children, id, newTrail);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// Flat list of every item across every storage unit, with its location context.
+function collectAllItemEntries() {
+  const entries = [];
+  racks.forEach(function (rack) {
+    walkNodes(rack.nodes, function (node) {
+      node.items.forEach(function (item) {
+        entries.push({
+          item: item,
+          node: node,
+          rack: rack,
+          path: findNodePathDeep(rack.nodes, node.id, []).join(" → "),
+        });
+      });
+    });
+  });
+  return entries;
+}
+
+function removeNodeDeep(nodes, id) {
+  const idx = nodes.findIndex(function (n) { return n.id === id; });
+  if (idx !== -1) { nodes.splice(idx, 1); return true; }
+  for (let i = 0; i < nodes.length; i++) {
+    if (nodes[i].children && removeNodeDeep(nodes[i].children, id)) return true;
+  }
+  return false;
+}
+
 // ---------- Shared helpers ----------
 function escapeHtml(str) {
   const div = document.createElement("div");
@@ -93,75 +357,73 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function filledOf(rack) {
-  return rack.items.reduce(function (sum, it) { return sum + it.quantity; }, 0);
+// ---------- Category / item colors ----------
+const CATEGORY_PALETTE = [
+  { bg: "#e0f2fe", border: "#7dd3fc", text: "#0369a1", solid: "#0ea5e9" }, // sky
+  { bg: "#ede9fe", border: "#c4b5fd", text: "#6d28d9", solid: "#7c3aed" }, // violet
+  { bg: "#ecfeff", border: "#67e8f9", text: "#0e7490", solid: "#06b6d4" }, // cyan
+  { bg: "#fff7ed", border: "#fdba74", text: "#c2410c", solid: "#f97316" }, // orange
+  { bg: "#fef2f2", border: "#fca5a5", text: "#b91c1c", solid: "#ef4444" }, // rose
+  { bg: "#ecfdf5", border: "#6ee7b7", text: "#047857", solid: "#10b981" }, // emerald
+  { bg: "#fdf4ff", border: "#e9d5ff", text: "#a21caf", solid: "#c026d3" }, // fuchsia
+  { bg: "#fefce8", border: "#fde047", text: "#a16207", solid: "#eab308" }, // yellow
+  { bg: "#eef2ff", border: "#a5b4fc", text: "#4338ca", solid: "#6366f1" }, // indigo
+  { bg: "#f0fdfa", border: "#5eead4", text: "#0f766e", solid: "#14b8a6" }, // teal
+];
+
+const CATEGORY_NEUTRAL = { bg: "#f1f5f9", border: "#cbd5e1", text: "#475569", solid: "#94a3b8" };
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return hash;
 }
 
-function statusOf(rack) {
-  const capacity = rack.capacity > 0 ? rack.capacity : 1;
-  const pct = Math.min(100, Math.round((filledOf(rack) / capacity) * 100));
-  let cls = "";
-  let label = "Available";
-  if (pct >= 100) { cls = "full"; label = "Full"; }
-  else if (pct >= 80) { cls = "warning"; label = "Nearly Full"; }
-  return { pct: pct, cls: cls, label: label };
+function getCategoryColor(category) {
+  const key = (category || "").toLowerCase().trim();
+  if (!key) return CATEGORY_NEUTRAL;
+  return CATEGORY_PALETTE[hashString(key) % CATEGORY_PALETTE.length];
 }
 
-function findRack(id) {
-  return racks.find(function (r) { return r.id === id; });
+function getItemColor(name) {
+  const key = "item:" + (name || "").toLowerCase().trim();
+  return CATEGORY_PALETTE[hashString(key) % CATEGORY_PALETTE.length];
 }
 
-function rackDetailUrl(id) {
-  return "rack-detail.html?id=" + encodeURIComponent(id);
+function categoryBadgeHtml(category) {
+  if (!category) return "";
+  const c = getCategoryColor(category);
+  return `<span class="rack-category-badge" style="background:${c.bg};border-color:${c.border};color:${c.text}">${escapeHtml(category)}</span>`;
 }
 
-function buildSlotGridHtml(rack) {
-  const total = rack.rows * rack.columns;
-  const cells = new Array(total).fill(null);
-
-  let idx = 0;
-  rack.items.forEach(function (item) {
-    for (let i = 0; i < item.quantity && idx < total; i++) {
-      cells[idx] = item.name;
-      idx++;
-    }
-  });
-
-  const cellsHtml = cells.map(function (name) {
-    return name
-      ? `<div class="slot-cell filled" title="${escapeHtml(name)}"></div>`
-      : `<div class="slot-cell" title="Empty slot"></div>`;
-  }).join("");
-
-  return `<div class="slot-grid-wrap"><div class="slot-grid" style="grid-template-columns: repeat(${rack.columns}, 1fr);">${cellsHtml}</div></div>`;
+function typeBadgeHtml(type) {
+  const t = typeInfo(type);
+  return `<span class="type-badge">${t.icon} ${t.label}</span>`;
 }
 
-function buildItemsPreviewHtml(rack, limit) {
-  limit = limit || 3;
-  if (rack.items.length === 0) {
+function buildItemsPreviewHtml(items) {
+  if (items.length === 0) {
     return `<div class="rack-items-preview"><span class="rack-item-chip more">No items placed yet</span></div>`;
   }
-  const shown = rack.items.slice(0, limit);
-  const extra = rack.items.length - shown.length;
   let html = `<div class="rack-items-preview">`;
-  shown.forEach(function (item) {
-    html += `<span class="rack-item-chip">${escapeHtml(item.name)} <span class="qty">× ${item.quantity}</span></span>`;
+  items.forEach(function (item) {
+    const c = getItemColor(item.name);
+    html += `<span class="rack-item-chip" style="background:${c.bg};border-color:${c.border};color:${c.text}">${escapeHtml(item.name)} <span class="qty">× ${item.quantity}</span></span>`;
   });
-  if (extra > 0) {
-    html += `<span class="rack-item-chip more">+${extra} more item${extra === 1 ? "" : "s"}</span>`;
-  }
   html += `</div>`;
   return html;
 }
 
 // ---------- Rack card / row builders ----------
 function buildRackCard(rack) {
-  const status = statusOf(rack);
-  const filled = filledOf(rack);
-  const free = Math.max(0, rack.capacity - filled);
+  const totalItems = unitItemCount(rack);
+  const nodeCount = unitNodeCount(rack);
 
   const card = document.createElement("div");
   card.className = "rack-card clickable";
+  card.style.borderLeft = `3px solid ${getCategoryColor(rack.category).solid}`;
   card.innerHTML = `
     <div class="rack-card-head">
       <div>
@@ -173,20 +435,16 @@ function buildRackCard(rack) {
         <button class="icon-btn delete delete-btn" title="Delete">🗑️</button>
       </div>
     </div>
-    <div class="rack-location">${escapeHtml(rack.location || "No location set")}</div>
+    <div class="rack-location">🚪 ${escapeHtml(roomLabel(rack.storeRoomId))}</div>
     <div class="rack-sub-meta">
-      ${rack.category ? `<span class="rack-category-badge">${escapeHtml(rack.category)}</span>` : ""}
-      <span class="rack-layout">${rack.rows} × ${rack.columns} layout</span>
+      ${typeBadgeHtml(rack.type)}
+      ${categoryBadgeHtml(rack.category)}
     </div>
-    ${buildItemsPreviewHtml(rack)}
-    <div class="rack-progress-track">
-      <div class="rack-progress-fill ${status.cls}" style="width:${status.pct}%"></div>
-    </div>
+    ${buildItemsPreviewHtml(collectAllItems(rack))}
     <div class="rack-meta">
-      <span><strong>${filled}</strong> / ${rack.capacity} items</span>
-      <span><strong>${free}</strong> free</span>
+      <span><strong>${totalItems}</strong> items</span>
+      <span><strong>${nodeCount}</strong> location${nodeCount === 1 ? "" : "s"}</span>
     </div>
-    <span class="rack-badge ${status.cls}">${status.label} · ${status.pct}%</span>
   `;
 
   card.addEventListener("click", function () {
@@ -198,62 +456,64 @@ function buildRackCard(rack) {
   });
   card.querySelector(".delete-btn").addEventListener("click", function (e) {
     e.stopPropagation();
-    deleteRack(rack.id, function () {
+    deleteRack(rack.id, function (deletedRack) {
+      showToast(`"${deletedRack.name}" deleted`, "danger");
       if (typeof window.onRackDataChanged === "function") window.onRackDataChanged();
-    });
+    }, card);
   });
 
   return card;
 }
 
 function buildRackRow(rack) {
-  const status = statusOf(rack);
-  const filled = filledOf(rack);
+  const totalItems = unitItemCount(rack);
   const row = document.createElement("a");
   row.href = rackDetailUrl(rack.id);
   row.className = "rack-row";
+  row.style.borderLeftColor = getCategoryColor(rack.category).solid;
   row.innerHTML = `
     <div class="rack-row-main">
       <span class="rack-id-badge">${escapeHtml(rack.id)}</span>
       <span class="rack-row-name">${escapeHtml(rack.name)}</span>
-      <span class="rack-row-loc">${escapeHtml(rack.location || "")}</span>
+      <span class="rack-row-loc">${escapeHtml(roomLabel(rack.storeRoomId))}</span>
     </div>
     <div class="rack-row-progress">
-      <div class="rack-progress-track small">
-        <div class="rack-progress-fill ${status.cls}" style="width:${status.pct}%"></div>
-      </div>
+      ${typeBadgeHtml(rack.type)}
     </div>
     <div class="rack-row-meta">
-      <span>${filled} / ${rack.capacity}</span>
-      <span class="rack-badge ${status.cls}">${status.label}</span>
+      <span><strong>${totalItems}</strong> items</span>
     </div>
   `;
   return row;
 }
 
 // ---------- Delete rack ----------
-function deleteRack(id, onSuccess) {
+function deleteRack(id, onSuccess, elToAnimate) {
   const rack = findRack(id);
   if (!rack) return;
   if (!confirm(`Delete "${rack.name}" (${rack.id})? This cannot be undone.`)) return;
 
-  racks = racks.filter(function (r) { return r.id !== id; });
-  saveRacks(racks);
-  if (onSuccess) onSuccess();
+  function finish() {
+    racks = racks.filter(function (r) { return r.id !== id; });
+    saveRacks(racks);
+    if (onSuccess) onSuccess(rack);
+  }
+
+  if (elToAnimate) {
+    elToAnimate.classList.add("removing");
+    elToAnimate.addEventListener("animationend", finish, { once: true });
+  } else {
+    finish();
+  }
 }
 
-// ---------- Shared Edit Rack modal (present on racks.html and rack-detail.html) ----------
+// ---------- Shared Edit Storage Unit modal (present on storage.html and storage-detail.html) ----------
 let editingRackId = null;
 
-function updateCapacityPreview(rowsInputId, colsInputId, previewId) {
-  const rows = parseInt(document.getElementById(rowsInputId).value, 10);
-  const columns = parseInt(document.getElementById(colsInputId).value, 10);
-  const preview = document.getElementById(previewId);
-  if (!isNaN(rows) && rows > 0 && !isNaN(columns) && columns > 0) {
-    preview.textContent = `Total capacity: ${rows * columns} slots`;
-  } else {
-    preview.textContent = "Total capacity: — slots";
-  }
+function roomOptionsHtml(selectedId) {
+  return rooms.map(function (r) {
+    return `<option value="${escapeHtml(r.id)}" ${r.id === selectedId ? "selected" : ""}>${escapeHtml(r.name)}</option>`;
+  }).join("");
 }
 
 function openEditModal(rack) {
@@ -264,12 +524,10 @@ function openEditModal(rack) {
   document.getElementById("editRackForm").reset();
   editingRackId = rack.id;
   document.getElementById("editRackId").value = rack.id;
+  document.getElementById("editRackType").value = typeInfo(rack.type).icon + " " + typeInfo(rack.type).label;
   document.getElementById("editRackName").value = rack.name;
-  document.getElementById("editRackLocation").value = rack.location || "";
+  document.getElementById("editRackRoom").innerHTML = roomOptionsHtml(rack.storeRoomId);
   document.getElementById("editRackCategory").value = rack.category || "";
-  document.getElementById("editRackRows").value = rack.rows;
-  document.getElementById("editRackColumns").value = rack.columns;
-  updateCapacityPreview("editRackRows", "editRackColumns", "editRackCapacityPreview");
   editModalOverlay.hidden = false;
 }
 
@@ -285,12 +543,6 @@ function closeEditModal() {
   const editRackForm = document.getElementById("editRackForm");
   const editRackError = document.getElementById("editRackError");
 
-  ["editRackRows", "editRackColumns"].forEach(function (id) {
-    document.getElementById(id).addEventListener("input", function () {
-      updateCapacityPreview("editRackRows", "editRackColumns", "editRackCapacityPreview");
-    });
-  });
-
   document.getElementById("editModalClose").addEventListener("click", closeEditModal);
   document.getElementById("editRackCancel").addEventListener("click", closeEditModal);
   editModalOverlay.addEventListener("click", function (e) {
@@ -304,38 +556,26 @@ function closeEditModal() {
     if (!rack) return;
 
     const name = document.getElementById("editRackName").value.trim();
-    const location = document.getElementById("editRackLocation").value.trim();
+    const storeRoomId = document.getElementById("editRackRoom").value;
     const category = document.getElementById("editRackCategory").value.trim();
-    const rows = parseInt(document.getElementById("editRackRows").value, 10);
-    const columns = parseInt(document.getElementById("editRackColumns").value, 10);
 
-    if (!name || isNaN(rows) || rows < 1 || isNaN(columns) || columns < 1) {
-      editRackError.textContent = "Please fill in all required fields with valid values.";
-      editRackError.hidden = false;
-      return;
-    }
-
-    const capacity = rows * columns;
-    const filled = filledOf(rack);
-    if (capacity < filled) {
-      editRackError.textContent = `Capacity can't be less than the ${filled} items already placed in this rack.`;
+    if (!name || !storeRoomId) {
+      editRackError.textContent = "Please fill in all required fields.";
       editRackError.hidden = false;
       return;
     }
 
     rack.name = name;
-    rack.location = location;
+    rack.storeRoomId = storeRoomId;
     rack.category = category;
-    rack.rows = rows;
-    rack.columns = columns;
-    rack.capacity = capacity;
     saveRacks(racks);
     closeEditModal();
+    showToast(`"${rack.name}" updated`, "success");
     if (typeof window.onRackDataChanged === "function") window.onRackDataChanged();
   });
 })();
 
-// ---------- Top search (find rack by ID) ----------
+// ---------- Top search (find storage unit by ID) ----------
 function runIdSearch() {
   const query = document.getElementById("idSearchInput").value.trim();
   if (!query) return;
@@ -344,7 +584,7 @@ function runIdSearch() {
   if (exact) {
     window.location.href = rackDetailUrl(exact.id);
   } else {
-    window.location.href = "racks.html?search=" + encodeURIComponent(query);
+    window.location.href = "storage.html?search=" + encodeURIComponent(query);
   }
 }
 
@@ -367,3 +607,43 @@ document.getElementById("idSearchInput").addEventListener("keydown", function (e
     });
   }
 })();
+
+// ---------- Theme toggle ----------
+(function initThemeToggle() {
+  const themeToggle = document.getElementById("themeToggle");
+  if (!themeToggle) return;
+
+  const label = document.getElementById("themeToggleLabel");
+
+  function sync() {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    label.textContent = isDark ? "Dark Mode" : "Light Mode";
+  }
+
+  themeToggle.addEventListener("click", function () {
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const next = isDark ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("srTheme", next);
+    sync();
+  });
+
+  sync();
+})();
+
+// ---------- Animation helpers ----------
+function animateNumber(el, target, suffix, duration) {
+  suffix = suffix || "";
+  duration = duration || 700;
+  const startTime = performance.now();
+
+  function tick(now) {
+    const progress = Math.min(1, (now - startTime) / duration);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(target * eased) + suffix;
+    if (progress < 1) requestAnimationFrame(tick);
+    else el.textContent = target + suffix;
+  }
+
+  requestAnimationFrame(tick);
+}
