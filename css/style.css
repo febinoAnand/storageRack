@@ -691,9 +691,7 @@ body {
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 20px;
-  background: var(--violet-bg);
-  border: 1px solid var(--violet-border);
-  color: var(--violet);
+  border: 1px solid;
 }
 
 .rack-layout {
@@ -715,17 +713,17 @@ body {
   align-items: baseline;
   gap: 4px;
   font-size: 11px;
+  font-weight: 600;
   padding: 3px 9px;
   border-radius: 20px;
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
-  color: var(--text);
+  border: 1px solid;
   max-width: 100%;
 }
 
 .rack-item-chip .qty {
-  color: var(--muted);
-  font-weight: 600;
+  color: inherit;
+  opacity: .7;
+  font-weight: 700;
 }
 
 .rack-item-chip.more {
@@ -877,9 +875,16 @@ body {
 
 .item-info {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
   min-width: 0;
+}
+
+.item-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .item-name {

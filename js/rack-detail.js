@@ -20,9 +20,11 @@ function renderDetail() {
   const itemsHtml = rack.items.length === 0
     ? `<p class="empty-state">No items placed in this rack yet.</p>`
     : `<div class="items-list">` + rack.items.map(function (item) {
+        const dotColor = getItemColor(item.name).solid;
         return `
           <div class="item-row" data-item-id="${escapeHtml(item.id)}">
             <div class="item-info">
+              <span class="item-dot" style="background:${dotColor}"></span>
               <span class="item-name">${escapeHtml(item.name)}</span>
               <span class="item-qty">${item.quantity} slot${item.quantity === 1 ? "" : "s"}</span>
             </div>
@@ -41,7 +43,7 @@ function renderDetail() {
         <h2>${escapeHtml(rack.name)} <span class="rack-id-badge large">${escapeHtml(rack.id)}</span></h2>
         <p class="muted">${escapeHtml(rack.location || "No location set")}</p>
         <div class="rack-sub-meta">
-          ${rack.category ? `<span class="rack-category-badge">${escapeHtml(rack.category)}</span>` : ""}
+          ${categoryBadgeHtml(rack.category)}
           <span class="rack-layout">${rack.rows} rows × ${rack.columns} columns</span>
         </div>
       </div>
@@ -91,6 +93,7 @@ function renderDetail() {
         <h3>Rack Layout</h3>
         <span class="muted">${rack.rows} × ${rack.columns} · ${filled} / ${rack.capacity} slots filled</span>
       </div>
+      ${buildItemsPreviewHtml(rack)}
       ${buildSlotGridHtml(rack)}
     </div>
 
