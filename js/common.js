@@ -115,6 +115,58 @@ function rackDetailUrl(id) {
   return "rack-detail.html?id=" + encodeURIComponent(id);
 }
 
+// ---------- Category colors ----------
+const CATEGORY_PALETTE = [
+  { bg: "#e0f2fe", border: "#7dd3fc", text: "#0369a1", solid: "#0ea5e9" }, // sky
+  { bg: "#ede9fe", border: "#c4b5fd", text: "#6d28d9", solid: "#7c3aed" }, // violet
+  { bg: "#ecfeff", border: "#67e8f9", text: "#0e7490", solid: "#06b6d4" }, // cyan
+  { bg: "#fff7ed", border: "#fdba74", text: "#c2410c", solid: "#f97316" }, // orange
+  { bg: "#fef2f2", border: "#fca5a5", text: "#b91c1c", solid: "#ef4444" }, // rose
+  { bg: "#ecfdf5", border: "#6ee7b7", text: "#047857", solid: "#10b981" }, // emerald
+  { bg: "#fdf4ff", border: "#e9d5ff", text: "#a21caf", solid: "#c026d3" }, // fuchsia
+  { bg: "#fefce8", border: "#fde047", text: "#a16207", solid: "#eab308" }, // yellow
+  { bg: "#eef2ff", border: "#a5b4fc", text: "#4338ca", solid: "#6366f1" }, // indigo
+  { bg: "#f0fdfa", border: "#5eead4", text: "#0f766e", solid: "#14b8a6" }, // teal
+];
+
+const CATEGORY_COLOR_MAP = {
+  "hardware": CATEGORY_PALETTE[0],
+  "electronics": CATEGORY_PALETTE[1],
+  "spare parts": CATEGORY_PALETTE[2],
+  "packaging": CATEGORY_PALETTE[3],
+  "tools": CATEGORY_PALETTE[4],
+  "safety equipment": CATEGORY_PALETTE[5],
+  "consumables": CATEGORY_PALETTE[6],
+};
+
+const CATEGORY_NEUTRAL = { bg: "#f1f5f9", border: "#cbd5e1", text: "#475569", solid: "#94a3b8" };
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function getCategoryColor(category) {
+  const key = (category || "").toLowerCase().trim();
+  if (!key) return CATEGORY_NEUTRAL;
+  if (CATEGORY_COLOR_MAP[key]) return CATEGORY_COLOR_MAP[key];
+  return CATEGORY_PALETTE[hashString(key) % CATEGORY_PALETTE.length];
+}
+
+function getItemColor(name) {
+  const key = "item:" + (name || "").toLowerCase().trim();
+  return CATEGORY_PALETTE[hashString(key) % CATEGORY_PALETTE.length];
+}
+
+function categoryBadgeHtml(category) {
+  if (!category) return "";
+  const c = getCategoryColor(category);
+  return `<span class="rack-category-badge" style="background:${c.bg};border-color:${c.border};color:${c.text}">${escapeHtml(category)}</span>`;
+}
+
 function buildSlotGridHtml(rack) {
   const total = rack.rows * rack.columns;
   const cells = new Array(total).fill(null);
@@ -122,34 +174,29 @@ function buildSlotGridHtml(rack) {
   let idx = 0;
   rack.items.forEach(function (item) {
     for (let i = 0; i < item.quantity && idx < total; i++) {
-      cells[idx] = item.name;
+      cells[idx] = item;
       idx++;
     }
   });
 
-  const cellsHtml = cells.map(function (name) {
-    return name
-      ? `<div class="slot-cell filled" title="${escapeHtml(name)}"></div>`
-      : `<div class="slot-cell" title="Empty slot"></div>`;
+  const cellsHtml = cells.map(function (item) {
+    if (!item) return `<div class="slot-cell" title="Empty slot"></div>`;
+    const color = getItemColor(item.name).solid;
+    return `<div class="slot-cell filled" style="background:${color}" title="${escapeHtml(item.name)}"></div>`;
   }).join("");
 
   return `<div class="slot-grid-wrap"><div class="slot-grid" style="grid-template-columns: repeat(${rack.columns}, 1fr);">${cellsHtml}</div></div>`;
 }
 
-function buildItemsPreviewHtml(rack, limit) {
-  limit = limit || 3;
+function buildItemsPreviewHtml(rack) {
   if (rack.items.length === 0) {
     return `<div class="rack-items-preview"><span class="rack-item-chip more">No items placed yet</span></div>`;
   }
-  const shown = rack.items.slice(0, limit);
-  const extra = rack.items.length - shown.length;
   let html = `<div class="rack-items-preview">`;
-  shown.forEach(function (item) {
-    html += `<span class="rack-item-chip">${escapeHtml(item.name)} <span class="qty">× ${item.quantity}</span></span>`;
+  rack.items.forEach(function (item) {
+    const c = getItemColor(item.name);
+    html += `<span class="rack-item-chip" style="background:${c.bg};border-color:${c.border};color:${c.text}">${escapeHtml(item.name)} <span class="qty">× ${item.quantity}</span></span>`;
   });
-  if (extra > 0) {
-    html += `<span class="rack-item-chip more">+${extra} more item${extra === 1 ? "" : "s"}</span>`;
-  }
   html += `</div>`;
   return html;
 }
@@ -162,6 +209,7 @@ function buildRackCard(rack) {
 
   const card = document.createElement("div");
   card.className = "rack-card clickable";
+  card.style.borderLeft = `4px solid ${getCategoryColor(rack.category).solid}`;
   card.innerHTML = `
     <div class="rack-card-head">
       <div>
@@ -175,7 +223,7 @@ function buildRackCard(rack) {
     </div>
     <div class="rack-location">${escapeHtml(rack.location || "No location set")}</div>
     <div class="rack-sub-meta">
-      ${rack.category ? `<span class="rack-category-badge">${escapeHtml(rack.category)}</span>` : ""}
+      ${categoryBadgeHtml(rack.category)}
       <span class="rack-layout">${rack.rows} × ${rack.columns} layout</span>
     </div>
     ${buildItemsPreviewHtml(rack)}
@@ -212,6 +260,7 @@ function buildRackRow(rack) {
   const row = document.createElement("a");
   row.href = rackDetailUrl(rack.id);
   row.className = "rack-row";
+  row.style.borderLeftColor = getCategoryColor(rack.category).solid;
   row.innerHTML = `
     <div class="rack-row-main">
       <span class="rack-id-badge">${escapeHtml(rack.id)}</span>
