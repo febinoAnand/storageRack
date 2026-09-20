@@ -63,6 +63,8 @@ function buildUserCard(user) {
   return card;
 }
 
+let userCurrentPage = 1;
+
 function applyUserFilters() {
   const query = document.getElementById("userFilterSearch").value.trim().toLowerCase();
   const roleFilter = document.getElementById("userFilterRole").value;
@@ -76,6 +78,9 @@ function applyUserFilters() {
     return matchesQuery && matchesRole;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (userCurrentPage > totalPages) userCurrentPage = totalPages;
+
   const grid = document.getElementById("userGrid");
   const emptyState = document.getElementById("emptyState");
   grid.innerHTML = "";
@@ -84,15 +89,21 @@ function applyUserFilters() {
     emptyState.hidden = false;
   } else {
     emptyState.hidden = true;
-    filtered.forEach(function (u) { grid.appendChild(buildUserCard(u)); });
+    paginateArray(filtered, userCurrentPage, PAGE_SIZE).forEach(function (u) { grid.appendChild(buildUserCard(u)); });
   }
+
+  renderPagination(document.getElementById("userPagination"), filtered.length, userCurrentPage, PAGE_SIZE, function (page) {
+    userCurrentPage = page;
+    applyUserFilters();
+  });
 }
 
-document.getElementById("userFilterSearch").addEventListener("input", applyUserFilters);
-document.getElementById("userFilterRole").addEventListener("change", applyUserFilters);
+document.getElementById("userFilterSearch").addEventListener("input", function () { userCurrentPage = 1; applyUserFilters(); });
+document.getElementById("userFilterRole").addEventListener("change", function () { userCurrentPage = 1; applyUserFilters(); });
 document.getElementById("userFilterReset").addEventListener("click", function () {
   document.getElementById("userFilterSearch").value = "";
   document.getElementById("userFilterRole").value = "all";
+  userCurrentPage = 1;
   applyUserFilters();
 });
 

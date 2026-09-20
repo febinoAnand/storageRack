@@ -366,6 +366,7 @@ body {
 }
 
 .req { color: var(--danger); }
+.optional-tag { color: var(--muted-dim); font-weight: 400; font-size: 12px; }
 
 .field-hint {
   font-size: 12px;
@@ -1206,6 +1207,115 @@ body {
   animation: fadeIn .3s ease both;
 }
 
+/* ---------- Log table ---------- */
+
+.log-table-wrap {
+  overflow-x: auto;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.log-table th {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  cursor: pointer;
+  user-select: none;
+  transition: color .15s ease;
+}
+
+.log-table th:hover { color: var(--text); }
+.log-table th.sorted { color: var(--primary); }
+.log-table th:not([data-sort]) { cursor: default; }
+
+.sort-arrow {
+  font-size: 9px;
+  margin-left: 3px;
+  display: inline-block;
+}
+
+.log-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--text);
+}
+
+.log-table tbody tr:last-child td { border-bottom: none; }
+.log-table tbody tr:hover td { background: var(--surface-alt); }
+
+.log-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.log-type-badge.in {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success);
+}
+
+.log-type-badge.out {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
+}
+
+/* ---------- Pagination ---------- */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 24px;
+}
+
+.page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.page-btn:hover:not(:disabled) { background: var(--surface-alt); border-color: var(--border-strong); }
+
+.page-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.page-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.page-btn.page-nav { font-weight: 600; }
+
 /* ---------- Rack detail ---------- */
 
 .back-link {
@@ -1360,6 +1470,23 @@ body {
 
 .node-items {
   margin-bottom: 8px;
+}
+
+.availability-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success);
+  white-space: nowrap;
+}
+
+.availability-badge.full {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger);
 }
 
 /* ---------- Slot grid (rack layout) ---------- */

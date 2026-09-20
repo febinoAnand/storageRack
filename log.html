@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Storage | All Items</title>
+<title>Storage | IN/OUT Log</title>
 <script src="js/theme.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="dash-body" data-page="items">
+<body class="dash-body" data-page="log">
 
   <div class="app-shell">
 
@@ -65,69 +65,54 @@
 
         <div class="toolbar">
           <div>
-            <h2>All Items</h2>
-            <p class="muted">Every item across every storage unit, in one place</p>
+            <h2>IN/OUT Log</h2>
+            <p class="muted">Every item movement, across every storage unit</p>
           </div>
-          <button class="btn-primary btn-add" id="addItemPageBtn">+ Add Item</button>
         </div>
 
         <div class="filters-bar">
-          <input type="text" id="itemFilterSearch" placeholder="Search by item, storage, category or location">
-          <select id="itemFilterType">
-            <option value="all">All Types</option>
+          <input type="text" id="logFilterSearch" placeholder="Search by item, storage, location or user">
+          <select id="logFilterType">
+            <option value="all">All Movements</option>
+            <option value="in">⬆ IN only</option>
+            <option value="out">⬇ OUT only</option>
           </select>
-          <button class="btn-secondary" id="itemFilterReset">Reset</button>
+          <select id="logFilterRack">
+            <option value="all">All Storages</option>
+          </select>
+          <button class="btn-secondary" id="logFilterReset">Reset</button>
         </div>
 
         <div class="panel">
           <div class="panel-head">
-            <h3 id="itemListHeading">Items</h3>
+            <h3 id="logListHeading">Log</h3>
           </div>
-          <div id="itemList" class="rack-row-list"></div>
-          <p class="empty-state" id="itemEmptyState" hidden>No items match your filters.</p>
-          <div class="pagination" id="itemPagination"></div>
+          <div class="log-table-wrap">
+            <table class="log-table">
+              <thead>
+                <tr>
+                  <th data-sort="timestamp">Date / Time <span class="sort-arrow"></span></th>
+                  <th data-sort="type">Type <span class="sort-arrow"></span></th>
+                  <th data-sort="itemName">Item <span class="sort-arrow"></span></th>
+                  <th data-sort="quantity">Qty <span class="sort-arrow"></span></th>
+                  <th data-sort="rackName">Storage <span class="sort-arrow"></span></th>
+                  <th>Location</th>
+                  <th data-sort="user">User <span class="sort-arrow"></span></th>
+                </tr>
+              </thead>
+              <tbody id="logTableBody"></tbody>
+            </table>
+          </div>
+          <p class="empty-state" id="logEmptyState" hidden>No log entries match your filters.</p>
+          <div class="pagination" id="logPagination"></div>
         </div>
 
       </main>
     </div>
   </div>
 
-  <!-- Add Item Modal (with placement picker) -->
-  <div class="modal-overlay" id="addItemModalOverlay" hidden>
-    <div class="modal">
-      <div class="modal-header">
-        <h3>Add Item</h3>
-        <button class="modal-close" id="addItemModalClose">&times;</button>
-      </div>
-      <form id="addItemPageForm" class="modal-form">
-        <div class="field">
-          <label for="placeRackSelect">Storage Unit</label>
-          <select id="placeRackSelect" required></select>
-        </div>
-        <div class="field">
-          <label for="placeNodeSelect">Place In</label>
-          <select id="placeNodeSelect" required></select>
-          <p class="field-hint" id="placeNodeHint"></p>
-        </div>
-        <div class="field">
-          <label for="placeItemName">Item Name</label>
-          <input type="text" id="placeItemName" placeholder="e.g. Circuit Boards - Box 12" required>
-        </div>
-        <div class="field">
-          <label for="placeItemQuantity">Quantity</label>
-          <input type="number" id="placeItemQuantity" min="1" placeholder="e.g. 5" required>
-        </div>
-        <p id="addItemPageError" class="error-msg" hidden></p>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="addItemPageCancel">Cancel</button>
-          <button type="submit" class="btn-primary">Add Item</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
 <script src="js/toast.js"></script>
 <script src="js/common.js"></script>
-<script src="js/items.js"></script>
+<script src="js/log.js"></script>
 </body>
 </html>

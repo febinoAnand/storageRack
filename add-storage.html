@@ -27,6 +27,9 @@
         <a href="items.html" class="nav-item" data-route="items">
           <span class="nav-icon">🏷️</span> All Items
         </a>
+        <a href="log.html" class="nav-item" data-route="log">
+          <span class="nav-icon">🔄</span> IN/OUT Log
+        </a>
         <a href="storerooms.html" class="nav-item" data-route="rooms">
           <span class="nav-icon">🚪</span> Store Rooms
         </a>
@@ -62,7 +65,7 @@
 
         <div class="view-head">
           <h2>Add New Storage</h2>
-          <p class="muted">Register a new storage unit. You'll build out its internal structure (levels, drawers, sections...) after creating it.</p>
+          <p class="muted">Register a new storage unit, and optionally set up its starting structure below. You can always add to it later.</p>
         </div>
 
         <form id="addRackForm" class="panel form-panel">
@@ -79,6 +82,11 @@
             <label for="newRackType">Storage Type <span class="req">*</span></label>
             <select id="newRackType" required></select>
             <p class="field-hint" id="typeHint"></p>
+          </div>
+          <div class="field" id="quickStructureField">
+            <label>Starting Structure <span class="optional-tag">(optional)</span></label>
+            <div class="field-group quick-structure-grid" id="quickStructureFields"></div>
+            <p class="field-hint" id="quickStructureHint"></p>
           </div>
           <div class="field">
             <label for="newRackRoom">Store Room <span class="req">*</span></label>

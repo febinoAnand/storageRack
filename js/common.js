@@ -37,8 +37,36 @@ function nodeId() {
   return "nd_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
-function makeNode(name, kind) {
-  return { id: nodeId(), name: name, kind: kind, children: [], items: [] };
+function makeNode(name, kind, capacity) {
+  return { id: nodeId(), name: name, kind: kind, capacity: (capacity || capacity === 0) ? capacity : null, children: [], items: [] };
+}
+
+// How full a single node is, based on items placed directly on it (not its children).
+function nodeAvailability(node) {
+  const filled = node.items.reduce(function (s, it) { return s + it.quantity; }, 0);
+  if (node.capacity == null) return { filled: filled, capacity: null, remaining: Infinity, isFull: false };
+  const remaining = Math.max(0, node.capacity - filled);
+  return { filled: filled, capacity: node.capacity, remaining: remaining, isFull: remaining <= 0 };
+}
+
+function nodeAvailabilityLabel(node) {
+  const a = nodeAvailability(node);
+  if (a.capacity == null) return `${a.filled} placed`;
+  return a.isFull ? `Full (${a.filled}/${a.capacity})` : `${a.remaining} of ${a.capacity} free`;
+}
+
+// Flat list of every node in a rack, each with its full breadcrumb path and availability — used by placement pickers.
+function flattenNodesForPlacement(rack) {
+  const out = [];
+  function walk(nodes, trail) {
+    nodes.forEach(function (node) {
+      const path = trail.concat([node.name]);
+      out.push({ rack: rack, node: node, path: path.join(" → "), availability: nodeAvailability(node) });
+      if (node.children && node.children.length) walk(node.children, path);
+    });
+  }
+  walk(rack.nodes, []);
+  return out;
 }
 
 function makeItem(name, quantity) {
@@ -341,6 +369,63 @@ function collectAllItemEntries() {
   return entries;
 }
 
+// ---------- IN / OUT transaction log ----------
+const LOG_KEY = "srItemLogV1";
+
+function loadLog() {
+  const raw = localStorage.getItem(LOG_KEY);
+  if (raw) return JSON.parse(raw);
+
+  // Seed the log with an "in" entry for every item already in the seed data, so the log isn't empty on first visit.
+  const seed = [];
+  racks.forEach(function (rack) {
+    walkNodes(rack.nodes, function (node) {
+      node.items.forEach(function (item) {
+        seed.push({
+          id: logId(),
+          timestamp: rack.createdAt,
+          type: "in",
+          itemName: item.name,
+          quantity: item.quantity,
+          rackId: rack.id,
+          rackName: rack.name,
+          path: findNodePathDeep(rack.nodes, node.id, []).join(" → "),
+          user: "admin",
+        });
+      });
+    });
+  });
+  saveLog(seed);
+  return seed;
+}
+
+function saveLog(data) {
+  localStorage.setItem(LOG_KEY, JSON.stringify(data));
+}
+
+function logId() {
+  return "LG-" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+let itemLog = loadLog();
+
+function logTransaction(type, itemName, quantity, rack, path) {
+  if (!quantity || quantity <= 0) return;
+  itemLog.unshift({
+    id: logId(),
+    timestamp: Date.now(),
+    type: type,
+    itemName: itemName,
+    quantity: quantity,
+    rackId: rack.id,
+    rackName: rack.name,
+    path: path,
+    user: sessionStorage.getItem("srUser") || "admin",
+  });
+  if (itemLog.length > 1000) itemLog.length = 1000;
+  saveLog(itemLog);
+}
+
 function removeNodeDeep(nodes, id) {
   const idx = nodes.findIndex(function (n) { return n.id === id; });
   if (idx !== -1) { nodes.splice(idx, 1); return true; }
@@ -630,6 +715,38 @@ document.getElementById("idSearchInput").addEventListener("keydown", function (e
 
   sync();
 })();
+
+// ---------- Pagination ----------
+const PAGE_SIZE = 6;
+
+function paginateArray(array, page, pageSize) {
+  const start = (page - 1) * pageSize;
+  return array.slice(start, start + pageSize);
+}
+
+// Renders numbered page buttons into `container`. Calls onChange(pageNumber) when a button is clicked.
+// Hides itself (empty innerHTML) when everything fits on one page.
+function renderPagination(container, totalItems, currentPage, pageSize, onChange) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  if (totalPages <= 1) {
+    container.innerHTML = "";
+    return;
+  }
+
+  let html = `<button class="page-btn page-nav" data-page="${currentPage - 1}" ${currentPage === 1 ? "disabled" : ""}>‹ Prev</button>`;
+  for (let p = 1; p <= totalPages; p++) {
+    html += `<button class="page-btn ${p === currentPage ? "active" : ""}" data-page="${p}">${p}</button>`;
+  }
+  html += `<button class="page-btn page-nav" data-page="${currentPage + 1}" ${currentPage === totalPages ? "disabled" : ""}>Next ›</button>`;
+  container.innerHTML = html;
+
+  container.querySelectorAll(".page-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (btn.disabled) return;
+      onChange(parseInt(btn.dataset.page, 10));
+    });
+  });
+}
 
 // ---------- Animation helpers ----------
 function animateNumber(el, target, suffix, duration) {

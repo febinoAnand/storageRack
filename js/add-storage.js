@@ -9,6 +9,34 @@ const typeHints = {
   custom: "Build your own arbitrary structure of nested nodes.",
 };
 
+function pluralizeLabel(label) {
+  return /f$/i.test(label) ? label.slice(0, -1) + "ves" : label + "s";
+}
+
+function renderQuickStructureFields(type) {
+  const wrap = document.getElementById("quickStructureField");
+  const container = document.getElementById("quickStructureFields");
+  const hint = document.getElementById("quickStructureHint");
+  const t = typeInfo(type);
+
+  if (!t.rootAdd || t.rootAdd.length === 0) {
+    wrap.hidden = true;
+    container.innerHTML = "";
+    hint.textContent = "";
+    return;
+  }
+
+  wrap.hidden = false;
+  container.innerHTML = t.rootAdd.map(function (r) {
+    return `
+      <div class="field">
+        <label for="qty_${r.kind}">Number of ${escapeHtml(pluralizeLabel(r.label))}</label>
+        <input type="number" id="qty_${r.kind}" min="0" max="30" placeholder="0" data-kind="${r.kind}" data-label="${escapeHtml(r.label)}">
+      </div>`;
+  }).join("");
+  hint.textContent = `Creates empty ${t.rootAdd.map(function (r) { return pluralizeLabel(r.label).toLowerCase(); }).join(" and ")} ready to fill in. Leave at 0 to build the structure later.`;
+}
+
 (function populateSelects() {
   const typeSelect = document.getElementById("newRackType");
   Object.keys(STORAGE_TYPES).forEach(function (key) {
@@ -20,6 +48,7 @@ const typeHints = {
 
   function syncHint() {
     document.getElementById("typeHint").textContent = typeHints[typeSelect.value] || "";
+    renderQuickStructureFields(typeSelect.value);
   }
   typeSelect.addEventListener("change", syncHint);
   syncHint();
@@ -61,6 +90,14 @@ document.getElementById("addRackForm").addEventListener("submit", function (e) {
   }
 
   const nodes = typeInfo(type).singleSpace ? [makeNode("Internal Space", "space")] : [];
+
+  document.querySelectorAll("#quickStructureFields input[type=number]").forEach(function (input) {
+    const count = parseInt(input.value, 10);
+    if (!count || count < 1) return;
+    for (let i = 1; i <= count; i++) {
+      nodes.push(makeNode(`${input.dataset.label} ${i}`, input.dataset.kind));
+    }
+  });
 
   const rack = {
     id: id,

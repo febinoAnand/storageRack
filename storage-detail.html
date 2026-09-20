@@ -27,6 +27,9 @@
         <a href="items.html" class="nav-item" data-route="items">
           <span class="nav-icon">🏷️</span> All Items
         </a>
+        <a href="log.html" class="nav-item" data-route="log">
+          <span class="nav-icon">🔄</span> IN/OUT Log
+        </a>
         <a href="storerooms.html" class="nav-item" data-route="rooms">
           <span class="nav-icon">🚪</span> Store Rooms
         </a>
@@ -140,6 +143,11 @@
         <div class="field">
           <label for="nodeName">Name</label>
           <input type="text" id="nodeName" placeholder="e.g. Level 1" required>
+        </div>
+        <div class="field">
+          <label for="nodeCapacity">Capacity (optional)</label>
+          <input type="number" id="nodeCapacity" min="1" placeholder="Leave blank for unlimited">
+          <p class="field-hint">If set, items placed directly here can't exceed this.</p>
         </div>
         <p id="nodeError" class="error-msg" hidden></p>
         <div class="modal-actions">

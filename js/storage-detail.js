@@ -53,11 +53,16 @@ function renderNodeHtml(rack, node, depth) {
 
   const childrenHtml = node.children.map(function (child) { return renderNodeHtml(rack, child, depth + 1); }).join("");
 
+  const avail = nodeAvailability(node);
+  const availBadge = avail.capacity != null
+    ? `<span class="availability-badge${avail.isFull ? " full" : ""}">${nodeAvailabilityLabel(node)}</span>`
+    : "";
+
   if (isBox) {
     return `
       <div class="node-block" data-node-id="${node.id}">
         <div class="node-header">
-          <div class="node-title"><span class="node-icon">📦</span> <span class="node-name">${escapeHtml(node.name)}</span></div>
+          <div class="node-title"><span class="node-icon">📦</span> <span class="node-name">${escapeHtml(node.name)}</span> ${availBadge}</div>
           <div class="node-actions">
             <button class="btn-secondary node-add-item-btn" data-node-id="${node.id}">+ Add Item</button>
           </div>
@@ -73,6 +78,7 @@ function renderNodeHtml(rack, node, depth) {
           <span class="node-icon">${NODE_ICONS[node.kind] || "📦"}</span>
           <span class="node-name">${escapeHtml(node.name)}</span>
           <span class="node-kind-badge">${nodeKindLabel(node.kind)}</span>
+          ${availBadge}
         </div>
         <div class="node-actions">
           <button class="btn-secondary node-add-item-btn" data-node-id="${node.id}">+ Item</button>
@@ -270,6 +276,7 @@ function openNodeModal(rack, parentNodeId, kind, label, existingNode) {
   document.getElementById("nodeModalTitle").textContent = existingNode ? `Rename ${label}` : `Add ${label}`;
   document.getElementById("nodeSave").textContent = existingNode ? "Save" : "Add";
   document.getElementById("nodeName").value = existingNode ? existingNode.name : "";
+  document.getElementById("nodeCapacity").value = existingNode && existingNode.capacity != null ? existingNode.capacity : "";
   nodeModalOverlay.hidden = false;
 }
 
@@ -287,8 +294,16 @@ nodeForm.addEventListener("submit", function (e) {
   if (!nodeModalCtx) return;
 
   const name = document.getElementById("nodeName").value.trim();
+  const capacityRaw = document.getElementById("nodeCapacity").value;
+  const capacity = capacityRaw === "" ? null : parseInt(capacityRaw, 10);
+
   if (!name) {
     nodeError.textContent = "Please enter a name.";
+    nodeError.hidden = false;
+    return;
+  }
+  if (capacityRaw !== "" && (isNaN(capacity) || capacity < 1)) {
+    nodeError.textContent = "Capacity must be a positive number, or left blank.";
     nodeError.hidden = false;
     return;
   }
@@ -296,10 +311,19 @@ nodeForm.addEventListener("submit", function (e) {
   const { rack, parentNodeId, kind, existingNode } = nodeModalCtx;
 
   if (existingNode) {
+    if (capacity != null) {
+      const currentlyFilled = existingNode.items.reduce(function (s, it) { return s + it.quantity; }, 0);
+      if (capacity < currentlyFilled) {
+        nodeError.textContent = `Capacity can't be less than the ${currentlyFilled} unit(s) already placed here.`;
+        nodeError.hidden = false;
+        return;
+      }
+    }
     existingNode.name = name;
+    existingNode.capacity = capacity;
     showToast(`"${name}" saved`, "success");
   } else {
-    const newNode = makeNode(name, kind);
+    const newNode = makeNode(name, kind, capacity);
     lastAddedNodeId = newNode.id;
     if (parentNodeId) {
       const parent = findNodeDeep(rack.nodes, parentNodeId);
@@ -366,14 +390,30 @@ itemForm.addEventListener("submit", function (e) {
 
   const existing = id ? node.items.find(function (i) { return i.id === id; }) : null;
 
+  if (node.capacity != null) {
+    const currentlyFilled = node.items.reduce(function (s, it) { return s + it.quantity; }, 0) - (existing ? existing.quantity : 0);
+    const available = node.capacity - currentlyFilled;
+    if (quantity > available) {
+      itemError.textContent = `Only ${Math.max(0, available)} unit(s) of space left here.`;
+      itemError.hidden = false;
+      return;
+    }
+  }
+
+  const path = findNodePathDeep(rack.nodes, node.id, []).join(" → ");
+
   if (existing) {
+    const delta = quantity - existing.quantity;
     existing.name = name;
     existing.quantity = quantity;
+    if (delta > 0) logTransaction("in", name, delta, rack, path);
+    else if (delta < 0) logTransaction("out", name, -delta, rack, path);
     showToast(`"${name}" updated`, "success");
   } else {
     const newItem = makeItem(name, quantity);
     node.items.push(newItem);
     lastAddedItemId = newItem.id;
+    logTransaction("in", name, quantity, rack, path);
     showToast(`"${name}" added`, "success");
   }
 
@@ -389,9 +429,12 @@ function deleteItem(rack, nodeId, itemId, itemRow) {
   if (!item) return;
   if (!confirm(`Remove "${item.name}" from ${rack.name}?`)) return;
 
+  const path = findNodePathDeep(rack.nodes, node.id, []).join(" → ");
+
   function finish() {
     node.items = node.items.filter(function (i) { return i.id !== itemId; });
     saveRacks(racks);
+    logTransaction("out", item.name, item.quantity, rack, path);
     showToast(`"${item.name}" removed`, "danger");
     renderDetail();
   }

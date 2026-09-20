@@ -58,7 +58,12 @@ function buildRoomCard(room) {
   return card;
 }
 
+let roomCurrentPage = 1;
+
 function renderRooms() {
+  const totalPages = Math.max(1, Math.ceil(rooms.length / PAGE_SIZE));
+  if (roomCurrentPage > totalPages) roomCurrentPage = totalPages;
+
   const grid = document.getElementById("roomGrid");
   const emptyState = document.getElementById("emptyState");
   grid.innerHTML = "";
@@ -67,8 +72,13 @@ function renderRooms() {
     emptyState.hidden = false;
   } else {
     emptyState.hidden = true;
-    rooms.forEach(function (room) { grid.appendChild(buildRoomCard(room)); });
+    paginateArray(rooms, roomCurrentPage, PAGE_SIZE).forEach(function (room) { grid.appendChild(buildRoomCard(room)); });
   }
+
+  renderPagination(document.getElementById("roomPagination"), rooms.length, roomCurrentPage, PAGE_SIZE, function (page) {
+    roomCurrentPage = page;
+    renderRooms();
+  });
 }
 
 // ---------- Add / Edit modal ----------

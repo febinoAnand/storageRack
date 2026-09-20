@@ -46,7 +46,12 @@ function buildRoleCard(role) {
   return card;
 }
 
+let roleCurrentPage = 1;
+
 function renderRoles() {
+  const totalPages = Math.max(1, Math.ceil(roles.length / PAGE_SIZE));
+  if (roleCurrentPage > totalPages) roleCurrentPage = totalPages;
+
   const grid = document.getElementById("roleGrid");
   const emptyState = document.getElementById("emptyState");
   grid.innerHTML = "";
@@ -55,8 +60,13 @@ function renderRoles() {
     emptyState.hidden = false;
   } else {
     emptyState.hidden = true;
-    roles.forEach(function (role) { grid.appendChild(buildRoleCard(role)); });
+    paginateArray(roles, roleCurrentPage, PAGE_SIZE).forEach(function (role) { grid.appendChild(buildRoleCard(role)); });
   }
+
+  renderPagination(document.getElementById("rolePagination"), roles.length, roleCurrentPage, PAGE_SIZE, function (page) {
+    roleCurrentPage = page;
+    renderRoles();
+  });
 }
 
 // ---------- Permission matrix builder ----------

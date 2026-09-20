@@ -17,6 +17,8 @@
   });
 })();
 
+let storageCurrentPage = 1;
+
 function applyRacksFilters() {
   const query = document.getElementById("filterSearch").value.trim().toLowerCase();
   const typeFilter = document.getElementById("filterType").value;
@@ -32,6 +34,9 @@ function applyRacksFilters() {
     return matchesQuery && matchesType && matchesRoom;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  if (storageCurrentPage > totalPages) storageCurrentPage = totalPages;
+
   const rackGrid = document.getElementById("rackGrid");
   const emptyState = document.getElementById("emptyState");
   rackGrid.innerHTML = "";
@@ -40,19 +45,27 @@ function applyRacksFilters() {
     emptyState.hidden = false;
   } else {
     emptyState.hidden = true;
-    filtered.forEach(function (rack) { rackGrid.appendChild(buildRackCard(rack)); });
+    paginateArray(filtered, storageCurrentPage, PAGE_SIZE).forEach(function (rack) {
+      rackGrid.appendChild(buildRackCard(rack));
+    });
   }
+
+  renderPagination(document.getElementById("storagePagination"), filtered.length, storageCurrentPage, PAGE_SIZE, function (page) {
+    storageCurrentPage = page;
+    applyRacksFilters();
+  });
 }
 
 window.onRackDataChanged = applyRacksFilters;
 
-document.getElementById("filterSearch").addEventListener("input", applyRacksFilters);
-document.getElementById("filterType").addEventListener("change", applyRacksFilters);
-document.getElementById("filterRoom").addEventListener("change", applyRacksFilters);
+document.getElementById("filterSearch").addEventListener("input", function () { storageCurrentPage = 1; applyRacksFilters(); });
+document.getElementById("filterType").addEventListener("change", function () { storageCurrentPage = 1; applyRacksFilters(); });
+document.getElementById("filterRoom").addEventListener("change", function () { storageCurrentPage = 1; applyRacksFilters(); });
 document.getElementById("filterReset").addEventListener("click", function () {
   document.getElementById("filterSearch").value = "";
   document.getElementById("filterType").value = "all";
   document.getElementById("filterRoom").value = "all";
+  storageCurrentPage = 1;
   applyRacksFilters();
 });
 
