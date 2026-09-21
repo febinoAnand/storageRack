@@ -58,9 +58,11 @@ function renderNodeHtml(rack, node, depth) {
     ? `<span class="availability-badge${avail.isFull ? " full" : ""}">${nodeAvailabilityLabel(node)}</span>`
     : "";
 
+  const rootCardClass = depth === 0 ? " node-card" : "";
+
   if (isBox) {
     return `
-      <div class="node-block" data-node-id="${node.id}">
+      <div class="node-block${rootCardClass}" data-node-id="${node.id}">
         <div class="node-header">
           <div class="node-title"><span class="node-icon">📦</span> <span class="node-name">${escapeHtml(node.name)}</span> ${availBadge}</div>
           <div class="node-actions">
@@ -72,7 +74,7 @@ function renderNodeHtml(rack, node, depth) {
   }
 
   return `
-    <div class="node-block${justAddedNode}" data-node-id="${node.id}" style="margin-left:${depth * 22}px">
+    <div class="node-block${rootCardClass}${justAddedNode}" data-node-id="${node.id}" style="margin-left:${depth * 22}px">
       <div class="node-header">
         <div class="node-title">
           <span class="node-icon">${NODE_ICONS[node.kind] || "📦"}</span>
@@ -173,7 +175,7 @@ function renderDetail() {
         <h3>Structure</h3>
         <div class="node-actions">${rootAddButtonsHtml(rack)}</div>
       </div>
-      <div id="structureTree">${structureHtml}</div>
+      <div id="structureTree" class="structure-grid">${structureHtml}</div>
     </div>
   `;
 
