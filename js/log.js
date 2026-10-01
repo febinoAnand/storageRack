@@ -23,7 +23,7 @@ function buildLogRow(entry) {
   const tr = document.createElement("tr");
   tr.innerHTML = `
     <td>${formatLogDate(entry.timestamp)}</td>
-    <td><span class="log-type-badge ${entry.type}">${entry.type === "in" ? "⬆ IN" : "⬇ OUT"}</span></td>
+    <td><span class="log-type-badge ${entry.type}">${entry.type === "in" ? ICONS.arrowUp : ICONS.arrowDown} ${entry.type === "in" ? "IN" : "OUT"}</span></td>
     <td><span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span>${escapeHtml(entry.itemName)}</td>
     <td><strong>${entry.quantity}</strong></td>
     <td><a href="${rackDetailUrl(entry.rackId)}" class="rack-id-badge">${escapeHtml(entry.rackId)}</a> ${escapeHtml(entry.rackName)}</td>

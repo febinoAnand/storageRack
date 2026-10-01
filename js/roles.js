@@ -6,6 +6,7 @@ function buildRoleCard(role) {
   const count = roleUserCount(role.id);
   const card = document.createElement("div");
   card.className = "rack-card clickable";
+  card.style.borderLeft = `3px solid ${getCategoryColor(role.name).solid}`;
   card.innerHTML = `
     <div class="rack-card-head">
       <div>
@@ -13,8 +14,8 @@ function buildRoleCard(role) {
         <div class="rack-name">${escapeHtml(role.name)}</div>
       </div>
       <div class="rack-card-actions">
-        <button class="icon-btn edit-btn" title="Edit">✏️</button>
-        <button class="icon-btn delete delete-btn" title="Delete">🗑️</button>
+        <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
+        <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
       </div>
     </div>
     <div class="rack-location">${escapeHtml(role.description || "No description")}</div>
@@ -61,6 +62,7 @@ function renderRoles() {
   } else {
     emptyState.hidden = true;
     paginateArray(roles, roleCurrentPage, PAGE_SIZE).forEach(function (role) { grid.appendChild(buildRoleCard(role)); });
+    grid.appendChild(buildAddGhostCard("Add Role", function () { openRoleModal(null); }));
   }
 
   renderPagination(document.getElementById("rolePagination"), roles.length, roleCurrentPage, PAGE_SIZE, function (page) {

@@ -1,3 +1,8 @@
+document.getElementById("statIconRacks").innerHTML = ICONS.archive;
+document.getElementById("statIconRooms").innerHTML = ICONS.door;
+document.getElementById("statIconItems").innerHTML = ICONS.box;
+document.getElementById("statIconTypes").innerHTML = ICONS.node;
+
 const totalRacks = racks.length;
 const totalRooms = rooms.length;
 const totalItems = racks.reduce(function (s, r) { return s + unitItemCount(r); }, 0);

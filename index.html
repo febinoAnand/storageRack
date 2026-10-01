@@ -30,12 +30,8 @@
           <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" value="admin123" required>
         </div>
 
-        <div class="field-row">
-          <label class="checkbox-label">
-            <input type="checkbox" id="remember">
-            <span>Remember me</span>
-          </label>
-          <a href="#" class="forgot-link">Forgot password?</a>
+        <div class="field-row" style="justify-content: flex-end;">
+          <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
         </div>
 
         <p id="errorMsg" class="error-msg" hidden>Invalid username or password. Try admin / admin123.</p>
@@ -43,6 +39,52 @@
         <button type="submit" class="btn-primary">Sign In</button>
 
         <p class="hint">Demo credentials pre-filled: <strong>admin</strong> / <strong>admin123</strong></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div class="modal-overlay" id="forgotModalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Reset Password</h3>
+        <button class="modal-close" id="forgotModalClose">&times;</button>
+      </div>
+
+      <!-- Step 1: request a reset code -->
+      <form id="forgotRequestForm" class="modal-form">
+        <div class="field">
+          <label for="forgotUsername">Username</label>
+          <input type="text" id="forgotUsername" placeholder="Enter your username" required>
+          <p class="field-hint">We'll email a verification code to the address on file for this account.</p>
+        </div>
+        <p id="forgotRequestError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="forgotCancel">Cancel</button>
+          <button type="submit" class="btn-primary">Send Code</button>
+        </div>
+      </form>
+
+      <!-- Step 2: enter the emailed code + new password -->
+      <form id="forgotResetForm" class="modal-form" hidden>
+        <p class="field-hint" id="forgotSentHint" style="margin-top: -4px; margin-bottom: 16px;"></p>
+        <div class="field">
+          <label for="forgotCode">Verification Code</label>
+          <input type="text" id="forgotCode" inputmode="numeric" maxlength="6" placeholder="6-digit code" required>
+        </div>
+        <div class="field">
+          <label for="forgotNewPassword">New Password</label>
+          <input type="password" id="forgotNewPassword" placeholder="At least 6 characters" required>
+        </div>
+        <div class="field">
+          <label for="forgotConfirmPassword">Confirm New Password</label>
+          <input type="password" id="forgotConfirmPassword" placeholder="Re-enter new password" required>
+        </div>
+        <p id="forgotResetError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="forgotBack">Back</button>
+          <button type="submit" class="btn-primary">Reset Password</button>
+        </div>
       </form>
     </div>
   </div>

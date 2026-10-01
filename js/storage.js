@@ -4,7 +4,7 @@
   Object.keys(STORAGE_TYPES).forEach(function (key) {
     const opt = document.createElement("option");
     opt.value = key;
-    opt.textContent = STORAGE_TYPES[key].icon + " " + STORAGE_TYPES[key].label;
+    opt.textContent = STORAGE_TYPES[key].label;
     typeSelect.appendChild(opt);
   });
 

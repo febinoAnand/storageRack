@@ -3,11 +3,6 @@ const currentRackId = detailParams.get("id");
 let lastAddedItemId = null;
 let lastAddedNodeId = null;
 
-const NODE_ICONS = {
-  level: "📏", section: "📂", shelf: "📚", drawer: "🗄️",
-  hanging: "👔", compartment: "🔲", space: "📦", node: "🧩",
-};
-
 function nodeKindLabel(kind) {
   return kind.charAt(0).toUpperCase() + kind.slice(1);
 }
@@ -23,8 +18,8 @@ function itemRowHtml(item, nodeId) {
         <span class="item-qty">${item.quantity} unit${item.quantity === 1 ? "" : "s"}</span>
       </div>
       <div class="item-actions">
-        <button class="icon-btn item-edit-btn" title="Edit item">✏️</button>
-        <button class="icon-btn delete item-delete-btn" title="Remove item">🗑️</button>
+        <button class="icon-btn item-edit-btn" title="Edit item">${ICONS.edit}</button>
+        <button class="icon-btn delete item-delete-btn" title="Remove item">${ICONS.trash}</button>
       </div>
     </div>`;
 }
@@ -60,11 +55,13 @@ function renderNodeHtml(rack, node, depth) {
 
   const rootCardClass = depth === 0 ? " node-card" : "";
 
+  const codeBadge = node.code ? `<span class="rack-id-badge">${escapeHtml(node.code)}</span>` : "";
+
   if (isBox) {
     return `
       <div class="node-block${rootCardClass}" data-node-id="${node.id}">
         <div class="node-header">
-          <div class="node-title"><span class="node-icon">📦</span> <span class="node-name">${escapeHtml(node.name)}</span> ${availBadge}</div>
+          <div class="node-title">${codeBadge} <span class="node-icon">${ICONS.box}</span> <span class="node-name">${escapeHtml(node.name)}</span> ${availBadge}</div>
           <div class="node-actions">
             <button class="btn-secondary node-add-item-btn" data-node-id="${node.id}">+ Add Item</button>
           </div>
@@ -77,7 +74,8 @@ function renderNodeHtml(rack, node, depth) {
     <div class="node-block${rootCardClass}${justAddedNode}" data-node-id="${node.id}" style="margin-left:${depth * 22}px">
       <div class="node-header">
         <div class="node-title">
-          <span class="node-icon">${NODE_ICONS[node.kind] || "📦"}</span>
+          ${codeBadge}
+          <span class="node-icon">${NODE_ICONS[node.kind] || ICONS.box}</span>
           <span class="node-name">${escapeHtml(node.name)}</span>
           <span class="node-kind-badge">${nodeKindLabel(node.kind)}</span>
           ${availBadge}
@@ -85,8 +83,8 @@ function renderNodeHtml(rack, node, depth) {
         <div class="node-actions">
           <button class="btn-secondary node-add-item-btn" data-node-id="${node.id}">+ Item</button>
           ${childAddButtonsHtml(rack, node)}
-          <button class="icon-btn node-rename-btn" data-node-id="${node.id}" title="Rename">✏️</button>
-          <button class="icon-btn delete node-delete-btn" data-node-id="${node.id}" title="Delete">🗑️</button>
+          <button class="icon-btn node-rename-btn" data-node-id="${node.id}" title="Rename">${ICONS.edit}</button>
+          <button class="icon-btn delete node-delete-btn" data-node-id="${node.id}" title="Delete">${ICONS.trash}</button>
         </div>
       </div>
       ${itemsHtml}
@@ -134,35 +132,35 @@ function renderDetail() {
     <div class="detail-title-row">
       <div>
         <h2>${escapeHtml(rack.name)} <span class="rack-id-badge large">${escapeHtml(rack.id)}</span></h2>
-        <p class="muted">🚪 ${escapeHtml(roomLabel(rack.storeRoomId))}</p>
+        <p class="muted"><span class="inline-icon">${ICONS.door}</span> ${escapeHtml(roomLabel(rack.storeRoomId))}</p>
         <div class="rack-sub-meta">
           ${typeBadgeHtml(rack.type)}
           ${categoryBadgeHtml(rack.category)}
         </div>
       </div>
       <div class="detail-actions">
-        <button class="btn-secondary" id="detailEditBtn">✏️ Edit Storage</button>
-        <button class="btn-danger" id="detailDeleteBtn">🗑️ Delete Storage</button>
+        <button class="btn-secondary" id="detailEditBtn">${ICONS.edit} Edit Storage</button>
+        <button class="btn-danger" id="detailDeleteBtn">${ICONS.trash} Delete Storage</button>
       </div>
     </div>
 
     <section class="stats-row stats-row-3">
       <div class="stat-card">
-        <div class="stat-icon c-amber">📦</div>
+        <div class="stat-icon c-amber">${ICONS.box}</div>
         <div>
           <div class="stat-value" id="detailStatItems">0</div>
           <div class="stat-label">Items Stored</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon c-violet">🗂️</div>
+        <div class="stat-icon c-violet">${ICONS.folder}</div>
         <div>
           <div class="stat-value" id="detailStatNodes">0</div>
           <div class="stat-label">Locations</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon c-blue">⭕</div>
+        <div class="stat-icon c-blue">${ICONS.circleSlash}</div>
         <div>
           <div class="stat-value" id="detailStatEmpty">0</div>
           <div class="stat-label">Empty Locations</div>

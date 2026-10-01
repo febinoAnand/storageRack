@@ -3,7 +3,7 @@
   Object.keys(STORAGE_TYPES).forEach(function (key) {
     const opt = document.createElement("option");
     opt.value = key;
-    opt.textContent = STORAGE_TYPES[key].icon + " " + STORAGE_TYPES[key].label;
+    opt.textContent = STORAGE_TYPES[key].label;
     typeSelect.appendChild(opt);
   });
 })();
@@ -123,7 +123,8 @@ function populateNodeSelect() {
   placeNodeSelect.innerHTML = placements.map(function (p) {
     const availLabel = nodeAvailabilityLabel(p.node);
     const full = p.availability.isFull;
-    return `<option value="${escapeHtml(p.node.id)}" ${full ? "disabled" : ""}>${escapeHtml(p.path)} — ${full ? "FULL" : availLabel}</option>`;
+    const codeLabel = p.node.code ? `[${p.node.code}] ` : "";
+    return `<option value="${escapeHtml(p.node.id)}" ${full ? "disabled" : ""}>${codeLabel}${escapeHtml(p.path)} — ${full ? "FULL" : availLabel}</option>`;
   }).join("");
 
   syncNodeHint();
