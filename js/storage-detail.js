@@ -24,6 +24,35 @@ function itemRowHtml(item, nodeId) {
     </div>`;
 }
 
+function globalItemsPanelHtml(rack) {
+  const items = activeGlobalItemsForRack(rack.id);
+  const rowsHtml = items.length
+    ? `<div class="items-list">` + items.map(function (item) {
+        const dotColor = getItemColor(item.name).solid;
+        const tags = item.tags && item.tags.length ? `<span class="item-qty">${escapeHtml(item.tags.join(", "))}</span>` : "";
+        return `
+          <div class="item-row">
+            <div class="item-info">
+              <span class="item-dot" style="background:${dotColor}"></span>
+              <span class="item-name">${escapeHtml(item.name)}</span>
+              <span class="item-qty">${item.quantity} unit${item.quantity === 1 ? "" : "s"}</span>
+              ${itemStatusBadgeHtml(item.status)}
+              ${tags}
+            </div>
+          </div>`;
+      }).join("") + `</div>`
+    : `<p class="empty-state">No storage-level items yet. Items added without picking a compartment show up here.</p>`;
+
+  return `
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Storage-Level Items</h3>
+        <a href="items.html" class="link-more">Manage in All Items →</a>
+      </div>
+      ${rowsHtml}
+    </div>`;
+}
+
 function childAddButtonsHtml(rack, node) {
   const t = typeInfo(rack.type);
   let buttons = "";
@@ -135,8 +164,9 @@ function renderDetail() {
         <p class="muted"><span class="inline-icon">${ICONS.door}</span> ${escapeHtml(roomLabel(rack.storeRoomId))}</p>
         <div class="rack-sub-meta">
           ${typeBadgeHtml(rack.type)}
-          ${categoryBadgeHtml(rack.category)}
+          ${tagsHtml(rackTags(rack))}
         </div>
+        ${imagesPreviewHtml(rackImages(rack), 56)}
       </div>
       <div class="detail-actions">
         <button class="btn-secondary" id="detailEditBtn">${ICONS.edit} Edit Storage</button>
@@ -170,11 +200,13 @@ function renderDetail() {
 
     <div class="panel">
       <div class="panel-head">
-        <h3>Structure</h3>
+        <h3>Structure <span class="structure-type-tag">${typeBadgeHtml(rack.type)}</span></h3>
         <div class="node-actions">${rootAddButtonsHtml(rack)}</div>
       </div>
       <div id="structureTree" class="structure-grid">${structureHtml}</div>
     </div>
+
+    ${globalItemsPanelHtml(rack)}
   `;
 
   animateNumber(document.getElementById("detailStatItems"), totalItems);

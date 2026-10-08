@@ -18,17 +18,29 @@ function formatLogDate(ts) {
   return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+const LOG_TYPE_META = {
+  in: { icon: ICONS.arrowUp, label: "IN" },
+  out: { icon: ICONS.arrowDown, label: "OUT" },
+  in_store: { icon: ICONS.box, label: "IN STORE" },
+  in_use: { icon: ICONS.user, label: "IN USE" },
+  removed: { icon: ICONS.trash, label: "REMOVED" },
+};
+
 function buildLogRow(entry) {
   const dotColor = getItemColor(entry.itemName).solid;
   const tr = document.createElement("tr");
+  const storageCell = entry.rackId
+    ? `<a href="${rackDetailUrl(entry.rackId)}" class="rack-id-badge">${escapeHtml(entry.rackId)}</a> ${escapeHtml(entry.rackName)}`
+    : `<span class="muted">${escapeHtml(entry.rackName || "Unassigned")}</span>`;
+  const meta = LOG_TYPE_META[entry.type] || LOG_TYPE_META.in;
   tr.innerHTML = `
-    <td>${formatLogDate(entry.timestamp)}</td>
-    <td><span class="log-type-badge ${entry.type}">${entry.type === "in" ? ICONS.arrowUp : ICONS.arrowDown} ${entry.type === "in" ? "IN" : "OUT"}</span></td>
-    <td><span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span>${escapeHtml(entry.itemName)}</td>
-    <td><strong>${entry.quantity}</strong></td>
-    <td><a href="${rackDetailUrl(entry.rackId)}" class="rack-id-badge">${escapeHtml(entry.rackId)}</a> ${escapeHtml(entry.rackName)}</td>
-    <td class="muted">${escapeHtml(entry.path || "—")}</td>
-    <td>${escapeHtml(entry.user)}</td>
+    <td data-label="Date / Time">${formatLogDate(entry.timestamp)}</td>
+    <td data-label="Type"><span class="log-type-badge ${entry.type}">${meta.icon} ${meta.label}</span></td>
+    <td data-label="Item"><span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span>${escapeHtml(entry.itemName)}</td>
+    <td data-label="Qty"><strong>${entry.quantity}</strong></td>
+    <td data-label="Storage">${storageCell}</td>
+    <td data-label="Location" class="muted">${escapeHtml(entry.path || "—")}</td>
+    <td data-label="User">${escapeHtml(entry.user)}</td>
   `;
   return tr;
 }

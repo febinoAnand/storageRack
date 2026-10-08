@@ -21,17 +21,17 @@
         <a href="dashboard.html" class="nav-item" data-route="overview">
           <span class="nav-icon">🏠</span> Overview
         </a>
-        <a href="storage.html" class="nav-item" data-route="storage">
-          <span class="nav-icon">🗄️</span> All Storages
-        </a>
         <a href="items.html" class="nav-item" data-route="items">
           <span class="nav-icon">🏷️</span> All Items
+        </a>
+        <a href="storage.html" class="nav-item" data-route="storage">
+          <span class="nav-icon">🗄️</span> All Storages
         </a>
         <a href="log.html" class="nav-item" data-route="log">
           <span class="nav-icon">🔄</span> IN/OUT Log
         </a>
         <a href="storerooms.html" class="nav-item" data-route="rooms">
-          <span class="nav-icon">🚪</span> Store Rooms
+          <span class="nav-icon">🚪</span> Locations
         </a>
         <a href="users.html" class="nav-item" data-route="users">
           <span class="nav-icon">👥</span> Users
@@ -66,18 +66,18 @@
         <div class="toolbar">
           <div>
             <h2>All Storages</h2>
-            <p class="muted">Every storage unit across all your store rooms</p>
+            <p class="muted">Every storage unit across all your locations</p>
           </div>
           <a href="add-storage.html" class="btn-primary btn-add">+ Add Storage</a>
         </div>
 
         <div class="filters-bar">
-          <input type="text" id="filterSearch" placeholder="Search by name, ID or category">
+          <input type="text" id="filterSearch" placeholder="Search by name, ID or tag">
           <select id="filterType">
             <option value="all">All Types</option>
           </select>
           <select id="filterRoom">
-            <option value="all">All Store Rooms</option>
+            <option value="all">All Locations</option>
           </select>
           <button class="btn-secondary" id="filterReset">Reset</button>
         </div>
@@ -113,12 +113,26 @@
           <input type="text" id="editRackName" required>
         </div>
         <div class="field">
-          <label for="editRackRoom">Store Room</label>
+          <label for="editRackRoom">Location</label>
           <select id="editRackRoom" required></select>
         </div>
         <div class="field">
-          <label for="editRackCategory">Item Category</label>
-          <input type="text" id="editRackCategory" placeholder="e.g. Electronics, Spare Parts">
+          <label for="editRackTagText">Tags</label>
+          <div class="tag-input" id="editRackTagInput">
+            <div class="tag-input-chips" id="editRackTagChips"></div>
+            <input type="text" id="editRackTagText" placeholder="Type a tag and press Enter">
+          </div>
+        </div>
+        <div class="field">
+          <label for="editRackImageFile">Pictures</label>
+          <div class="image-input" id="editRackImageInput">
+            <div class="image-input-previews" id="editRackImagePreviews"></div>
+            <label class="image-input-add" for="editRackImageFile">
+              <span class="add-ghost-icon">+</span> Add Pictures
+            </label>
+            <input type="file" id="editRackImageFile" accept="image/*" multiple hidden>
+          </div>
+          <p class="field-hint">Up to 5 pictures, 2MB each.</p>
         </div>
         <p id="editRackError" class="error-msg" hidden></p>
         <div class="modal-actions">

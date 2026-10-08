@@ -142,6 +142,27 @@ forgotResetForm.addEventListener("submit", function (e) {
   showToast("Password updated. Sign in with your new password.", "success");
 });
 
+// ---------- Reset all demo data ----------
+const DATA_KEYS = [
+  "srStorageV4",      // storages
+  "srRoomsV1",        // locations
+  "srUsersV1",        // users
+  "srRolesV1",        // roles
+  "srGlobalItemsV1",  // items (status/archive model)
+  "srItemLogV1",      // IN/OUT log
+  "srNodeCodeSeqV1",  // compartment code counter
+  "srPassword",       // any password set via Forgot Password
+];
+
+document.getElementById("resetDataLink").addEventListener("click", function (e) {
+  e.preventDefault();
+  if (!confirm("This will permanently delete every storage, location, item, user, role, and log entry, and recreate the original demo data. Continue?")) return;
+  DATA_KEYS.forEach(function (key) { localStorage.removeItem(key); });
+  sessionStorage.removeItem("srLoggedIn");
+  sessionStorage.removeItem("srUser");
+  window.location.reload();
+});
+
 // ---------- Icons (self-contained — this page doesn't load common.js) ----------
 function loginSvgIcon(path) {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;

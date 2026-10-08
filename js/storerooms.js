@@ -49,7 +49,7 @@ function buildRoomCard(room) {
       showToast(`Move or delete its ${roomUnitCount(room.id)} storage unit(s) first`, "danger");
       return;
     }
-    if (!confirm(`Delete store room "${room.name}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete location "${room.name}"? This cannot be undone.`)) return;
     rooms = rooms.filter(function (r) { return r.id !== room.id; });
     saveRooms(rooms);
     showToast(`"${room.name}" deleted`, "danger");
@@ -74,7 +74,7 @@ function renderRooms() {
   } else {
     emptyState.hidden = true;
     paginateArray(rooms, roomCurrentPage, PAGE_SIZE).forEach(function (room) { grid.appendChild(buildRoomCard(room)); });
-    grid.appendChild(buildAddGhostCard("Add Store Room", function () { openRoomModal(null); }));
+    grid.appendChild(buildAddGhostCard("Add Location", function () { openRoomModal(null); }));
   }
 
   renderPagination(document.getElementById("roomPagination"), rooms.length, roomCurrentPage, PAGE_SIZE, function (page) {
@@ -93,8 +93,8 @@ function openRoomModal(room) {
   roomError.hidden = true;
   roomForm.reset();
   editingRoomId = room ? room.id : null;
-  document.getElementById("roomModalTitle").textContent = room ? "Edit Store Room" : "Add Store Room";
-  document.getElementById("roomSave").textContent = room ? "Save Changes" : "Add Room";
+  document.getElementById("roomModalTitle").textContent = room ? "Edit Location" : "Add Location";
+  document.getElementById("roomSave").textContent = room ? "Save Changes" : "Add Location";
   document.getElementById("roomName").value = room ? room.name : "";
   document.getElementById("roomLocation").value = room ? room.location || "" : "";
   roomModalOverlay.hidden = false;
@@ -119,7 +119,7 @@ roomForm.addEventListener("submit", function (e) {
   const location = document.getElementById("roomLocation").value.trim();
 
   if (!name) {
-    roomError.textContent = "Please enter a room name.";
+    roomError.textContent = "Please enter a location name.";
     roomError.hidden = false;
     return;
   }

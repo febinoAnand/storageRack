@@ -32,6 +32,7 @@ const ICONS = {
   bureau: svgIcon('<rect x="4" y="3" width="16" height="18" rx="1"></rect><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="6" x2="14" y2="6"></line><line x1="10" y1="12" x2="14" y2="12"></line><line x1="10" y1="18" x2="14" y2="18"></line>'),
   arrowUp: svgIcon('<line x1="12" y1="19" x2="12" y2="5"></line><polyline points="6 11 12 5 18 11"></polyline>'),
   arrowDown: svgIcon('<line x1="12" y1="5" x2="12" y2="19"></line><polyline points="6 13 12 19 18 13"></polyline>'),
+  restore: svgIcon('<path d="M3 12a9 9 0 1 0 3.3-6.9"></path><polyline points="3 3 3 8 8 8"></polyline>'),
 };
 
 const NAV_ICONS = { overview: "home", storage: "archive", items: "tag", log: "repeat", rooms: "door", users: "users", roles: "shield" };
@@ -123,33 +124,19 @@ function nodeAvailabilityLabel(node) {
   return a.isFull ? `Full (${a.filled}/${a.capacity})` : `${a.remaining} of ${a.capacity} free`;
 }
 
-// Flat list of every node in a rack, each with its full breadcrumb path and availability — used by placement pickers.
-function flattenNodesForPlacement(rack) {
-  const out = [];
-  function walk(nodes, trail) {
-    nodes.forEach(function (node) {
-      const path = trail.concat([node.name]);
-      out.push({ rack: rack, node: node, path: path.join(" → "), availability: nodeAvailability(node) });
-      if (node.children && node.children.length) walk(node.children, path);
-    });
-  }
-  walk(rack.nodes, []);
-  return out;
-}
-
 function makeItem(name, quantity) {
   return { id: itemId(), name: name, quantity: quantity };
 }
 
-// ---------- Store rooms ----------
+// ---------- Locations (store rooms) ----------
 const ROOMS_KEY = "srRoomsV1";
 
 function loadRooms() {
   const raw = localStorage.getItem(ROOMS_KEY);
   if (raw) return JSON.parse(raw);
   const seed = [
-    { id: "SR-1001", name: "Store Room 1", location: "Warehouse 1", createdAt: Date.now() - 6 * 86400000 },
-    { id: "SR-1002", name: "Store Room 2", location: "Warehouse 2", createdAt: Date.now() - 5 * 86400000 },
+    { id: "SR-1001", name: "Location 1", location: "Warehouse 1", createdAt: Date.now() - 6 * 86400000 },
+    { id: "SR-1002", name: "Location 2", location: "Warehouse 2", createdAt: Date.now() - 5 * 86400000 },
   ];
   saveRooms(seed);
   return seed;
@@ -167,14 +154,14 @@ function findRoom(id) {
 
 function roomLabel(id) {
   const room = findRoom(id);
-  return room ? room.name : "No store room";
+  return room ? room.name : "No location";
 }
 
 // ---------- Roles & permissions ----------
 const PERMISSION_MODULES = [
   { key: "storage", label: "Storage Units" },
   { key: "items", label: "Items" },
-  { key: "rooms", label: "Store Rooms" },
+  { key: "rooms", label: "Locations" },
   { key: "users", label: "Users" },
   { key: "roles", label: "Roles & Permissions" },
 ];
@@ -209,7 +196,7 @@ function loadRoles() {
 
   const seed = [
     { id: "RL-1001", name: "Administrator", description: "Full access to every module.", permissions: adminPerms, createdAt: Date.now() - 6 * 86400000 },
-    { id: "RL-1002", name: "Manager", description: "Can manage storage, items and rooms. Read-only on users and roles.", permissions: managerPerms, createdAt: Date.now() - 5 * 86400000 },
+    { id: "RL-1002", name: "Manager", description: "Can manage storage, items and locations. Read-only on users and roles.", permissions: managerPerms, createdAt: Date.now() - 5 * 86400000 },
     { id: "RL-1003", name: "Viewer", description: "Read-only access across the app.", permissions: viewerPerms, createdAt: Date.now() - 4 * 86400000 },
   ];
   saveRoles(seed);
@@ -288,8 +275,8 @@ function nextRoleId() {
 // ---------- Storage units ----------
 const STORAGE_KEY = "srStorageV4";
 
-function seedRack(id, name, storeRoomId, type, category, nodes, daysAgo) {
-  return { id: id, name: name, storeRoomId: storeRoomId, type: type, category: category, nodes: nodes, createdAt: Date.now() - daysAgo * 86400000 };
+function seedRack(id, name, storeRoomId, type, tags, nodes, daysAgo) {
+  return { id: id, name: name, storeRoomId: storeRoomId, type: type, tags: tags, images: [], nodes: nodes, createdAt: Date.now() - daysAgo * 86400000 };
 }
 
 function backfillNodeCodes(racksData) {
@@ -313,57 +300,20 @@ function loadRacks() {
     return data;
   }
 
+  // Seed storages start with no structure — same as one you create yourself
+  // through the Add Storage form. Build it out from its detail page.
   const seed = [
-    seedRack("ST-1001", "Rack A", "SR-1001", "rack", "Files & Books", [
-      (function () {
-        const level1 = makeNode("Level 1", "level");
-        level1.children = [
-          Object.assign(makeNode("Section 1", "section"), { items: [makeItem("Files", 20)] }),
-          Object.assign(makeNode("Section 2", "section"), { items: [makeItem("Books", 15)] }),
-        ];
-        return level1;
-      })(),
-      Object.assign(makeNode("Level 2", "level"), { items: [makeItem("Boxes", 10)] }),
-    ], 8),
-
-    seedRack("ST-1002", "Cupboard A", "SR-1001", "cupboard", "Office Supplies", [
-      Object.assign(makeNode("Shelf 1", "shelf"), { items: [makeItem("Documents", 12)] }),
-      Object.assign(makeNode("Drawer 1", "drawer"), { items: [makeItem("Electronics", 8)] }),
-    ], 7),
-
-    seedRack("ST-1003", "Bureau A", "SR-1001", "bureau", "Stationery", [
-      Object.assign(makeNode("Drawer 1", "drawer"), { items: [makeItem("Pens", 30)] }),
-      Object.assign(makeNode("Drawer 2", "drawer"), { items: [makeItem("Tools", 10)] }),
-    ], 6),
-
-    seedRack("ST-1004", "Wardrobe A", "SR-1001", "wardrobe", "Apparel", [
-      Object.assign(makeNode("Hanging Section", "hanging"), { items: [makeItem("Clothes", 25)] }),
-      Object.assign(makeNode("Shelf 1", "shelf"), { items: [makeItem("Accessories", 14)] }),
-    ], 5),
-
-    seedRack("ST-1005", "Shelf B", "SR-1002", "shelf", "Books", [
-      Object.assign(makeNode("Level 1", "level"), { items: [makeItem("Manuals", 18)] }),
-      Object.assign(makeNode("Level 2", "level"), { items: [makeItem("Magazines", 9)] }),
-    ], 4),
-
-    seedRack("ST-1006", "Cabinet A", "SR-1002", "cabinet", "Hardware", [
-      Object.assign(makeNode("Shelf 1", "shelf"), { items: [makeItem("Cables", 22)] }),
-      Object.assign(makeNode("Compartment 1", "compartment"), { items: [makeItem("Screws", 50)] }),
-    ], 3),
-
-    seedRack("ST-1007", "Box A", "SR-1002", "box", "Miscellaneous", [
-      Object.assign(makeNode("Internal Space", "space"), { items: [makeItem("Spare Parts", 6)] }),
-    ], 2),
-
-    seedRack("ST-1008", "Custom A", "SR-1002", "custom", "Lab Equipment", [
-      (function () {
-        const zone = makeNode("Zone A", "node");
-        zone.children = [
-          Object.assign(makeNode("Bin 1", "node"), { items: [makeItem("Samples", 5)] }),
-        ];
-        return zone;
-      })(),
-    ], 1),
+    seedRack("ST-1001", "Tool Rack 1", "SR-1001", "rack", ["Tools", "Hardware"], [], 8),
+    seedRack("ST-1002", "Supply Cupboard 1", "SR-1001", "cupboard", ["Kitchen Supplies", "Consumables"], [], 7),
+    seedRack("ST-1003", "Stationery Bureau", "SR-1001", "bureau", ["Office Stationery", "Supplies"], [], 6),
+    seedRack("ST-1004", "Uniform Wardrobe", "SR-1001", "wardrobe", ["Uniforms", "Apparel"], [], 5),
+    seedRack("ST-1005", "Packaging Shelf", "SR-1002", "shelf", ["Packaging", "Shipping"], [], 4),
+    seedRack("ST-1006", "Electronics Cabinet", "SR-1002", "cabinet", ["Electronics", "Hardware"], [], 3),
+    // Box is single-space by design — the Add Storage form always creates its one
+    // "Internal Space" automatically (there's no "+ Add" button for this type), so the
+    // seed matches that exactly rather than leaving it with no way to hold anything.
+    seedRack("ST-1007", "Spare Box 1", "SR-1002", "box", ["Miscellaneous"], [makeNode("Internal Space", "space")], 2),
+    seedRack("ST-1008", "Lab Storage", "SR-1002", "custom", ["Lab Equipment", "Research"], [], 1),
   ];
   saveRacks(seed);
   return seed;
@@ -396,6 +346,7 @@ function unitItemCount(rack) {
   walkNodes(rack.nodes, function (node) {
     total += node.items.reduce(function (s, it) { return s + it.quantity; }, 0);
   });
+  total += activeGlobalItemsForRack(rack.id).reduce(function (s, it) { return s + it.quantity; }, 0);
   return total;
 }
 
@@ -454,6 +405,88 @@ function collectAllItemEntries() {
   return entries;
 }
 
+// ---------- Global items (belong to a storage as a whole, or to nothing — not a specific compartment) ----------
+const GLOBAL_ITEMS_KEY = "srGlobalItemsV1";
+
+function loadGlobalItems() {
+  const raw = localStorage.getItem(GLOBAL_ITEMS_KEY);
+  if (raw) {
+    const data = JSON.parse(raw);
+    let changed = false;
+    data.forEach(function (i) {
+      if (!i.status) { i.status = "in_store"; changed = true; }
+    });
+    if (changed) saveGlobalItems(data);
+    return data;
+  }
+
+  // Seed items belong to a storage as a whole (or nothing) — every item field gets
+  // exercised here: ID, tags, remarks, optional storage assignment, and status.
+  function d(daysAgo) { return Date.now() - daysAgo * 86400000; }
+  const seed = [
+    { id: "IT-1001", name: "Wrenches", tags: ["Tools"], quantity: 16, remarks: "Reorder when below 5.", storageId: "ST-1001", images: [], status: "in_store", createdAt: d(8) },
+    { id: "IT-1002", name: "Drill Bits", tags: ["Tools"], quantity: 40, remarks: "", storageId: "ST-1001", images: [], status: "in_store", createdAt: d(8) },
+    { id: "IT-1003", name: "Paper Cups", tags: ["Kitchen Supplies"], quantity: 50, remarks: "Bulk pack, 50 per sleeve.", storageId: "ST-1002", images: [], status: "in_store", createdAt: d(7) },
+    { id: "IT-1004", name: "Cutlery Sets", tags: ["Kitchen Supplies"], quantity: 30, remarks: "", storageId: "ST-1002", images: [], status: "in_store", createdAt: d(7) },
+    { id: "IT-1005", name: "Notebooks", tags: ["Office Stationery"], quantity: 22, remarks: "", storageId: "ST-1003", images: [], status: "in_store", createdAt: d(6) },
+    { id: "IT-1006", name: "Label Printer", tags: ["Equipment"], quantity: 1, remarks: "Shared across the warehouse floor.", storageId: "ST-1003", images: [], status: "in_use", createdAt: d(6) },
+    { id: "IT-1007", name: "Jackets", tags: ["Apparel"], quantity: 18, remarks: "", storageId: "ST-1004", images: [], status: "in_store", createdAt: d(5) },
+    { id: "IT-1008", name: "Cardboard Boxes", tags: ["Packaging"], quantity: 45, remarks: "", storageId: "ST-1005", images: [], status: "in_store", createdAt: d(4) },
+    { id: "IT-1009", name: "USB Adapters", tags: ["Electronics"], quantity: 33, remarks: "", storageId: "ST-1006", images: [], status: "in_store", createdAt: d(3) },
+    { id: "IT-1010", name: "First Aid Kit", tags: ["Safety"], quantity: 3, remarks: "Check expiry dates quarterly.", storageId: "ST-1006", images: [], status: "in_store", createdAt: d(3) },
+    { id: "IT-1011", name: "Replacement Fuses", tags: ["Miscellaneous"], quantity: 14, remarks: "", storageId: "ST-1007", images: [], status: "in_store", createdAt: d(2) },
+    { id: "IT-1012", name: "Test Tubes", tags: ["Lab Equipment"], quantity: 20, remarks: "", storageId: "ST-1008", images: [], status: "in_store", createdAt: d(1) },
+    { id: "IT-1013", name: "Spare Barcode Scanner", tags: ["Equipment", "Electronics"], quantity: 2, remarks: "", storageId: null, images: [], status: "in_store", createdAt: d(1) },
+  ];
+  saveGlobalItems(seed);
+  return seed;
+}
+
+function saveGlobalItems(data) {
+  localStorage.setItem(GLOBAL_ITEMS_KEY, JSON.stringify(data));
+}
+
+let globalItems = loadGlobalItems();
+
+function findGlobalItem(id) {
+  return globalItems.find(function (i) { return i.id === id; });
+}
+
+function nextItemCode() {
+  let max = 1000;
+  globalItems.forEach(function (i) {
+    const m = /^IT-(\d+)$/.exec(i.id);
+    if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+  });
+  return "IT-" + (max + 1);
+}
+
+// All items assigned to a rack, active or archived.
+function globalItemsForRack(rackId) {
+  return globalItems.filter(function (i) { return i.storageId === rackId; });
+}
+
+// Only items that are still in circulation (not removed/archived) — used for stock counts.
+function activeGlobalItemsForRack(rackId) {
+  return globalItemsForRack(rackId).filter(function (i) { return i.status !== "removed"; });
+}
+
+function globalItemStorageLabel(item) {
+  if (!item.storageId) return "Unassigned";
+  const rack = findRack(item.storageId);
+  return rack ? rack.name : "Unassigned";
+}
+
+// ---------- Item status (In Store / In Use / Removed-to-Archive) ----------
+const ITEM_STATUS_LABELS = { in_store: "In Store", in_use: "In Use", removed: "Removed" };
+const ITEM_STATUS_BADGE_CLASS = { in_store: "", in_use: "warning", removed: "neutral" };
+
+function itemStatusBadgeHtml(status) {
+  const cls = ITEM_STATUS_BADGE_CLASS[status] || "";
+  const label = ITEM_STATUS_LABELS[status] || status;
+  return `<span class="rack-badge ${cls}">${escapeHtml(label)}</span>`;
+}
+
 // ---------- IN / OUT transaction log ----------
 const LOG_KEY = "srItemLogV1";
 
@@ -461,11 +494,11 @@ const LOG_KEY = "srItemLogV1";
 function sampleOutLogEntries() {
   const ONE_DAY = 86400000;
   const examples = [
-    { rackId: "ST-1001", rackName: "Rack A", itemName: "Files", quantity: 5, path: "Level 1 → Section 1", user: "jane.m" },
-    { rackId: "ST-1002", rackName: "Cupboard A", itemName: "Electronics", quantity: 2, path: "Drawer 1", user: "sam.v" },
-    { rackId: "ST-1003", rackName: "Bureau A", itemName: "Tools", quantity: 3, path: "Drawer 2", user: "admin" },
-    { rackId: "ST-1004", rackName: "Wardrobe A", itemName: "Accessories", quantity: 2, path: "Shelf 1", user: "jane.m" },
-    { rackId: "ST-1006", rackName: "Cabinet A", itemName: "Cables", quantity: 4, path: "Shelf 1", user: "admin" },
+    { rackId: "ST-1001", rackName: "Tool Rack 1", itemName: "Wrenches", quantity: 4, user: "jane.m" },
+    { rackId: "ST-1002", rackName: "Supply Cupboard 1", itemName: "Cutlery Sets", quantity: 3, user: "sam.v" },
+    { rackId: "ST-1003", rackName: "Stationery Bureau", itemName: "Notebooks", quantity: 5, user: "admin" },
+    { rackId: "ST-1004", rackName: "Uniform Wardrobe", itemName: "Jackets", quantity: 2, user: "jane.m" },
+    { rackId: "ST-1006", rackName: "Electronics Cabinet", itemName: "USB Adapters", quantity: 6, user: "admin" },
   ];
   const out = [];
   examples.forEach(function (ex) {
@@ -479,7 +512,7 @@ function sampleOutLogEntries() {
       quantity: ex.quantity,
       rackId: ex.rackId,
       rackName: ex.rackName,
-      path: ex.path,
+      path: null,
       user: ex.user,
     });
   });
@@ -518,6 +551,22 @@ function loadLog() {
     });
   });
 
+  // Also log an "in" entry for each seeded global item.
+  globalItems.forEach(function (item) {
+    const rack = item.storageId ? findRack(item.storageId) : null;
+    seed.push({
+      id: logId(),
+      timestamp: item.createdAt,
+      type: "in",
+      itemName: item.name,
+      quantity: item.quantity,
+      rackId: rack ? rack.id : "",
+      rackName: rack ? rack.name : "Unassigned",
+      path: null,
+      user: "admin",
+    });
+  });
+
   seed.push.apply(seed, sampleOutLogEntries());
 
   saveLog(seed);
@@ -542,9 +591,27 @@ function logTransaction(type, itemName, quantity, rack, path) {
     type: type,
     itemName: itemName,
     quantity: quantity,
-    rackId: rack.id,
-    rackName: rack.name,
+    rackId: rack ? rack.id : "",
+    rackName: rack ? rack.name : "Unassigned",
     path: path,
+    user: sessionStorage.getItem("srUser") || "admin",
+  });
+  if (itemLog.length > 1000) itemLog.length = 1000;
+  saveLog(itemLog);
+}
+
+// Logs a status change (In Store / In Use / Removed) — not a quantity movement, so it's
+// recorded separately from logTransaction's "in"/"out" entries.
+function logStatusChange(item, newStatus, rack) {
+  itemLog.unshift({
+    id: logId(),
+    timestamp: Date.now(),
+    type: newStatus,
+    itemName: item.name,
+    quantity: item.quantity,
+    rackId: rack ? rack.id : "",
+    rackName: rack ? rack.name : "Unassigned",
+    path: null,
     user: sessionStorage.getItem("srUser") || "admin",
   });
   if (itemLog.length > 1000) itemLog.length = 1000;
@@ -608,6 +675,123 @@ function categoryBadgeHtml(category) {
   return `<span class="rack-category-badge" style="background:${c.bg};border-color:${c.border};color:${c.text}">${escapeHtml(category)}</span>`;
 }
 
+// A storage unit's tags. New storages store `tags: string[]`; older/seed data
+// only has a single `category` string, so fall back to that as a one-item list.
+function rackTags(rack) {
+  if (Array.isArray(rack.tags) && rack.tags.length) return rack.tags;
+  if (rack.category) return [rack.category];
+  return [];
+}
+
+function tagsHtml(tags) {
+  return tags.map(function (t) { return categoryBadgeHtml(t); }).join("");
+}
+
+function rackImages(rack) {
+  return Array.isArray(rack.images) ? rack.images : [];
+}
+
+function imagesPreviewHtml(images, size) {
+  if (!images.length) return "";
+  size = size || 44;
+  return `<div class="rack-images-preview">` + images.map(function (src) {
+    return `<img class="rack-image-thumb" src="${src}" alt="" style="width:${size}px;height:${size}px">`;
+  }).join("") + `</div>`;
+}
+
+// ---------- Shared tag-input / image-input controls (Add + Edit storage forms) ----------
+function createTagInput(chipsEl, textEl, initialTags) {
+  let tags = (initialTags || []).slice();
+
+  function render() {
+    chipsEl.innerHTML = tags.map(function (t, i) {
+      return `<span class="tag-chip">${escapeHtml(t)}<button type="button" class="tag-chip-remove" data-i="${i}">&times;</button></span>`;
+    }).join("");
+    chipsEl.querySelectorAll(".tag-chip-remove").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        tags.splice(parseInt(btn.dataset.i, 10), 1);
+        render();
+      });
+    });
+  }
+
+  function addFromText() {
+    const raw = textEl.value.split(",");
+    raw.forEach(function (part) {
+      const v = part.trim();
+      if (v && tags.indexOf(v) === -1) tags.push(v);
+    });
+    textEl.value = "";
+    render();
+  }
+
+  textEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addFromText();
+    } else if (e.key === "Backspace" && !textEl.value && tags.length) {
+      tags.pop();
+      render();
+    }
+  });
+  textEl.addEventListener("blur", function () {
+    if (textEl.value.trim()) addFromText();
+  });
+
+  render();
+
+  return {
+    getTags: function () { return tags.slice(); },
+    setTags: function (next) { tags = (next || []).slice(); render(); },
+  };
+}
+
+function createImageInput(previewsEl, fileEl, options) {
+  const maxCount = (options && options.maxCount) || 5;
+  const maxBytes = (options && options.maxBytes) || 2 * 1024 * 1024;
+  let images = (options && options.initialImages || []).slice();
+
+  function render() {
+    previewsEl.innerHTML = images.map(function (src, i) {
+      return `<div class="image-input-thumb"><img src="${src}" alt=""><button type="button" class="image-input-remove" data-i="${i}">&times;</button></div>`;
+    }).join("");
+    previewsEl.querySelectorAll(".image-input-remove").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        images.splice(parseInt(btn.dataset.i, 10), 1);
+        render();
+      });
+    });
+  }
+
+  fileEl.addEventListener("change", function () {
+    const files = Array.from(fileEl.files || []);
+    files.forEach(function (file) {
+      if (images.length >= maxCount) {
+        showToast(`You can attach up to ${maxCount} pictures`, "danger");
+        return;
+      }
+      if (file.size > maxBytes) {
+        showToast(`"${file.name}" is too large (max ${Math.round(maxBytes / 1024 / 1024)}MB)`, "danger");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function () {
+        images.push(reader.result);
+        render();
+      };
+      reader.readAsDataURL(file);
+    });
+    fileEl.value = "";
+  });
+
+  render();
+
+  return {
+    getImages: function () { return images.slice(); },
+    setImages: function (next) { images = (next || []).slice(); render(); },
+  };
+}
+
 function typeBadgeHtml(type) {
   const t = typeInfo(type);
   return `<span class="type-badge"><span class="badge-icon">${t.icon}</span>${t.label}</span>`;
@@ -631,9 +815,12 @@ function buildRackCard(rack) {
   const totalItems = unitItemCount(rack);
   const nodeCount = unitNodeCount(rack);
 
+  const tags = rackTags(rack);
+  const images = rackImages(rack);
+
   const card = document.createElement("div");
   card.className = "rack-card clickable";
-  card.style.borderLeft = `3px solid ${getCategoryColor(rack.category).solid}`;
+  card.style.borderLeft = `3px solid ${getCategoryColor(tags[0] || "").solid}`;
   card.innerHTML = `
     <div class="rack-card-head">
       <div>
@@ -648,8 +835,9 @@ function buildRackCard(rack) {
     <div class="rack-location"><span class="inline-icon">${ICONS.door}</span> ${escapeHtml(roomLabel(rack.storeRoomId))}</div>
     <div class="rack-sub-meta">
       ${typeBadgeHtml(rack.type)}
-      ${categoryBadgeHtml(rack.category)}
+      ${tagsHtml(tags)}
     </div>
+    ${imagesPreviewHtml(images)}
     ${buildItemsPreviewHtml(collectAllItems(rack))}
     <div class="rack-meta">
       <span><strong>${totalItems}</strong> items</span>
@@ -680,7 +868,7 @@ function buildRackRow(rack) {
   const row = document.createElement("a");
   row.href = rackDetailUrl(rack.id);
   row.className = "rack-row";
-  row.style.borderLeftColor = getCategoryColor(rack.category).solid;
+  row.style.borderLeftColor = getCategoryColor(rackTags(rack)[0] || "").solid;
   row.innerHTML = `
     <div class="rack-row-main">
       <span class="rack-id-badge">${escapeHtml(rack.id)}</span>
@@ -734,6 +922,9 @@ function roomOptionsHtml(selectedId) {
   }).join("");
 }
 
+let editTagInput = null;
+let editImageInput = null;
+
 function openEditModal(rack) {
   const editModalOverlay = document.getElementById("editModalOverlay");
   if (!editModalOverlay) return;
@@ -745,7 +936,8 @@ function openEditModal(rack) {
   document.getElementById("editRackType").value = typeInfo(rack.type).label;
   document.getElementById("editRackName").value = rack.name;
   document.getElementById("editRackRoom").innerHTML = roomOptionsHtml(rack.storeRoomId);
-  document.getElementById("editRackCategory").value = rack.category || "";
+  editTagInput = createTagInput(document.getElementById("editRackTagChips"), document.getElementById("editRackTagText"), rackTags(rack));
+  editImageInput = createImageInput(document.getElementById("editRackImagePreviews"), document.getElementById("editRackImageFile"), { initialImages: rackImages(rack) });
   editModalOverlay.hidden = false;
 }
 
@@ -775,7 +967,6 @@ function closeEditModal() {
 
     const name = document.getElementById("editRackName").value.trim();
     const storeRoomId = document.getElementById("editRackRoom").value;
-    const category = document.getElementById("editRackCategory").value.trim();
 
     if (!name || !storeRoomId) {
       editRackError.textContent = "Please fill in all required fields.";
@@ -785,7 +976,9 @@ function closeEditModal() {
 
     rack.name = name;
     rack.storeRoomId = storeRoomId;
-    rack.category = category;
+    rack.tags = editTagInput ? editTagInput.getTags() : rackTags(rack);
+    rack.images = editImageInput ? editImageInput.getImages() : rackImages(rack);
+    delete rack.category;
     saveRacks(racks);
     closeEditModal();
     showToast(`"${rack.name}" updated`, "success");
