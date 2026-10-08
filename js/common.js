@@ -1,10 +1,69 @@
+// ---------- Icon system (one hand-drawn, monochrome SVG set — no emoji) ----------
+function svgIcon(path) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+}
+
+const ICONS = {
+  box: svgIcon('<path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path><path d="M12 13v8"></path>'),
+  archive: svgIcon('<rect x="3" y="4" width="18" height="5" rx="1"></rect><rect x="4" y="9" width="16" height="11" rx="1"></rect><line x1="9" y1="13" x2="15" y2="13"></line>'),
+  tag: svgIcon('<path d="M20 13.5L13.5 20a1.5 1.5 0 0 1-2.1 0L4 12.6V4h8.6l7.4 7.4a1.5 1.5 0 0 1 0 2.1z"></path><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"></circle>'),
+  repeat: svgIcon('<path d="M17 2l4 4-4 4"></path><path d="M21 6H9a4 4 0 0 0-4 4v1"></path><path d="M7 22l-4-4 4-4"></path><path d="M3 18h12a4 4 0 0 0 4-4v-1"></path>'),
+  door: svgIcon('<rect x="5" y="3" width="13" height="18" rx="1"></rect><circle cx="14.5" cy="12" r="0.75" fill="currentColor" stroke="none"></circle>'),
+  users: svgIcon('<circle cx="9" cy="8" r="3"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path><circle cx="17" cy="9" r="2.4"></circle><path d="M15.3 14.2c2.5.4 4.4 2.4 4.4 5.8"></path>'),
+  shield: svgIcon('<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"></path>'),
+  menu: svgIcon('<line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line>'),
+  search: svgIcon('<circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>'),
+  sun: svgIcon('<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"></path>'),
+  moon: svgIcon('<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"></path>'),
+  user: svgIcon('<circle cx="12" cy="8" r="4"></circle><path d="M4 20c0-4.4 3.6-8 8-8s8 3.6 8 8"></path>'),
+  edit: svgIcon('<path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>'),
+  trash: svgIcon('<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>'),
+  check: svgIcon('<circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.5 2.5L16 9.5"></path>'),
+  info: svgIcon('<circle cx="12" cy="12" r="9"></circle><line x1="12" y1="11" x2="12" y2="16"></line><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"></circle>'),
+  folder: svgIcon('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"></path>'),
+  circleSlash: svgIcon('<circle cx="12" cy="12" r="9"></circle><line x1="5" y1="5" x2="19" y2="19"></line>'),
+  layers: svgIcon('<polyline points="12 2 2 7 12 12 22 7 12 2"></polyline><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline>'),
+  shelf: svgIcon('<rect x="3" y="4" width="18" height="6" rx="1"></rect><rect x="3" y="14" width="18" height="6" rx="1"></rect>'),
+  drawer: svgIcon('<rect x="3" y="5" width="18" height="14" rx="2"></rect><line x1="9" y1="12" x2="15" y2="12"></line>'),
+  hanging: svgIcon('<path d="M12 3a2 2 0 1 1 2 2c-.5.5-1 1-1 2"></path><path d="M12 7s0 1-2 2L2 14c-1 .6-1 2 .2 2.4L12 20l9.8-3.6c1.2-.4 1.2-1.8.2-2.4l-8-5c-2-1-2-2-2-2"></path>'),
+  compartment: svgIcon('<rect x="3" y="3" width="8" height="8" rx="1"></rect><rect x="13" y="3" width="8" height="8" rx="1"></rect><rect x="3" y="13" width="8" height="8" rx="1"></rect><rect x="13" y="13" width="8" height="8" rx="1"></rect>'),
+  node: svgIcon('<circle cx="6" cy="6" r="2.3"></circle><circle cx="18" cy="6" r="2.3"></circle><circle cx="12" cy="18" r="2.3"></circle><path d="M8 7.3l2.5 8M16 7.3l-2.5 8M8.4 6h7.2"></path>'),
+  cupboard: svgIcon('<rect x="4" y="3" width="16" height="18" rx="1"></rect><line x1="12" y1="3" x2="12" y2="21"></line><circle cx="10" cy="12" r="0.7" fill="currentColor" stroke="none"></circle><circle cx="14" cy="12" r="0.7" fill="currentColor" stroke="none"></circle>'),
+  bureau: svgIcon('<rect x="4" y="3" width="16" height="18" rx="1"></rect><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="6" x2="14" y2="6"></line><line x1="10" y1="12" x2="14" y2="12"></line><line x1="10" y1="18" x2="14" y2="18"></line>'),
+  arrowUp: svgIcon('<line x1="12" y1="19" x2="12" y2="5"></line><polyline points="6 11 12 5 18 11"></polyline>'),
+  arrowDown: svgIcon('<line x1="12" y1="5" x2="12" y2="19"></line><polyline points="6 13 12 19 18 13"></polyline>'),
+};
+
+const NAV_ICONS = { overview: "home", storage: "archive", items: "tag", log: "repeat", rooms: "door", users: "users", roles: "shield" };
+
+ICONS.home = svgIcon('<path d="M3 11l9-7 9 7"></path><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"></path>');
+
+// Compartment (node) kind icons, shared between the storage-type badges and the structure tree.
+const NODE_ICONS = {
+  level: ICONS.layers, section: ICONS.folder, shelf: ICONS.shelf, drawer: ICONS.drawer,
+  hanging: ICONS.hanging, compartment: ICONS.compartment, space: ICONS.box, node: ICONS.node,
+};
+
+(function replaceChromeIcons() {
+  document.querySelectorAll(".nav-item[data-route]").forEach(function (a) {
+    const span = a.querySelector(".nav-icon");
+    const name = NAV_ICONS[a.dataset.route];
+    if (span && name) span.innerHTML = ICONS[name];
+  });
+  document.querySelectorAll(".brand-icon").forEach(function (el) { el.innerHTML = ICONS.box; });
+  const menuToggle = document.getElementById("menuToggle");
+  if (menuToggle) menuToggle.innerHTML = ICONS.menu;
+  const searchBtn = document.getElementById("idSearchBtn");
+  if (searchBtn) searchBtn.innerHTML = ICONS.search + " Search";
+})();
+
 // ---------- Auth guard ----------
 if (sessionStorage.getItem("srLoggedIn") !== "true") {
   window.location.href = "index.html";
 }
 
-document.getElementById("userChip").textContent =
-  "👤 " + (sessionStorage.getItem("srUser") || "Admin");
+document.getElementById("userChip").innerHTML =
+  ICONS.user + " " + escapeHtml(sessionStorage.getItem("srUser") || "Admin");
 
 document.getElementById("logoutBtn").addEventListener("click", function () {
   sessionStorage.removeItem("srLoggedIn");
@@ -14,14 +73,14 @@ document.getElementById("logoutBtn").addEventListener("click", function () {
 
 // ---------- Storage types ----------
 const STORAGE_TYPES = {
-  shelf: { label: "Shelf", icon: "📚", rootAdd: [{ kind: "level", label: "Shelf Level" }], childAdd: {} },
-  rack: { label: "Rack", icon: "🗄️", rootAdd: [{ kind: "level", label: "Level" }], childAdd: { level: [{ kind: "section", label: "Section" }] } },
-  cupboard: { label: "Cupboard", icon: "🚪", rootAdd: [{ kind: "shelf", label: "Shelf" }, { kind: "drawer", label: "Drawer" }], childAdd: {} },
-  bureau: { label: "Bureau", icon: "🗃️", rootAdd: [{ kind: "drawer", label: "Drawer" }], childAdd: {} },
-  wardrobe: { label: "Wardrobe", icon: "👕", rootAdd: [{ kind: "hanging", label: "Hanging Section" }, { kind: "shelf", label: "Shelf" }], childAdd: {} },
-  cabinet: { label: "Cabinet", icon: "🗄️", rootAdd: [{ kind: "shelf", label: "Shelf" }, { kind: "compartment", label: "Compartment" }], childAdd: {} },
-  box: { label: "Box", icon: "📦", rootAdd: [], childAdd: {}, singleSpace: true },
-  custom: { label: "Custom", icon: "🧩", rootAdd: [{ kind: "node", label: "Node" }], childAdd: {}, freeNesting: true },
+  shelf: { label: "Shelf", icon: ICONS.shelf, rootAdd: [{ kind: "level", label: "Shelf Level" }], childAdd: {} },
+  rack: { label: "Rack", icon: ICONS.layers, rootAdd: [{ kind: "level", label: "Level" }], childAdd: { level: [{ kind: "section", label: "Section" }] } },
+  cupboard: { label: "Cupboard", icon: ICONS.cupboard, rootAdd: [{ kind: "shelf", label: "Shelf" }, { kind: "drawer", label: "Drawer" }], childAdd: {} },
+  bureau: { label: "Bureau", icon: ICONS.bureau, rootAdd: [{ kind: "drawer", label: "Drawer" }], childAdd: {} },
+  wardrobe: { label: "Wardrobe", icon: ICONS.hanging, rootAdd: [{ kind: "hanging", label: "Hanging Section" }, { kind: "shelf", label: "Shelf" }], childAdd: {} },
+  cabinet: { label: "Cabinet", icon: ICONS.compartment, rootAdd: [{ kind: "shelf", label: "Shelf" }, { kind: "compartment", label: "Compartment" }], childAdd: {} },
+  box: { label: "Box", icon: ICONS.box, rootAdd: [], childAdd: {}, singleSpace: true },
+  custom: { label: "Custom", icon: ICONS.node, rootAdd: [{ kind: "node", label: "Node" }], childAdd: {}, freeNesting: true },
 };
 
 function typeInfo(type) {
@@ -37,8 +96,17 @@ function nodeId() {
   return "nd_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
+// Unique, human-readable alphanumeric code for a compartment (level/shelf/drawer/section/etc.), e.g. "CM-1001".
+const NODE_CODE_SEQ_KEY = "srNodeCodeSeqV1";
+
+function nextNodeCode() {
+  const seq = parseInt(localStorage.getItem(NODE_CODE_SEQ_KEY) || "1000", 10) + 1;
+  localStorage.setItem(NODE_CODE_SEQ_KEY, String(seq));
+  return "CM-" + seq;
+}
+
 function makeNode(name, kind, capacity) {
-  return { id: nodeId(), name: name, kind: kind, capacity: (capacity || capacity === 0) ? capacity : null, children: [], items: [] };
+  return { id: nodeId(), code: nextNodeCode(), name: name, kind: kind, capacity: (capacity || capacity === 0) ? capacity : null, children: [], items: [] };
 }
 
 // How full a single node is, based on items placed directly on it (not its children).
@@ -224,9 +292,26 @@ function seedRack(id, name, storeRoomId, type, category, nodes, daysAgo) {
   return { id: id, name: name, storeRoomId: storeRoomId, type: type, category: category, nodes: nodes, createdAt: Date.now() - daysAgo * 86400000 };
 }
 
+function backfillNodeCodes(racksData) {
+  let changed = false;
+  racksData.forEach(function (rack) {
+    walkNodes(rack.nodes, function (node) {
+      if (!node.code) {
+        node.code = nextNodeCode();
+        changed = true;
+      }
+    });
+  });
+  return changed;
+}
+
 function loadRacks() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) return JSON.parse(raw);
+  if (raw) {
+    const data = JSON.parse(raw);
+    if (backfillNodeCodes(data)) saveRacks(data);
+    return data;
+  }
 
   const seed = [
     seedRack("ST-1001", "Rack A", "SR-1001", "rack", "Files & Books", [
@@ -372,9 +457,46 @@ function collectAllItemEntries() {
 // ---------- IN / OUT transaction log ----------
 const LOG_KEY = "srItemLogV1";
 
+// A handful of "out" examples, so the log doesn't read as all stock-ins.
+function sampleOutLogEntries() {
+  const ONE_DAY = 86400000;
+  const examples = [
+    { rackId: "ST-1001", rackName: "Rack A", itemName: "Files", quantity: 5, path: "Level 1 → Section 1", user: "jane.m" },
+    { rackId: "ST-1002", rackName: "Cupboard A", itemName: "Electronics", quantity: 2, path: "Drawer 1", user: "sam.v" },
+    { rackId: "ST-1003", rackName: "Bureau A", itemName: "Tools", quantity: 3, path: "Drawer 2", user: "admin" },
+    { rackId: "ST-1004", rackName: "Wardrobe A", itemName: "Accessories", quantity: 2, path: "Shelf 1", user: "jane.m" },
+    { rackId: "ST-1006", rackName: "Cabinet A", itemName: "Cables", quantity: 4, path: "Shelf 1", user: "admin" },
+  ];
+  const out = [];
+  examples.forEach(function (ex) {
+    const rack = findRack(ex.rackId);
+    if (!rack) return;
+    out.push({
+      id: logId(),
+      timestamp: rack.createdAt + ONE_DAY,
+      type: "out",
+      itemName: ex.itemName,
+      quantity: ex.quantity,
+      rackId: ex.rackId,
+      rackName: ex.rackName,
+      path: ex.path,
+      user: ex.user,
+    });
+  });
+  return out;
+}
+
 function loadLog() {
   const raw = localStorage.getItem(LOG_KEY);
-  if (raw) return JSON.parse(raw);
+  if (raw) {
+    const data = JSON.parse(raw);
+    if (data.length && !data.some(function (e) { return e.type === "out"; })) {
+      const withOut = data.concat(sampleOutLogEntries());
+      saveLog(withOut);
+      return withOut;
+    }
+    return data;
+  }
 
   // Seed the log with an "in" entry for every item already in the seed data, so the log isn't empty on first visit.
   const seed = [];
@@ -395,6 +517,9 @@ function loadLog() {
       });
     });
   });
+
+  seed.push.apply(seed, sampleOutLogEntries());
+
   saveLog(seed);
   return seed;
 }
@@ -485,7 +610,7 @@ function categoryBadgeHtml(category) {
 
 function typeBadgeHtml(type) {
   const t = typeInfo(type);
-  return `<span class="type-badge">${t.icon} ${t.label}</span>`;
+  return `<span class="type-badge"><span class="badge-icon">${t.icon}</span>${t.label}</span>`;
 }
 
 function buildItemsPreviewHtml(items) {
@@ -516,11 +641,11 @@ function buildRackCard(rack) {
         <div class="rack-name">${escapeHtml(rack.name)}</div>
       </div>
       <div class="rack-card-actions">
-        <button class="icon-btn edit-btn" title="Edit">✏️</button>
-        <button class="icon-btn delete delete-btn" title="Delete">🗑️</button>
+        <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
+        <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
       </div>
     </div>
-    <div class="rack-location">🚪 ${escapeHtml(roomLabel(rack.storeRoomId))}</div>
+    <div class="rack-location"><span class="inline-icon">${ICONS.door}</span> ${escapeHtml(roomLabel(rack.storeRoomId))}</div>
     <div class="rack-sub-meta">
       ${typeBadgeHtml(rack.type)}
       ${categoryBadgeHtml(rack.category)}
@@ -572,6 +697,14 @@ function buildRackRow(rack) {
   return row;
 }
 
+function buildAddGhostCard(label, onClick) {
+  const card = document.createElement("div");
+  card.className = "rack-card clickable add-ghost-card";
+  card.innerHTML = `<span class="add-ghost-icon">+</span><span>${escapeHtml(label)}</span>`;
+  card.addEventListener("click", onClick);
+  return card;
+}
+
 // ---------- Delete rack ----------
 function deleteRack(id, onSuccess, elToAnimate) {
   const rack = findRack(id);
@@ -609,7 +742,7 @@ function openEditModal(rack) {
   document.getElementById("editRackForm").reset();
   editingRackId = rack.id;
   document.getElementById("editRackId").value = rack.id;
-  document.getElementById("editRackType").value = typeInfo(rack.type).icon + " " + typeInfo(rack.type).label;
+  document.getElementById("editRackType").value = typeInfo(rack.type).label;
   document.getElementById("editRackName").value = rack.name;
   document.getElementById("editRackRoom").innerHTML = roomOptionsHtml(rack.storeRoomId);
   document.getElementById("editRackCategory").value = rack.category || "";

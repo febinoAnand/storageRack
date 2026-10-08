@@ -69,29 +69,33 @@
         </div>
 
         <form id="addRackForm" class="panel form-panel">
-          <div class="field">
-            <label for="newRackId">Storage ID <span class="req">*</span></label>
-            <input type="text" id="newRackId" placeholder="e.g. ST-101 or A1-05" required>
-            <p class="field-hint">A unique ID used to find this storage later.</p>
+          <div class="field-group">
+            <div class="field">
+              <label for="newRackId">Storage ID <span class="req">*</span></label>
+              <input type="text" id="newRackId" placeholder="e.g. ST-101 or A1-05" required>
+              <p class="field-hint">A unique ID used to find this storage later.</p>
+            </div>
+            <div class="field">
+              <label for="newRackName">Storage Name <span class="req">*</span></label>
+              <input type="text" id="newRackName" placeholder="e.g. Rack A1" required>
+            </div>
           </div>
-          <div class="field">
-            <label for="newRackName">Storage Name <span class="req">*</span></label>
-            <input type="text" id="newRackName" placeholder="e.g. Rack A1" required>
-          </div>
-          <div class="field">
-            <label for="newRackType">Storage Type <span class="req">*</span></label>
-            <select id="newRackType" required></select>
-            <p class="field-hint" id="typeHint"></p>
+          <div class="field-group">
+            <div class="field">
+              <label for="newRackType">Storage Type <span class="req">*</span></label>
+              <select id="newRackType" required></select>
+              <p class="field-hint" id="typeHint"></p>
+            </div>
+            <div class="field">
+              <label for="newRackRoom">Store Room <span class="req">*</span></label>
+              <select id="newRackRoom" required></select>
+              <p class="field-hint">No store room yet? <a href="storerooms.html">Create one first →</a></p>
+            </div>
           </div>
           <div class="field" id="quickStructureField">
             <label>Starting Structure <span class="optional-tag">(optional)</span></label>
             <div class="field-group quick-structure-grid" id="quickStructureFields"></div>
             <p class="field-hint" id="quickStructureHint"></p>
-          </div>
-          <div class="field">
-            <label for="newRackRoom">Store Room <span class="req">*</span></label>
-            <select id="newRackRoom" required></select>
-            <p class="field-hint">No store room yet? <a href="storerooms.html">Create one first →</a></p>
           </div>
           <div class="field">
             <label for="newRackCategory">Item Category</label>

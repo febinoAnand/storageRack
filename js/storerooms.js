@@ -18,6 +18,7 @@ function buildRoomCard(room) {
   const count = roomUnitCount(room.id);
   const card = document.createElement("div");
   card.className = "rack-card clickable";
+  card.style.borderLeft = `3px solid ${getCategoryColor(room.name).solid}`;
   card.innerHTML = `
     <div class="rack-card-head">
       <div>
@@ -25,8 +26,8 @@ function buildRoomCard(room) {
         <div class="rack-name">${escapeHtml(room.name)}</div>
       </div>
       <div class="rack-card-actions">
-        <button class="icon-btn edit-btn" title="Edit">✏️</button>
-        <button class="icon-btn delete delete-btn" title="Delete">🗑️</button>
+        <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
+        <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
       </div>
     </div>
     <div class="rack-location">${escapeHtml(room.location || "No location set")}</div>
@@ -73,6 +74,7 @@ function renderRooms() {
   } else {
     emptyState.hidden = true;
     paginateArray(rooms, roomCurrentPage, PAGE_SIZE).forEach(function (room) { grid.appendChild(buildRoomCard(room)); });
+    grid.appendChild(buildAddGhostCard("Add Store Room", function () { openRoomModal(null); }));
   }
 
   renderPagination(document.getElementById("roomPagination"), rooms.length, roomCurrentPage, PAGE_SIZE, function (page) {

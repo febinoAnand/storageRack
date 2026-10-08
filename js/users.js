@@ -32,11 +32,11 @@ function buildUserCard(user) {
         <div class="rack-name">${escapeHtml(user.name)}</div>
       </div>
       <div class="rack-card-actions">
-        <button class="icon-btn edit-btn" title="Edit">✏️</button>
-        <button class="icon-btn delete delete-btn" title="Delete">🗑️</button>
+        <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
+        <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
       </div>
     </div>
-    <div class="rack-location">👤 @${escapeHtml(user.username)} ${user.email ? "· " + escapeHtml(user.email) : ""}</div>
+    <div class="rack-location"><span class="inline-icon">${ICONS.user}</span> @${escapeHtml(user.username)} ${user.email ? "· " + escapeHtml(user.email) : ""}</div>
     <div class="rack-sub-meta">
       ${roleBadgeHtml(user.roleId)}
       ${statusBadgeHtml(user.status)}
@@ -90,6 +90,7 @@ function applyUserFilters() {
   } else {
     emptyState.hidden = true;
     paginateArray(filtered, userCurrentPage, PAGE_SIZE).forEach(function (u) { grid.appendChild(buildUserCard(u)); });
+    grid.appendChild(buildAddGhostCard("Add User", function () { openUserModal(null); }));
   }
 
   renderPagination(document.getElementById("userPagination"), filtered.length, userCurrentPage, PAGE_SIZE, function (page) {
