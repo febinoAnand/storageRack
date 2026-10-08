@@ -21,17 +21,17 @@
         <a href="dashboard.html" class="nav-item" data-route="overview">
           <span class="nav-icon">🏠</span> Overview
         </a>
-        <a href="storage.html" class="nav-item" data-route="storage">
-          <span class="nav-icon">🗄️</span> All Storages
-        </a>
         <a href="items.html" class="nav-item" data-route="items">
           <span class="nav-icon">🏷️</span> All Items
+        </a>
+        <a href="storage.html" class="nav-item" data-route="storage">
+          <span class="nav-icon">🗄️</span> All Storages
         </a>
         <a href="log.html" class="nav-item" data-route="log">
           <span class="nav-icon">🔄</span> IN/OUT Log
         </a>
         <a href="storerooms.html" class="nav-item" data-route="rooms">
-          <span class="nav-icon">🚪</span> Store Rooms
+          <span class="nav-icon">🚪</span> Locations
         </a>
         <a href="users.html" class="nav-item" data-route="users">
           <span class="nav-icon">👥</span> Users
@@ -65,14 +65,17 @@
 
         <div class="toolbar">
           <div>
-            <h2>All Items</h2>
-            <p class="muted">Every item across every storage unit, in one place</p>
+            <h2 id="itemViewTitle">All Items</h2>
+            <p class="muted" id="itemViewSubtitle">Every item across every storage unit, in one place</p>
           </div>
-          <button class="btn-primary btn-add" id="addItemPageBtn">+ Add Item</button>
+          <div class="node-actions">
+            <button class="btn-secondary" id="itemArchiveToggle"></button>
+            <button class="btn-primary btn-add" id="addItemPageBtn">+ Add Item</button>
+          </div>
         </div>
 
         <div class="filters-bar">
-          <input type="text" id="itemFilterSearch" placeholder="Search by item, storage, category or location">
+          <input type="text" id="itemFilterSearch" placeholder="Search by item, storage, tag or location">
           <select id="itemFilterType">
             <option value="all">All Types</option>
           </select>
@@ -92,35 +95,63 @@
     </div>
   </div>
 
-  <!-- Add Item Modal (with placement picker) -->
+  <!-- Add / Edit Item Modal -->
   <div class="modal-overlay" id="addItemModalOverlay" hidden>
     <div class="modal">
       <div class="modal-header">
-        <h3>Add Item</h3>
+        <h3 id="addItemModalTitle">Add Item</h3>
         <button class="modal-close" id="addItemModalClose">&times;</button>
       </div>
       <form id="addItemPageForm" class="modal-form">
-        <div class="field">
-          <label for="placeRackSelect">Storage Unit</label>
-          <select id="placeRackSelect" required></select>
+        <input type="hidden" id="placeItemEditingId">
+        <div class="field-group">
+          <div class="field">
+            <label for="placeItemName">Item Name <span class="req">*</span></label>
+            <input type="text" id="placeItemName" placeholder="e.g. Circuit Boards - Box 12" required>
+          </div>
+          <div class="field">
+            <label for="placeItemId">Item ID <span class="optional-tag">(optional)</span></label>
+            <input type="text" id="placeItemId" placeholder="Auto-generated if left blank">
+          </div>
         </div>
         <div class="field">
-          <label for="placeNodeSelect">Place In</label>
-          <select id="placeNodeSelect" required></select>
-          <p class="field-hint" id="placeNodeHint"></p>
+          <label for="placeItemTagText">Item Tags</label>
+          <div class="tag-input" id="placeItemTagInput">
+            <div class="tag-input-chips" id="placeItemTagChips"></div>
+            <input type="text" id="placeItemTagText" placeholder="Type a tag and press Enter">
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <label for="placeItemQuantity">Quantity <span class="req">*</span></label>
+            <input type="number" id="placeItemQuantity" min="1" placeholder="e.g. 5" required>
+          </div>
+          <div class="field">
+            <label for="placeRackSelect">Storage <span class="optional-tag">(optional)</span></label>
+            <select id="placeRackSelect">
+              <option value="">— Unassigned —</option>
+            </select>
+          </div>
         </div>
         <div class="field">
-          <label for="placeItemName">Item Name</label>
-          <input type="text" id="placeItemName" placeholder="e.g. Circuit Boards - Box 12" required>
+          <label for="placeItemRemarks">Remarks</label>
+          <textarea id="placeItemRemarks" rows="2" placeholder="Any notes about this item"></textarea>
         </div>
         <div class="field">
-          <label for="placeItemQuantity">Quantity</label>
-          <input type="number" id="placeItemQuantity" min="1" placeholder="e.g. 5" required>
+          <label for="placeItemImageFile">Pictures</label>
+          <div class="image-input" id="placeItemImageInput">
+            <div class="image-input-previews" id="placeItemImagePreviews"></div>
+            <label class="image-input-add" for="placeItemImageFile">
+              <span class="add-ghost-icon">+</span> Add Pictures
+            </label>
+            <input type="file" id="placeItemImageFile" accept="image/*" multiple hidden>
+          </div>
+          <p class="field-hint">Up to 5 pictures, 2MB each.</p>
         </div>
         <p id="addItemPageError" class="error-msg" hidden></p>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="addItemPageCancel">Cancel</button>
-          <button type="submit" class="btn-primary">Add Item</button>
+          <button type="submit" class="btn-primary" id="addItemPageSubmit">Add Item</button>
         </div>
       </form>
     </div>

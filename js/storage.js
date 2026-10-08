@@ -28,7 +28,7 @@ function applyRacksFilters() {
     const matchesQuery = !query ||
       r.name.toLowerCase().indexOf(query) !== -1 ||
       r.id.toLowerCase().indexOf(query) !== -1 ||
-      (r.category || "").toLowerCase().indexOf(query) !== -1;
+      rackTags(r).some(function (t) { return t.toLowerCase().indexOf(query) !== -1; });
     const matchesType = typeFilter === "all" || r.type === typeFilter;
     const matchesRoom = roomFilter === "all" || r.storeRoomId === roomFilter;
     return matchesQuery && matchesType && matchesRoom;
@@ -69,7 +69,7 @@ document.getElementById("filterReset").addEventListener("click", function () {
   applyRacksFilters();
 });
 
-// Prefill filters from query params (?search= from the top-bar ID search fallback, ?room= from a Store Room card)
+// Prefill filters from query params (?search= from the top-bar ID search fallback, ?room= from a Location card)
 const urlParams = new URLSearchParams(window.location.search);
 const searchParam = urlParams.get("search");
 if (searchParam) {

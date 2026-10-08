@@ -21,17 +21,17 @@
         <a href="dashboard.html" class="nav-item" data-route="overview">
           <span class="nav-icon">🏠</span> Overview
         </a>
-        <a href="storage.html" class="nav-item" data-route="storage">
-          <span class="nav-icon">🗄️</span> All Storages
-        </a>
         <a href="items.html" class="nav-item" data-route="items">
           <span class="nav-icon">🏷️</span> All Items
+        </a>
+        <a href="storage.html" class="nav-item" data-route="storage">
+          <span class="nav-icon">🗄️</span> All Storages
         </a>
         <a href="log.html" class="nav-item" data-route="log">
           <span class="nav-icon">🔄</span> IN/OUT Log
         </a>
         <a href="storerooms.html" class="nav-item" data-route="rooms">
-          <span class="nav-icon">🚪</span> Store Rooms
+          <span class="nav-icon">🚪</span> Locations
         </a>
         <a href="users.html" class="nav-item" data-route="users">
           <span class="nav-icon">👥</span> Users
@@ -65,7 +65,7 @@
 
         <div class="view-head">
           <h2>Add New Storage</h2>
-          <p class="muted">Register a new storage unit, and optionally set up its starting structure below. You can always add to it later.</p>
+          <p class="muted">Register a new storage unit. You can build out its structure afterward from its detail page.</p>
         </div>
 
         <form id="addRackForm" class="panel form-panel">
@@ -82,24 +82,34 @@
           </div>
           <div class="field-group">
             <div class="field">
-              <label for="newRackType">Storage Type <span class="req">*</span></label>
+              <label for="newRackType">Type <span class="req">*</span></label>
               <select id="newRackType" required></select>
               <p class="field-hint" id="typeHint"></p>
             </div>
             <div class="field">
-              <label for="newRackRoom">Store Room <span class="req">*</span></label>
+              <label for="newRackRoom">Location <span class="req">*</span></label>
               <select id="newRackRoom" required></select>
-              <p class="field-hint">No store room yet? <a href="storerooms.html">Create one first →</a></p>
+              <p class="field-hint">No location yet? <a href="storerooms.html">Create one first →</a></p>
             </div>
           </div>
-          <div class="field" id="quickStructureField">
-            <label>Starting Structure <span class="optional-tag">(optional)</span></label>
-            <div class="field-group quick-structure-grid" id="quickStructureFields"></div>
-            <p class="field-hint" id="quickStructureHint"></p>
+          <div class="field">
+            <label for="newRackTagInput">Tags</label>
+            <div class="tag-input" id="newRackTagInput">
+              <div class="tag-input-chips" id="newRackTagChips"></div>
+              <input type="text" id="newRackTagText" placeholder="Type a tag and press Enter">
+            </div>
+            <p class="field-hint">e.g. Electronics, Spare Parts — press Enter or comma after each one.</p>
           </div>
           <div class="field">
-            <label for="newRackCategory">Item Category</label>
-            <input type="text" id="newRackCategory" placeholder="e.g. Electronics, Spare Parts">
+            <label for="newRackImageInput">Pictures</label>
+            <div class="image-input" id="newRackImageInput">
+              <div class="image-input-previews" id="newRackImagePreviews"></div>
+              <label class="image-input-add" for="newRackImageFile">
+                <span class="add-ghost-icon">+</span> Add Pictures
+              </label>
+              <input type="file" id="newRackImageFile" accept="image/*" multiple hidden>
+            </div>
+            <p class="field-hint">Up to 5 pictures, 2MB each.</p>
           </div>
           <p id="addRackError" class="error-msg" hidden></p>
           <div class="modal-actions">

@@ -351,26 +351,56 @@ body {
   color: var(--text);
 }
 
-.field input {
+/* ---------- Custom select chevron (replaces the native browser arrow everywhere) ---------- */
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23676b7e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 15px 15px;
+  padding-right: 34px !important;
+  cursor: pointer;
+}
+
+[data-theme="dark"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a9db0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+select:disabled {
+  cursor: not-allowed;
+  opacity: .6;
+}
+
+.field input,
+.field textarea,
+.field select {
   width: 100%;
   padding: 11px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
+  font-family: inherit;
   outline: none;
-  transition: border-color .15s, box-shadow .15s, background .2s ease;
-  background: var(--surface-alt);
+  transition: border-color .15s, box-shadow .15s, background-color .2s ease;
+  background-color: var(--surface-alt);
   color: var(--text);
+  resize: vertical;
 }
 
-.field input::placeholder {
+.field input::placeholder,
+.field textarea::placeholder {
   color: var(--muted-dim);
 }
 
-.field input:focus {
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-soft);
-  background: var(--surface);
+  background-color: var(--surface);
 }
 
 .field input:disabled {
@@ -831,6 +861,8 @@ body {
 
 .panel-head h3 { font-size: 15px; font-weight: 700; }
 
+.structure-type-tag { display: inline-flex; vertical-align: middle; margin-left: 2px; }
+
 .link-more {
   font-size: 13px;
   color: var(--primary);
@@ -858,7 +890,7 @@ body {
 
 .rack-row {
   display: grid;
-  grid-template-columns: 1fr 140px auto;
+  grid-template-columns: 1fr 170px 240px;
   align-items: center;
   gap: 16px;
   padding: 11px 14px;
@@ -880,6 +912,13 @@ body {
   min-width: 0;
 }
 
+.rack-row-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
 .rack-row-name { font-weight: 600; font-size: 14px; }
 
 .rack-row-loc {
@@ -893,6 +932,7 @@ body {
 .rack-row-meta {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
   font-size: 13px;
   color: var(--muted);
@@ -928,12 +968,12 @@ body {
   padding: 9px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--surface);
+  background-color: var(--surface);
   color: var(--text);
   font-size: 13px;
   outline: none;
   cursor: pointer;
-  transition: background .2s ease, border-color .15s;
+  transition: background-color .2s ease, border-color .15s;
 }
 
 .filters-bar .btn-secondary {
@@ -961,6 +1001,7 @@ body {
 }
 
 .rack-card.clickable { cursor: pointer; }
+.rack-row.clickable { cursor: pointer; }
 
 .rack-card:hover {
   transform: translateY(-2px);
@@ -1152,6 +1193,147 @@ body {
   cursor: pointer;
 }
 
+/* ---------- Tag input (storage Tags field) ---------- */
+
+.tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-alt);
+}
+
+.tag-input-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 6px 4px 10px;
+  border-radius: 20px;
+  background: var(--primary-soft);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+}
+
+.tag-chip-remove {
+  border: none;
+  background: none;
+  color: inherit;
+  opacity: .6;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.tag-chip-remove:hover { opacity: 1; }
+
+.tag-input input {
+  flex: 1;
+  min-width: 140px;
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--text);
+  padding: 4px 2px;
+}
+
+/* ---------- Image input (storage Pictures field) ---------- */
+
+.image-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.image-input-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.image-input-thumb {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.image-input-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.image-input-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-input-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 1.5px dashed var(--border-strong);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-direction: column;
+  transition: border-color .15s ease, color .15s ease;
+}
+
+.image-input-add:hover { border-color: var(--primary); color: var(--primary); }
+.image-input-add .add-ghost-icon { font-size: 16px; }
+
+/* ---------- Picture previews (rack card / detail) ---------- */
+
+.rack-images-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.rack-image-thumb {
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
 /* ---------- Item chips (rack card preview) ---------- */
 
 .rack-items-preview {
@@ -1279,6 +1461,11 @@ body {
   border-color: var(--danger-border);
   color: var(--danger);
 }
+.rack-badge.neutral {
+  background: var(--surface-alt);
+  border-color: var(--border-strong);
+  color: var(--muted);
+}
 
 .empty-state {
   text-align: center;
@@ -1358,6 +1545,24 @@ body {
   background: var(--danger-bg);
   border: 1px solid var(--danger-border);
   color: var(--danger);
+}
+
+.log-type-badge.in_store {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success);
+}
+
+.log-type-badge.in_use {
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  color: var(--warning);
+}
+
+.log-type-badge.removed {
+  background: var(--surface-alt);
+  border: 1px solid var(--border-strong);
+  color: var(--muted);
 }
 
 /* ---------- Pagination ---------- */
@@ -1748,12 +1953,48 @@ body {
   .btn-add { width: 100%; }
   .field-group { grid-template-columns: 1fr; }
   .topbar { padding: 12px 16px; }
+  .topbar-search { max-width: none; }
   .dash-main { padding: 20px 16px 40px; }
   .filters-bar { flex-wrap: wrap; }
   .filters-bar input { min-width: 100%; }
   .detail-title-row { flex-direction: column; }
   .detail-actions { width: 100%; }
   .detail-actions button { flex: 1; }
+
+  /* Log table reflows into stacked cards — a 7-column table has no good way to
+     stay tabular at this width. */
+  .log-table-wrap { overflow-x: visible; }
+  .log-table thead { display: none; }
+  .log-table, .log-table tbody, .log-table tr, .log-table td { display: block; width: 100%; }
+  .log-table tr {
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    background: var(--surface-alt);
+  }
+  .log-table tbody tr:last-child { margin-bottom: 0; }
+  .log-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    white-space: normal;
+    text-align: right;
+  }
+  .log-table td:last-child { border-bottom: none; }
+  .log-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--muted);
+    flex-shrink: 0;
+    text-align: left;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
