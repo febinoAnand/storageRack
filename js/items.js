@@ -35,35 +35,33 @@ function buildUnifiedRows() {
       kind: "legacy", name: e.item.name, quantity: e.item.quantity,
       tags: [], remarks: "", images: [], status: "in_store",
       rack: e.rack, path: e.path, storageLabel: e.rack.name,
+      typeLabel: typeInfo(e.rack.type).label, statusLabel: ITEM_STATUS_LABELS.in_store,
     };
   });
   const global = globalItems.map(function (it) {
     const rack = it.storageId ? findRack(it.storageId) : null;
+    const status = it.status || "in_store";
     return {
       kind: "global", raw: it, name: it.name, quantity: it.quantity,
-      tags: it.tags || [], remarks: it.remarks || "", images: it.images || [], status: it.status || "in_store",
+      tags: it.tags || [], remarks: it.remarks || "", images: it.images || [], status: status,
       rack: rack, path: null, storageLabel: rack ? rack.name : "Unassigned",
+      typeLabel: rack ? typeInfo(rack.type).label : "Unassigned", statusLabel: ITEM_STATUS_LABELS[status] || status,
     };
   });
   return legacy.concat(global);
 }
 
-function buildItemEntryRow(entry) {
+function buildItemTableRow(entry) {
   const dotColor = getItemColor(entry.name).solid;
-  const row = document.createElement("div");
-  row.className = "rack-row";
-  row.style.borderLeftColor = dotColor;
+  const row = document.createElement("tr");
 
   const locText = entry.path ? `${escapeHtml(entry.storageLabel)} → ${escapeHtml(entry.path)}` : escapeHtml(entry.storageLabel);
-  const tagsText = entry.tags.length ? entry.tags.join(", ") : "";
+  const tagsText = entry.tags.length ? entry.tags.join(", ") : "—";
 
   let actionsHtml = "";
   if (entry.kind === "global" && !showArchive) {
-    const toggleIcon = entry.status === "in_use" ? ICONS.box : ICONS.user;
-    const toggleTitle = entry.status === "in_use" ? "Mark In Store" : "Mark In Use";
     actionsHtml = `
       <button class="icon-btn item-row-edit-btn" title="Edit">${ICONS.edit}</button>
-      <button class="icon-btn item-row-toggle-btn" title="${toggleTitle}">${toggleIcon}</button>
       <button class="icon-btn delete item-row-archive-btn" title="Remove (send to Archive)">${ICONS.archive}</button>
     `;
   } else if (entry.kind === "global" && showArchive) {
@@ -73,74 +71,80 @@ function buildItemEntryRow(entry) {
     `;
   }
 
-  row.innerHTML = `
-    <div class="rack-row-main">
-      <span class="item-dot" style="background:${dotColor}"></span>
-      <span class="rack-row-name">${escapeHtml(entry.name)}</span>
-      <span class="rack-row-loc">${locText}${tagsText ? " · " + escapeHtml(tagsText) : ""}</span>
-    </div>
-    <div class="rack-row-progress">
-      ${entry.rack ? typeBadgeHtml(entry.rack.type) : `<span class="type-badge">Unassigned</span>`}
-      ${entry.kind === "global" ? itemStatusBadgeHtml(entry.status) : ""}
-    </div>
-    <div class="rack-row-meta">
-      <span><strong>${entry.quantity}</strong> units</span>
-      ${entry.rack ? `<span class="rack-id-badge">${escapeHtml(entry.rack.id)}</span>` : ""}
-      ${actionsHtml}
-    </div>
-  `;
+  const nameHtml = entry.kind === "global"
+    ? `<a href="${itemDetailUrl(entry.raw.id)}">${escapeHtml(entry.name)}</a>`
+    : escapeHtml(entry.name);
 
-  if (entry.rack) {
-    row.classList.add("clickable");
-    row.addEventListener("click", function () { window.location.href = rackDetailUrl(entry.rack.id); });
-  }
+  row.innerHTML = `
+    <td data-label="Item"><span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span>${nameHtml}</td>
+    <td data-label="Storage">${entry.rack ? `<a href="${rackDetailUrl(entry.rack.id)}" class="rack-id-badge">${escapeHtml(entry.rack.id)}</a> ` : ""}${locText}</td>
+    <td data-label="Tags" class="muted">${escapeHtml(tagsText)}</td>
+    <td data-label="Type">${entry.rack ? typeBadgeHtml(entry.rack.type) : `<span class="type-badge">Unassigned</span>`}</td>
+    <td data-label="Status">${entry.kind === "global" && !showArchive
+      ? `<button type="button" class="status-picker-btn" title="Move or change status">${itemStatusBadgeHtml(entry.status)}</button>`
+      : entry.kind === "global" ? itemStatusBadgeHtml(entry.status) : "—"}</td>
+    <td data-label="Qty"><strong>${entry.quantity}</strong></td>
+    <td data-label="Actions">${actionsHtml || "—"}</td>
+  `;
 
   if (entry.kind === "global" && !showArchive) {
     row.querySelector(".item-row-edit-btn").addEventListener("click", function (e) {
       e.stopPropagation();
       openAddItemModal(entry.raw);
     });
-    row.querySelector(".item-row-toggle-btn").addEventListener("click", function (e) {
+    row.querySelector(".status-picker-btn").addEventListener("click", function (e) {
       e.stopPropagation();
-      const next = entry.raw.status === "in_use" ? "in_store" : "in_use";
-      entry.raw.status = next;
-      saveGlobalItems(globalItems);
-      logStatusChange(entry.raw, next, entry.rack);
-      showToast(`"${entry.raw.name}" marked ${ITEM_STATUS_LABELS[next]}`, "success");
-      applyItemFilters();
+      openMoveItemModal(entry);
     });
     row.querySelector(".item-row-archive-btn").addEventListener("click", function (e) {
       e.stopPropagation();
-      if (!confirm(`Remove "${entry.raw.name}" to the archive?`)) return;
-      entry.raw.status = "removed";
-      saveGlobalItems(globalItems);
-      logStatusChange(entry.raw, "removed", entry.rack);
-      showToast(`"${entry.raw.name}" moved to archive`, "danger");
-      applyItemFilters();
+      archiveGlobalItem(entry.raw, entry.rack);
     });
   } else if (entry.kind === "global" && showArchive) {
     row.querySelector(".item-row-restore-btn").addEventListener("click", function (e) {
       e.stopPropagation();
-      entry.raw.status = "in_store";
-      saveGlobalItems(globalItems);
-      logStatusChange(entry.raw, "in_store", entry.rack);
-      showToast(`"${entry.raw.name}" restored`, "success");
-      applyItemFilters();
+      restoreGlobalItem(entry.raw, entry.rack);
     });
     row.querySelector(".item-row-purge-btn").addEventListener("click", function (e) {
       e.stopPropagation();
-      if (!confirm(`Permanently delete "${entry.raw.name}"? This cannot be undone.`)) return;
-      globalItems = globalItems.filter(function (i) { return i.id !== entry.raw.id; });
-      saveGlobalItems(globalItems);
-      showToast(`"${entry.raw.name}" permanently deleted`, "danger");
-      applyItemFilters();
+      purgeGlobalItem(entry.raw);
     });
   }
 
   return row;
 }
 
+window.onItemDataChanged = function () { applyItemFilters(); };
+
 let itemCurrentPage = 1;
+let itemSortField = "name";
+let itemSortDir = "asc";
+let currentFilteredItems = [];
+
+function sortItemEntries(list) {
+  const dir = itemSortDir === "asc" ? 1 : -1;
+  return list.slice().sort(function (a, b) {
+    let av = a[itemSortField];
+    let bv = b[itemSortField];
+    if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+}
+
+function syncItemSortIndicators() {
+  document.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
+    const arrow = th.querySelector(".sort-arrow");
+    if (th.dataset.sort === itemSortField) {
+      th.classList.add("sorted");
+      arrow.textContent = itemSortDir === "asc" ? "▲" : "▼";
+    } else {
+      th.classList.remove("sorted");
+      arrow.textContent = "";
+    }
+  });
+}
 
 function applyItemFilters() {
   const query = document.getElementById("itemFilterSearch").value.trim().toLowerCase();
@@ -151,7 +155,7 @@ function applyItemFilters() {
     return entry.kind === "legacy" || entry.status !== "removed";
   });
 
-  const filtered = all.filter(function (entry) {
+  let filtered = all.filter(function (entry) {
     const matchesQuery = !query ||
       entry.name.toLowerCase().indexOf(query) !== -1 ||
       entry.storageLabel.toLowerCase().indexOf(query) !== -1 ||
@@ -162,7 +166,9 @@ function applyItemFilters() {
     return matchesQuery && matchesType;
   });
 
-  filtered.sort(function (a, b) { return a.name.localeCompare(b.name); });
+  filtered = sortItemEntries(filtered);
+  syncItemSortIndicators();
+  currentFilteredItems = filtered;
 
   document.getElementById("itemListHeading").textContent =
     `${showArchive ? "Archived" : "Items"} (${filtered.length} of ${all.length})`;
@@ -170,17 +176,20 @@ function applyItemFilters() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   if (itemCurrentPage > totalPages) itemCurrentPage = totalPages;
 
-  const list = document.getElementById("itemList");
+  const tbody = document.getElementById("itemTableBody");
   const emptyState = document.getElementById("itemEmptyState");
-  list.innerHTML = "";
+  const table = document.querySelector(".log-table-wrap");
+  tbody.innerHTML = "";
 
   if (filtered.length === 0) {
     emptyState.hidden = false;
     emptyState.textContent = showArchive ? "The archive is empty." : "No items match your filters.";
+    table.hidden = true;
   } else {
     emptyState.hidden = true;
+    table.hidden = false;
     paginateArray(filtered, itemCurrentPage, PAGE_SIZE).forEach(function (entry) {
-      list.appendChild(buildItemEntryRow(entry));
+      tbody.appendChild(buildItemTableRow(entry));
     });
   }
 
@@ -189,6 +198,20 @@ function applyItemFilters() {
     applyItemFilters();
   });
 }
+
+document.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
+  th.addEventListener("click", function () {
+    const field = th.dataset.sort;
+    if (itemSortField === field) {
+      itemSortDir = itemSortDir === "asc" ? "desc" : "asc";
+    } else {
+      itemSortField = field;
+      itemSortDir = "asc";
+    }
+    itemCurrentPage = 1;
+    applyItemFilters();
+  });
+});
 
 document.getElementById("itemFilterSearch").addEventListener("input", function () { itemCurrentPage = 1; applyItemFilters(); });
 document.getElementById("itemFilterType").addEventListener("change", function () { itemCurrentPage = 1; applyItemFilters(); });
@@ -199,112 +222,293 @@ document.getElementById("itemFilterReset").addEventListener("click", function ()
   applyItemFilters();
 });
 
-// ---------- Add / Edit Item modal ----------
-const addItemModalOverlay = document.getElementById("addItemModalOverlay");
-const addItemPageForm = document.getElementById("addItemPageForm");
-const addItemPageError = document.getElementById("addItemPageError");
-const placeRackSelect = document.getElementById("placeRackSelect");
+// ---------- Import Items ----------
+const IMPORT_COLUMNS = ["name", "itemid", "tags", "quantity", "storageid", "remarks", "status"];
 
-let itemTagInput = null;
-let itemImageInput = null;
-let editingGlobalItemId = null;
-
-function populateRackSelect(selectedId) {
-  placeRackSelect.innerHTML = `<option value="">— Unassigned —</option>` + racks.map(function (r) {
-    return `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)} (${escapeHtml(r.id)}) — ${escapeHtml(roomLabel(r.storeRoomId))}</option>`;
-  }).join("");
-  placeRackSelect.value = selectedId || "";
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ",") {
+      row.push(field); field = "";
+    } else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(field); field = "";
+      if (row.length > 1 || row[0] !== "") rows.push(row);
+      row = [];
+    } else {
+      field += c;
+    }
+  }
+  if (field !== "" || row.length) { row.push(field); rows.push(row); }
+  return rows;
 }
 
-function openAddItemModal(existingItem) {
-  addItemPageError.hidden = true;
-  addItemPageForm.reset();
-  populateRackSelect(existingItem ? existingItem.storageId : "");
-
-  editingGlobalItemId = existingItem ? existingItem.id : null;
-  document.getElementById("addItemModalTitle").textContent = existingItem ? "Edit Item" : "Add Item";
-  document.getElementById("addItemPageSubmit").textContent = existingItem ? "Save Changes" : "Add Item";
-  document.getElementById("placeItemEditingId").value = existingItem ? existingItem.id : "";
-  document.getElementById("placeItemId").value = existingItem ? existingItem.id : "";
-  document.getElementById("placeItemName").value = existingItem ? existingItem.name : "";
-  document.getElementById("placeItemQuantity").value = existingItem ? existingItem.quantity : "";
-  document.getElementById("placeItemRemarks").value = existingItem ? existingItem.remarks || "" : "";
-
-  itemTagInput = createTagInput(document.getElementById("placeItemTagChips"), document.getElementById("placeItemTagText"), existingItem ? existingItem.tags || [] : []);
-  itemImageInput = createImageInput(document.getElementById("placeItemImagePreviews"), document.getElementById("placeItemImageFile"), { initialImages: existingItem ? existingItem.images || [] : [] });
-
-  addItemModalOverlay.hidden = false;
+function csvRowsToObjects(rows) {
+  if (!rows.length) return [];
+  const headers = rows[0].map(function (h) { return h.trim(); });
+  return rows.slice(1).map(function (r) {
+    const obj = {};
+    headers.forEach(function (h, i) { obj[h] = r[i] !== undefined ? r[i] : ""; });
+    return obj;
+  });
 }
 
-function closeAddItemModal() {
-  addItemModalOverlay.hidden = true;
-  editingGlobalItemId = null;
+function normalizeRowKeys(obj) {
+  const out = {};
+  Object.keys(obj).forEach(function (k) {
+    out[k.trim().toLowerCase().replace(/\s+/g, "")] = obj[k];
+  });
+  return out;
 }
 
-document.getElementById("addItemPageBtn").addEventListener("click", function () { openAddItemModal(null); });
-document.getElementById("addItemModalClose").addEventListener("click", closeAddItemModal);
-document.getElementById("addItemPageCancel").addEventListener("click", closeAddItemModal);
-addItemModalOverlay.addEventListener("click", function (e) { if (e.target === addItemModalOverlay) closeAddItemModal(); });
+function parseImportFile(file) {
+  const isCsv = /\.csv$/i.test(file.name);
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onerror = function () { reject(new Error("Could not read the file.")); };
+    if (isCsv) {
+      reader.onload = function () {
+        try {
+          const rows = csvRowsToObjects(parseCSV(String(reader.result)));
+          resolve(rows.map(normalizeRowKeys));
+        } catch (err) { reject(err); }
+      };
+      reader.readAsText(file);
+    } else {
+      reader.onload = function () {
+        try {
+          const wb = XLSX.read(new Uint8Array(reader.result), { type: "array" });
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+          resolve(rows.map(normalizeRowKeys));
+        } catch (err) { reject(err); }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  });
+}
 
-addItemPageForm.addEventListener("submit", function (e) {
-  e.preventDefault();
+function validateImportRow(obj, seenIds) {
+  const name = String(obj.name || "").trim();
+  const itemId = String(obj.itemid || "").trim();
+  const tags = String(obj.tags || "").split(",").map(function (t) { return t.trim(); }).filter(Boolean);
+  const quantity = parseInt(obj.quantity, 10);
+  const storageIdRaw = String(obj.storageid || "").trim();
+  const remarks = String(obj.remarks || "").trim();
+  const statusRaw = String(obj.status || "").trim().toLowerCase();
+  const status = statusRaw === "in use" || statusRaw === "in_use" ? "in_use" : "in_store";
 
-  const name = document.getElementById("placeItemName").value.trim();
-  const idRaw = document.getElementById("placeItemId").value.trim();
-  const quantity = parseInt(document.getElementById("placeItemQuantity").value, 10);
-  const storageId = placeRackSelect.value || null;
-  const remarks = document.getElementById("placeItemRemarks").value.trim();
+  const errors = [];
+  if (!name) errors.push("Missing name");
+  if (isNaN(quantity) || quantity < 1) errors.push("Invalid quantity");
 
-  if (!name || isNaN(quantity) || quantity < 1) {
-    addItemPageError.textContent = "Please enter an item name and a valid quantity.";
-    addItemPageError.hidden = false;
-    return;
+  let rack = null;
+  if (storageIdRaw) {
+    rack = findRack(storageIdRaw);
+    if (!rack) errors.push(`Unknown storage "${storageIdRaw}"`);
   }
 
-  if (idRaw && globalItems.some(function (i) { return i.id.toLowerCase() === idRaw.toLowerCase() && i.id !== editingGlobalItemId; })) {
-    addItemPageError.textContent = `Item ID "${idRaw}" is already in use. Choose a different ID.`;
-    addItemPageError.hidden = false;
-    return;
+  if (itemId) {
+    if (findGlobalItem(itemId)) errors.push(`Item ID "${itemId}" already exists`);
+    else if (seenIds.has(itemId)) errors.push(`Item ID "${itemId}" repeated in file`);
   }
+  if (itemId) seenIds.add(itemId);
 
-  const tags = itemTagInput.getTags();
-  const images = itemImageInput.getImages();
-  const rack = storageId ? findRack(storageId) : null;
+  return { name, itemId, tags, quantity, storageId: rack ? rack.id : null, rack, remarks, status, errors };
+}
 
-  if (editingGlobalItemId) {
-    const item = findGlobalItem(editingGlobalItemId);
-    const delta = quantity - item.quantity;
-    item.name = name;
-    item.quantity = quantity;
-    item.tags = tags;
-    item.remarks = remarks;
-    item.images = images;
-    item.storageId = storageId;
-    saveGlobalItems(globalItems);
-    if (delta > 0) logTransaction("in", name, delta, rack, null);
-    else if (delta < 0) logTransaction("out", name, -delta, rack, null);
-    showToast(`"${name}" updated`, "success");
-  } else {
+let importParsedRows = [];
+
+function importRowHtml(row) {
+  const ok = row.errors.length === 0;
+  const statusCell = ok
+    ? `<span class="rack-badge">${ICONS.check} OK</span>`
+    : `<span class="rack-badge full" title="${escapeHtml(row.errors.join("; "))}">${escapeHtml(row.errors.join("; "))}</span>`;
+  return `
+    <tr class="${ok ? "" : "import-row-error"}">
+      <td data-label="Status">${statusCell}</td>
+      <td data-label="Name">${escapeHtml(row.name || "—")}</td>
+      <td data-label="Item ID">${escapeHtml(row.itemId || "auto")}</td>
+      <td data-label="Tags">${escapeHtml(row.tags.join(", ") || "—")}</td>
+      <td data-label="Qty">${isNaN(row.quantity) ? "—" : row.quantity}</td>
+      <td data-label="Storage">${escapeHtml(row.rack ? row.rack.name : (row.storageId ? row.storageId : "Unassigned"))}</td>
+      <td data-label="Remarks">${escapeHtml(row.remarks || "—")}</td>
+    </tr>`;
+}
+
+function showImportStep(step) {
+  document.getElementById("importStepUpload").hidden = step !== "upload";
+  document.getElementById("importStepPreview").hidden = step !== "preview";
+}
+
+function openImportModal() {
+  document.getElementById("importFile").value = "";
+  document.getElementById("importParseError").hidden = true;
+  importParsedRows = [];
+  showImportStep("upload");
+  document.getElementById("importModalOverlay").hidden = false;
+}
+
+function closeImportModal() {
+  document.getElementById("importModalOverlay").hidden = true;
+}
+
+document.getElementById("importItemsBtn").addEventListener("click", openImportModal);
+document.getElementById("importModalClose").addEventListener("click", closeImportModal);
+document.getElementById("importCancel1").addEventListener("click", closeImportModal);
+document.getElementById("importBack").addEventListener("click", function () { showImportStep("upload"); });
+document.getElementById("importModalOverlay").addEventListener("click", function (e) {
+  if (e.target === document.getElementById("importModalOverlay")) closeImportModal();
+});
+
+document.getElementById("importDownloadTemplate").addEventListener("click", function () {
+  const csv = "name,itemId,tags,quantity,storageId,remarks,status\n" +
+    "Wrenches,,Tools,16,ST-1001,Reorder when below 5,In Store\n" +
+    "Floor Cleaner,,Cleaning Supplies,20,ST-1002,,In Store\n";
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "item-import-template.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("importFile").addEventListener("change", function (e) {
+  const file = e.target.files[0];
+  const errorEl = document.getElementById("importParseError");
+  errorEl.hidden = true;
+  if (!file) return;
+
+  parseImportFile(file).then(function (rawRows) {
+    if (!rawRows.length) {
+      errorEl.textContent = "That file has no rows to import.";
+      errorEl.hidden = false;
+      return;
+    }
+    const seenIds = new Set();
+    importParsedRows = rawRows.map(function (r) { return validateImportRow(r, seenIds); });
+
+    const validCount = importParsedRows.filter(function (r) { return r.errors.length === 0; }).length;
+    document.getElementById("importSummary").textContent =
+      `${importParsedRows.length} row${importParsedRows.length === 1 ? "" : "s"} found — ${validCount} ready to import, ${importParsedRows.length - validCount} with errors (errors will be skipped).`;
+    document.getElementById("importPreviewBody").innerHTML = importParsedRows.map(importRowHtml).join("");
+    document.getElementById("importConfirm").disabled = validCount === 0;
+
+    showImportStep("preview");
+  }).catch(function (err) {
+    errorEl.textContent = "Couldn't read that file: " + err.message;
+    errorEl.hidden = false;
+  });
+});
+
+document.getElementById("importConfirm").addEventListener("click", function () {
+  const validRows = importParsedRows.filter(function (r) { return r.errors.length === 0; });
+  if (!validRows.length) return;
+
+  validRows.forEach(function (row) {
     const item = {
-      id: idRaw || nextItemCode(),
-      name: name,
-      tags: tags,
-      quantity: quantity,
-      remarks: remarks,
-      storageId: storageId,
-      images: images,
-      status: "in_store",
+      id: row.itemId || nextItemCode(),
+      name: row.name,
+      tags: row.tags,
+      quantity: row.quantity,
+      remarks: row.remarks,
+      images: [],
+      storageId: row.storageId,
+      status: row.status,
       createdAt: Date.now(),
     };
     globalItems.push(item);
-    saveGlobalItems(globalItems);
-    logTransaction("in", name, quantity, rack, null);
-    showToast(`"${name}" added`, "success");
-  }
+    logTransaction("in", item.name, item.quantity, row.rack, null);
+  });
+  saveGlobalItems(globalItems);
 
-  closeAddItemModal();
+  showToast(`Imported ${validRows.length} item${validRows.length === 1 ? "" : "s"}`, "success");
+  closeImportModal();
   itemCurrentPage = 1;
   applyItemFilters();
+});
+
+// ---------- Export (CSV / PDF) ----------
+const exportBtn = document.getElementById("exportBtn");
+const exportMenu = document.getElementById("exportMenu");
+
+exportBtn.addEventListener("click", function (e) {
+  e.stopPropagation();
+  exportMenu.hidden = !exportMenu.hidden;
+});
+document.addEventListener("click", function () { exportMenu.hidden = true; });
+exportMenu.addEventListener("click", function (e) { e.stopPropagation(); });
+
+function exportFileBaseName() {
+  return (showArchive ? "archived-items" : "items") + "-" + new Date().toISOString().slice(0, 10);
+}
+
+function exportRowsAsObjects() {
+  return currentFilteredItems.map(function (entry) {
+    return {
+      Name: entry.name,
+      "Item ID": entry.kind === "global" ? entry.raw.id : "—",
+      Storage: entry.rack ? `${entry.rack.name} (${entry.rack.id})` : "Unassigned",
+      Tags: entry.tags.join(", "),
+      Type: entry.typeLabel,
+      Status: entry.statusLabel,
+      Quantity: entry.quantity,
+      Remarks: entry.remarks || "",
+    };
+  });
+}
+
+function csvEscape(val) {
+  const s = String(val == null ? "" : val);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+document.getElementById("exportCsvBtn").addEventListener("click", function () {
+  const rows = exportRowsAsObjects();
+  if (!rows.length) { showToast("Nothing to export.", "danger"); return; }
+  const headers = Object.keys(rows[0]);
+  const lines = [headers.join(",")].concat(rows.map(function (r) {
+    return headers.map(function (h) { return csvEscape(r[h]); }).join(",");
+  }));
+  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = exportFileBaseName() + ".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  exportMenu.hidden = true;
+});
+
+document.getElementById("exportPdfBtn").addEventListener("click", function () {
+  const rows = exportRowsAsObjects();
+  if (!rows.length) { showToast("Nothing to export.", "danger"); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+  const headers = Object.keys(rows[0]);
+  doc.setFontSize(14);
+  doc.text(showArchive ? "Archived Items" : "All Items", 14, 15);
+  doc.setFontSize(9);
+  doc.text(new Date().toLocaleString(), 14, 21);
+  doc.autoTable({
+    head: [headers],
+    body: rows.map(function (r) { return headers.map(function (h) { return String(r[h]); }); }),
+    startY: 26,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [37, 99, 235] },
+  });
+  doc.save(exportFileBaseName() + ".pdf");
+  exportMenu.hidden = true;
 });
 
 syncArchiveToggle();

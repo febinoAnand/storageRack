@@ -1,12 +1,12 @@
 const typeHints = {
-  shelf: "Flat shelf levels, e.g. Level 1, Level 2.",
-  rack: "Levels that can each hold sections.",
-  cupboard: "A mix of shelves and drawers.",
-  bureau: "A set of drawers.",
-  wardrobe: "A hanging section plus shelves.",
-  cabinet: "Shelves and compartments.",
-  box: "A single internal space — just add items directly.",
-  custom: "Build your own arbitrary structure of nested nodes.",
+  shelf: "Open shelving.",
+  rack: "A multi-tier rack for bulkier goods.",
+  cupboard: "An enclosed unit with doors.",
+  bureau: "A desk or unit built from drawers.",
+  wardrobe: "A tall unit for hanging or folded items.",
+  cabinet: "An enclosed storage cabinet.",
+  box: "A single container.",
+  custom: "Anything that doesn't fit the other types.",
 };
 
 (function populateSelects() {
@@ -62,8 +62,6 @@ document.getElementById("addRackForm").addEventListener("submit", function (e) {
     return;
   }
 
-  const nodes = typeInfo(type).singleSpace ? [makeNode("Internal Space", "space")] : [];
-
   const rack = {
     id: id,
     name: name,
@@ -71,7 +69,7 @@ document.getElementById("addRackForm").addEventListener("submit", function (e) {
     type: type,
     tags: newTagInput.getTags(),
     images: newImageInput.getImages(),
-    nodes: nodes,
+    nodes: [],
     createdAt: Date.now(),
   };
   racks.push(rack);

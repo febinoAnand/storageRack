@@ -121,57 +121,96 @@
   </div>
 
   <!-- Add / Edit Item Modal -->
-  <div class="modal-overlay" id="itemModalOverlay" hidden>
+  <div class="modal-overlay" id="addItemModalOverlay" hidden>
     <div class="modal">
       <div class="modal-header">
-        <h3 id="itemModalTitle">Add Item</h3>
-        <button class="modal-close" id="itemModalClose">&times;</button>
+        <h3 id="addItemModalTitle">Add Item</h3>
+        <button class="modal-close" id="addItemModalClose">&times;</button>
       </div>
-      <form id="itemForm" class="modal-form">
-        <input type="hidden" id="itemId">
-        <div class="field">
-          <label for="itemName">Item Name</label>
-          <input type="text" id="itemName" placeholder="e.g. Circuit Boards - Box 12" required>
+      <form id="addItemPageForm" class="modal-form">
+        <input type="hidden" id="placeItemEditingId">
+        <div class="field-group">
+          <div class="field">
+            <label for="placeItemName">Item Name <span class="req">*</span></label>
+            <input type="text" id="placeItemName" placeholder="e.g. Circuit Boards - Box 12" required>
+          </div>
+          <div class="field">
+            <label for="placeItemId">Item ID <span class="optional-tag">(optional)</span></label>
+            <input type="text" id="placeItemId" placeholder="Auto-generated if left blank">
+          </div>
         </div>
         <div class="field">
-          <label for="itemQuantity">Quantity</label>
-          <input type="number" id="itemQuantity" min="1" placeholder="e.g. 5" required>
+          <label for="placeItemTagText">Item Tags</label>
+          <div class="tag-input" id="placeItemTagInput">
+            <div class="tag-input-chips" id="placeItemTagChips"></div>
+            <input type="text" id="placeItemTagText" placeholder="Type a tag and press Enter">
+          </div>
         </div>
-        <p id="itemError" class="error-msg" hidden></p>
+        <div class="field-group">
+          <div class="field">
+            <label for="placeItemQuantity">Quantity <span class="req">*</span></label>
+            <input type="number" id="placeItemQuantity" min="1" placeholder="e.g. 5" required>
+          </div>
+          <div class="field">
+            <label for="placeRackSelect">Storage <span class="optional-tag">(optional)</span></label>
+            <select id="placeRackSelect">
+              <option value="">— Unassigned —</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="placeItemRemarks">Remarks</label>
+          <textarea id="placeItemRemarks" rows="2" placeholder="Any notes about this item"></textarea>
+        </div>
+        <div class="field">
+          <label for="placeItemImageFile">Pictures</label>
+          <div class="image-input" id="placeItemImageInput">
+            <div class="image-input-previews" id="placeItemImagePreviews"></div>
+            <label class="image-input-add" for="placeItemImageFile">
+              <span class="add-ghost-icon">+</span> Add Pictures
+            </label>
+            <input type="file" id="placeItemImageFile" accept="image/*" multiple hidden>
+          </div>
+          <p class="field-hint">Up to 5 pictures, 2MB each.</p>
+        </div>
+        <p id="addItemPageError" class="error-msg" hidden></p>
         <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="itemCancel">Cancel</button>
-          <button type="submit" class="btn-primary" id="itemSave">Add Item</button>
+          <button type="button" class="btn-secondary" id="addItemPageCancel">Cancel</button>
+          <button type="submit" class="btn-primary" id="addItemPageSubmit">Add Item</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Add / Rename Node Modal -->
-  <div class="modal-overlay" id="nodeModalOverlay" hidden>
-    <div class="modal">
+  <!-- QR Code Modal -->
+  <div class="modal-overlay" id="qrModalOverlay" hidden>
+    <div class="modal modal-narrow">
       <div class="modal-header">
-        <h3 id="nodeModalTitle">Add Level</h3>
-        <button class="modal-close" id="nodeModalClose">&times;</button>
+        <h3>Storage QR Code</h3>
+        <button class="modal-close" id="qrModalClose">&times;</button>
       </div>
-      <form id="nodeForm" class="modal-form">
-        <div class="field">
-          <label for="nodeName">Name</label>
-          <input type="text" id="nodeName" placeholder="e.g. Level 1" required>
-        </div>
-        <div class="field">
-          <label for="nodeCapacity">Capacity (optional)</label>
-          <input type="number" id="nodeCapacity" min="1" placeholder="Leave blank for unlimited">
-          <p class="field-hint">If set, items placed directly here can't exceed this.</p>
-        </div>
-        <p id="nodeError" class="error-msg" hidden></p>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="nodeCancel">Cancel</button>
-          <button type="submit" class="btn-primary" id="nodeSave">Add</button>
-        </div>
-      </form>
+      <div class="qr-modal-body">
+        <div class="qr-code-box" id="qrCodeBox"></div>
+        <div class="qr-code-id" id="qrCodeId"></div>
+        <div class="qr-code-name" id="qrCodeName"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="qrModalCloseBtn">Close</button>
+        <button type="button" class="btn-primary" id="qrPrintBtn">🖨️ Print</button>
+      </div>
     </div>
   </div>
 
+  <!-- Printable QR label (shown only when printing) -->
+  <div id="qrPrintArea">
+    <div class="qr-print-label">
+      <div class="qr-code-box" id="qrPrintCodeBox"></div>
+      <div class="qr-code-id" id="qrPrintId"></div>
+      <div class="qr-code-name" id="qrPrintName"></div>
+    </div>
+  </div>
+
+<script src="js/vendor/qrcode.js"></script>
 <script src="js/toast.js"></script>
 <script src="js/common.js"></script>
 <script src="js/storage-detail.js"></script>

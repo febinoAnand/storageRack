@@ -68,6 +68,15 @@
             <h2>IN/OUT Log</h2>
             <p class="muted">Every item movement, across every storage unit</p>
           </div>
+          <div class="node-actions">
+            <div class="export-dropdown">
+              <button class="btn-secondary" id="exportBtn">⬇ Export</button>
+              <div class="export-menu" id="exportMenu" hidden>
+                <button type="button" id="exportCsvBtn">📄 Export as CSV</button>
+                <button type="button" id="exportPdfBtn">📕 Export as PDF</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="filters-bar">
@@ -114,6 +123,8 @@
     </div>
   </div>
 
+<script src="js/vendor/jspdf.js"></script>
+<script src="js/vendor/jspdf.autotable.js"></script>
 <script src="js/toast.js"></script>
 <script src="js/common.js"></script>
 <script src="js/log.js"></script>

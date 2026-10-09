@@ -33,17 +33,15 @@ const ICONS = {
   arrowUp: svgIcon('<line x1="12" y1="19" x2="12" y2="5"></line><polyline points="6 11 12 5 18 11"></polyline>'),
   arrowDown: svgIcon('<line x1="12" y1="5" x2="12" y2="19"></line><polyline points="6 13 12 19 18 13"></polyline>'),
   restore: svgIcon('<path d="M3 12a9 9 0 1 0 3.3-6.9"></path><polyline points="3 3 3 8 8 8"></polyline>'),
+  qr: svgIcon('<rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><line x1="14" y1="15" x2="14" y2="21"></line><line x1="21" y1="15" x2="21" y2="21"></line><line x1="17.5" y1="14" x2="17.5" y2="21"></line>'),
+  print: svgIcon('<polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect>'),
+  chevronLeft: svgIcon('<polyline points="15 18 9 12 15 6"></polyline>'),
+  chevronRight: svgIcon('<polyline points="9 18 15 12 9 6"></polyline>'),
 };
 
 const NAV_ICONS = { overview: "home", storage: "archive", items: "tag", log: "repeat", rooms: "door", users: "users", roles: "shield" };
 
 ICONS.home = svgIcon('<path d="M3 11l9-7 9 7"></path><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"></path>');
-
-// Compartment (node) kind icons, shared between the storage-type badges and the structure tree.
-const NODE_ICONS = {
-  level: ICONS.layers, section: ICONS.folder, shelf: ICONS.shelf, drawer: ICONS.drawer,
-  hanging: ICONS.hanging, compartment: ICONS.compartment, space: ICONS.box, node: ICONS.node,
-};
 
 (function replaceChromeIcons() {
   document.querySelectorAll(".nav-item[data-route]").forEach(function (a) {
@@ -73,59 +71,31 @@ document.getElementById("logoutBtn").addEventListener("click", function () {
 });
 
 // ---------- Storage types ----------
+// Purely descriptive now — a storage has no sub-structure, so this only
+// drives the type badge/icon shown on it.
 const STORAGE_TYPES = {
-  shelf: { label: "Shelf", icon: ICONS.shelf, rootAdd: [{ kind: "level", label: "Shelf Level" }], childAdd: {} },
-  rack: { label: "Rack", icon: ICONS.layers, rootAdd: [{ kind: "level", label: "Level" }], childAdd: { level: [{ kind: "section", label: "Section" }] } },
-  cupboard: { label: "Cupboard", icon: ICONS.cupboard, rootAdd: [{ kind: "shelf", label: "Shelf" }, { kind: "drawer", label: "Drawer" }], childAdd: {} },
-  bureau: { label: "Bureau", icon: ICONS.bureau, rootAdd: [{ kind: "drawer", label: "Drawer" }], childAdd: {} },
-  wardrobe: { label: "Wardrobe", icon: ICONS.hanging, rootAdd: [{ kind: "hanging", label: "Hanging Section" }, { kind: "shelf", label: "Shelf" }], childAdd: {} },
-  cabinet: { label: "Cabinet", icon: ICONS.compartment, rootAdd: [{ kind: "shelf", label: "Shelf" }, { kind: "compartment", label: "Compartment" }], childAdd: {} },
-  box: { label: "Box", icon: ICONS.box, rootAdd: [], childAdd: {}, singleSpace: true },
-  custom: { label: "Custom", icon: ICONS.node, rootAdd: [{ kind: "node", label: "Node" }], childAdd: {}, freeNesting: true },
+  shelf: { label: "Shelf", icon: ICONS.shelf },
+  rack: { label: "Rack", icon: ICONS.layers },
+  cupboard: { label: "Cupboard", icon: ICONS.cupboard },
+  bureau: { label: "Bureau", icon: ICONS.bureau },
+  wardrobe: { label: "Wardrobe", icon: ICONS.hanging },
+  cabinet: { label: "Cabinet", icon: ICONS.compartment },
+  box: { label: "Box", icon: ICONS.box },
+  custom: { label: "Custom", icon: ICONS.node },
 };
 
 function typeInfo(type) {
   return STORAGE_TYPES[type] || STORAGE_TYPES.custom;
 }
 
-// ---------- IDs ----------
-function itemId() {
-  return "it_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-}
-
-function nodeId() {
-  return "nd_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-}
-
 // Unique, human-readable alphanumeric code for a compartment (level/shelf/drawer/section/etc.), e.g. "CM-1001".
+// Kept for any legacy compartment data created before storages became flat.
 const NODE_CODE_SEQ_KEY = "srNodeCodeSeqV1";
 
 function nextNodeCode() {
   const seq = parseInt(localStorage.getItem(NODE_CODE_SEQ_KEY) || "1000", 10) + 1;
   localStorage.setItem(NODE_CODE_SEQ_KEY, String(seq));
   return "CM-" + seq;
-}
-
-function makeNode(name, kind, capacity) {
-  return { id: nodeId(), code: nextNodeCode(), name: name, kind: kind, capacity: (capacity || capacity === 0) ? capacity : null, children: [], items: [] };
-}
-
-// How full a single node is, based on items placed directly on it (not its children).
-function nodeAvailability(node) {
-  const filled = node.items.reduce(function (s, it) { return s + it.quantity; }, 0);
-  if (node.capacity == null) return { filled: filled, capacity: null, remaining: Infinity, isFull: false };
-  const remaining = Math.max(0, node.capacity - filled);
-  return { filled: filled, capacity: node.capacity, remaining: remaining, isFull: remaining <= 0 };
-}
-
-function nodeAvailabilityLabel(node) {
-  const a = nodeAvailability(node);
-  if (a.capacity == null) return `${a.filled} placed`;
-  return a.isFull ? `Full (${a.filled}/${a.capacity})` : `${a.remaining} of ${a.capacity} free`;
-}
-
-function makeItem(name, quantity) {
-  return { id: itemId(), name: name, quantity: quantity };
 }
 
 // ---------- Locations (store rooms) ----------
@@ -300,20 +270,17 @@ function loadRacks() {
     return data;
   }
 
-  // Seed storages start with no structure — same as one you create yourself
-  // through the Add Storage form. Build it out from its detail page.
+  // A storage is just a storage — no sub-levels or compartments. Items attach
+  // to it directly (see loadGlobalItems below).
   const seed = [
-    seedRack("ST-1001", "Tool Rack 1", "SR-1001", "rack", ["Tools", "Hardware"], [], 8),
-    seedRack("ST-1002", "Supply Cupboard 1", "SR-1001", "cupboard", ["Kitchen Supplies", "Consumables"], [], 7),
-    seedRack("ST-1003", "Stationery Bureau", "SR-1001", "bureau", ["Office Stationery", "Supplies"], [], 6),
-    seedRack("ST-1004", "Uniform Wardrobe", "SR-1001", "wardrobe", ["Uniforms", "Apparel"], [], 5),
-    seedRack("ST-1005", "Packaging Shelf", "SR-1002", "shelf", ["Packaging", "Shipping"], [], 4),
-    seedRack("ST-1006", "Electronics Cabinet", "SR-1002", "cabinet", ["Electronics", "Hardware"], [], 3),
-    // Box is single-space by design — the Add Storage form always creates its one
-    // "Internal Space" automatically (there's no "+ Add" button for this type), so the
-    // seed matches that exactly rather than leaving it with no way to hold anything.
-    seedRack("ST-1007", "Spare Box 1", "SR-1002", "box", ["Miscellaneous"], [makeNode("Internal Space", "space")], 2),
-    seedRack("ST-1008", "Lab Storage", "SR-1002", "custom", ["Lab Equipment", "Research"], [], 1),
+    seedRack("ST-1001", "Spare Parts Rack", "SR-1001", "rack", ["Spare Parts", "Maintenance"], [], 8),
+    seedRack("ST-1002", "Cleaning Cupboard", "SR-1001", "cupboard", ["Cleaning Supplies", "Janitorial"], [], 7),
+    seedRack("ST-1003", "Paperwork Bureau", "SR-1001", "bureau", ["Documents", "Admin"], [], 6),
+    seedRack("ST-1004", "Safety Gear Wardrobe", "SR-1001", "wardrobe", ["Safety Gear", "PPE"], [], 5),
+    seedRack("ST-1005", "Retail Shelf 1", "SR-1002", "shelf", ["Retail Stock", "Display"], [], 4),
+    seedRack("ST-1006", "Server Cabinet", "SR-1002", "cabinet", ["IT Equipment", "Networking"], [], 3),
+    seedRack("ST-1007", "Returns Box", "SR-1002", "box", ["Returns"], [], 2),
+    seedRack("ST-1008", "Chem Storage", "SR-1002", "custom", ["Chemicals", "Hazmat"], [], 1),
   ];
   saveRacks(seed);
   return seed;
@@ -333,6 +300,10 @@ function rackDetailUrl(id) {
   return "storage-detail.html?id=" + encodeURIComponent(id);
 }
 
+function itemDetailUrl(id) {
+  return "item-detail.html?id=" + encodeURIComponent(id);
+}
+
 // ---------- Node / item helpers ----------
 function walkNodes(nodes, fn) {
   nodes.forEach(function (node) {
@@ -350,29 +321,12 @@ function unitItemCount(rack) {
   return total;
 }
 
-function unitNodeCount(rack) {
-  let count = 0;
-  walkNodes(rack.nodes, function () { count++; });
-  return count;
-}
-
 function collectAllItems(rack) {
   const all = [];
   walkNodes(rack.nodes, function (node) {
     node.items.forEach(function (it) { all.push(it); });
   });
   return all;
-}
-
-function findNodeDeep(nodes, id) {
-  for (let i = 0; i < nodes.length; i++) {
-    if (nodes[i].id === id) return nodes[i];
-    if (nodes[i].children && nodes[i].children.length) {
-      const found = findNodeDeep(nodes[i].children, id);
-      if (found) return found;
-    }
-  }
-  return null;
 }
 
 function findNodePathDeep(nodes, id, trail) {
@@ -424,19 +378,20 @@ function loadGlobalItems() {
   // exercised here: ID, tags, remarks, optional storage assignment, and status.
   function d(daysAgo) { return Date.now() - daysAgo * 86400000; }
   const seed = [
-    { id: "IT-1001", name: "Wrenches", tags: ["Tools"], quantity: 16, remarks: "Reorder when below 5.", storageId: "ST-1001", images: [], status: "in_store", createdAt: d(8) },
-    { id: "IT-1002", name: "Drill Bits", tags: ["Tools"], quantity: 40, remarks: "", storageId: "ST-1001", images: [], status: "in_store", createdAt: d(8) },
-    { id: "IT-1003", name: "Paper Cups", tags: ["Kitchen Supplies"], quantity: 50, remarks: "Bulk pack, 50 per sleeve.", storageId: "ST-1002", images: [], status: "in_store", createdAt: d(7) },
-    { id: "IT-1004", name: "Cutlery Sets", tags: ["Kitchen Supplies"], quantity: 30, remarks: "", storageId: "ST-1002", images: [], status: "in_store", createdAt: d(7) },
-    { id: "IT-1005", name: "Notebooks", tags: ["Office Stationery"], quantity: 22, remarks: "", storageId: "ST-1003", images: [], status: "in_store", createdAt: d(6) },
-    { id: "IT-1006", name: "Label Printer", tags: ["Equipment"], quantity: 1, remarks: "Shared across the warehouse floor.", storageId: "ST-1003", images: [], status: "in_use", createdAt: d(6) },
-    { id: "IT-1007", name: "Jackets", tags: ["Apparel"], quantity: 18, remarks: "", storageId: "ST-1004", images: [], status: "in_store", createdAt: d(5) },
-    { id: "IT-1008", name: "Cardboard Boxes", tags: ["Packaging"], quantity: 45, remarks: "", storageId: "ST-1005", images: [], status: "in_store", createdAt: d(4) },
-    { id: "IT-1009", name: "USB Adapters", tags: ["Electronics"], quantity: 33, remarks: "", storageId: "ST-1006", images: [], status: "in_store", createdAt: d(3) },
-    { id: "IT-1010", name: "First Aid Kit", tags: ["Safety"], quantity: 3, remarks: "Check expiry dates quarterly.", storageId: "ST-1006", images: [], status: "in_store", createdAt: d(3) },
-    { id: "IT-1011", name: "Replacement Fuses", tags: ["Miscellaneous"], quantity: 14, remarks: "", storageId: "ST-1007", images: [], status: "in_store", createdAt: d(2) },
-    { id: "IT-1012", name: "Test Tubes", tags: ["Lab Equipment"], quantity: 20, remarks: "", storageId: "ST-1008", images: [], status: "in_store", createdAt: d(1) },
-    { id: "IT-1013", name: "Spare Barcode Scanner", tags: ["Equipment", "Electronics"], quantity: 2, remarks: "", storageId: null, images: [], status: "in_store", createdAt: d(1) },
+    { id: "IT-1001", name: "Hydraulic Hoses", tags: ["Spare Parts"], quantity: 12, remarks: "Check for wear monthly.", storageId: "ST-1001", images: [], status: "in_store", createdAt: d(8) },
+    { id: "IT-1002", name: "Bearing Sets", tags: ["Spare Parts"], quantity: 28, remarks: "", storageId: "ST-1001", images: [], status: "in_store", createdAt: d(8) },
+    { id: "IT-1003", name: "Floor Cleaner", tags: ["Cleaning Supplies"], quantity: 20, remarks: "", storageId: "ST-1002", images: [], status: "in_store", createdAt: d(7) },
+    { id: "IT-1004", name: "Mop Heads", tags: ["Cleaning Supplies"], quantity: 15, remarks: "", storageId: "ST-1002", images: [], status: "in_store", createdAt: d(7) },
+    { id: "IT-1005", name: "Invoice Binders", tags: ["Documents"], quantity: 10, remarks: "Archived yearly.", storageId: "ST-1003", images: [], status: "in_store", createdAt: d(6) },
+    { id: "IT-1006", name: "Laminator", tags: ["Equipment"], quantity: 1, remarks: "Shared with front office.", storageId: "ST-1003", images: [], status: "in_use", createdAt: d(6) },
+    { id: "IT-1007", name: "Hard Hats", tags: ["PPE"], quantity: 24, remarks: "", storageId: "ST-1004", images: [], status: "in_store", createdAt: d(5) },
+    { id: "IT-1008", name: "Safety Vests", tags: ["PPE"], quantity: 30, remarks: "", storageId: "ST-1004", images: [], status: "in_store", createdAt: d(5) },
+    { id: "IT-1009", name: "Display Mannequins", tags: ["Retail Stock"], quantity: 6, remarks: "", storageId: "ST-1005", images: [], status: "in_store", createdAt: d(4) },
+    { id: "IT-1010", name: "Network Switches", tags: ["IT Equipment"], quantity: 9, remarks: "", storageId: "ST-1006", images: [], status: "in_store", createdAt: d(3) },
+    { id: "IT-1011", name: "Patch Cables", tags: ["Networking"], quantity: 50, remarks: "", storageId: "ST-1006", images: [], status: "in_store", createdAt: d(3) },
+    { id: "IT-1012", name: "Returned Headsets", tags: ["Returns"], quantity: 7, remarks: "Pending inspection.", storageId: "ST-1007", images: [], status: "in_store", createdAt: d(2) },
+    { id: "IT-1013", name: "Acetone Bottles", tags: ["Chemicals"], quantity: 5, remarks: "Store away from heat.", storageId: "ST-1008", images: [], status: "in_store", createdAt: d(1) },
+    { id: "IT-1014", name: "Spare Forklift Key", tags: ["Equipment"], quantity: 1, remarks: "", storageId: null, images: [], status: "in_store", createdAt: d(1) },
   ];
   saveGlobalItems(seed);
   return seed;
@@ -487,6 +442,259 @@ function itemStatusBadgeHtml(status) {
   return `<span class="rack-badge ${cls}">${escapeHtml(label)}</span>`;
 }
 
+// ---------- Item lifecycle actions (shared by items.html and item-detail.html) ----------
+function archiveGlobalItem(item, rack, onSuccess) {
+  if (!confirm(`Remove "${item.name}" to the archive?`)) return;
+  item.status = "removed";
+  saveGlobalItems(globalItems);
+  logStatusChange(item, "removed", rack);
+  showToast(`"${item.name}" moved to archive`, "danger");
+  if (onSuccess) onSuccess();
+  if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+}
+
+function restoreGlobalItem(item, rack, onSuccess) {
+  item.status = "in_store";
+  saveGlobalItems(globalItems);
+  logStatusChange(item, "in_store", rack);
+  showToast(`"${item.name}" restored`, "success");
+  if (onSuccess) onSuccess();
+  if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+}
+
+function purgeGlobalItem(item, onSuccess) {
+  if (!confirm(`Permanently delete "${item.name}"? This cannot be undone.`)) return;
+  globalItems = globalItems.filter(function (i) { return i.id !== item.id; });
+  saveGlobalItems(globalItems);
+  showToast(`"${item.name}" permanently deleted`, "danger");
+  if (onSuccess) onSuccess();
+  if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+}
+
+// ---------- Shared Add / Edit Item modal (present on items.html and item-detail.html) ----------
+let editingGlobalItemId = null;
+let itemTagInput = null;
+let itemImageInput = null;
+
+function populateRackSelect(selectEl, selectedId) {
+  selectEl.innerHTML = `<option value="">— Unassigned —</option>` + racks.map(function (r) {
+    return `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)} (${escapeHtml(r.id)}) — ${escapeHtml(roomLabel(r.storeRoomId))}</option>`;
+  }).join("");
+  selectEl.value = selectedId || "";
+}
+
+function openAddItemModal(existingItem, presetStorageId) {
+  const addItemModalOverlay = document.getElementById("addItemModalOverlay");
+  if (!addItemModalOverlay) return;
+
+  const addItemPageForm = document.getElementById("addItemPageForm");
+  document.getElementById("addItemPageError").hidden = true;
+  addItemPageForm.reset();
+  populateRackSelect(document.getElementById("placeRackSelect"), existingItem ? existingItem.storageId : presetStorageId);
+
+  editingGlobalItemId = existingItem ? existingItem.id : null;
+  document.getElementById("addItemModalTitle").textContent = existingItem ? "Edit Item" : "Add Item";
+  document.getElementById("addItemPageSubmit").textContent = existingItem ? "Save Changes" : "Add Item";
+  document.getElementById("placeItemEditingId").value = existingItem ? existingItem.id : "";
+  document.getElementById("placeItemId").value = existingItem ? existingItem.id : "";
+  document.getElementById("placeItemName").value = existingItem ? existingItem.name : "";
+  document.getElementById("placeItemQuantity").value = existingItem ? existingItem.quantity : "";
+  document.getElementById("placeItemRemarks").value = existingItem ? existingItem.remarks || "" : "";
+
+  itemTagInput = createTagInput(document.getElementById("placeItemTagChips"), document.getElementById("placeItemTagText"), existingItem ? existingItem.tags || [] : []);
+  itemImageInput = createImageInput(document.getElementById("placeItemImagePreviews"), document.getElementById("placeItemImageFile"), { initialImages: existingItem ? existingItem.images || [] : [] });
+
+  addItemModalOverlay.hidden = false;
+}
+
+function closeAddItemModal() {
+  document.getElementById("addItemModalOverlay").hidden = true;
+  editingGlobalItemId = null;
+}
+
+(function initAddItemModal() {
+  const addItemModalOverlay = document.getElementById("addItemModalOverlay");
+  if (!addItemModalOverlay) return;
+
+  const addItemPageForm = document.getElementById("addItemPageForm");
+  const addItemPageError = document.getElementById("addItemPageError");
+  const placeRackSelect = document.getElementById("placeRackSelect");
+  const addItemPageBtn = document.getElementById("addItemPageBtn");
+
+  if (addItemPageBtn) addItemPageBtn.addEventListener("click", function () { openAddItemModal(null); });
+  document.getElementById("addItemModalClose").addEventListener("click", closeAddItemModal);
+  document.getElementById("addItemPageCancel").addEventListener("click", closeAddItemModal);
+  addItemModalOverlay.addEventListener("click", function (e) { if (e.target === addItemModalOverlay) closeAddItemModal(); });
+
+  addItemPageForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const name = document.getElementById("placeItemName").value.trim();
+    const idRaw = document.getElementById("placeItemId").value.trim();
+    const quantity = parseInt(document.getElementById("placeItemQuantity").value, 10);
+    const storageId = placeRackSelect.value || null;
+    const remarks = document.getElementById("placeItemRemarks").value.trim();
+
+    if (!name || isNaN(quantity) || quantity < 1) {
+      addItemPageError.textContent = "Please enter an item name and a valid quantity.";
+      addItemPageError.hidden = false;
+      return;
+    }
+
+    if (idRaw && globalItems.some(function (i) { return i.id.toLowerCase() === idRaw.toLowerCase() && i.id !== editingGlobalItemId; })) {
+      addItemPageError.textContent = `Item ID "${idRaw}" is already in use. Choose a different ID.`;
+      addItemPageError.hidden = false;
+      return;
+    }
+
+    const tags = itemTagInput.getTags();
+    const images = itemImageInput.getImages();
+    const rack = storageId ? findRack(storageId) : null;
+
+    if (editingGlobalItemId) {
+      const item = findGlobalItem(editingGlobalItemId);
+      const delta = quantity - item.quantity;
+      item.name = name;
+      item.quantity = quantity;
+      item.tags = tags;
+      item.remarks = remarks;
+      item.images = images;
+      item.storageId = storageId;
+      saveGlobalItems(globalItems);
+      if (delta > 0) logTransaction("in", name, delta, rack, null);
+      else if (delta < 0) logTransaction("out", name, -delta, rack, null);
+      showToast(`"${name}" updated`, "success");
+    } else {
+      const item = {
+        id: idRaw || nextItemCode(),
+        name: name,
+        tags: tags,
+        quantity: quantity,
+        remarks: remarks,
+        storageId: storageId,
+        images: images,
+        status: "in_store",
+        createdAt: Date.now(),
+      };
+      globalItems.push(item);
+      saveGlobalItems(globalItems);
+      logTransaction("in", name, quantity, rack, null);
+      showToast(`"${name}" added`, "success");
+    }
+
+    closeAddItemModal();
+    if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+  });
+})();
+
+// ---------- Shared Move / Use Item modal (present on items.html and item-detail.html) ----------
+let moveItemCtx = null; // { raw, rack, name, quantity, storageLabel }
+
+function openMoveItemModal(entry) {
+  const moveItemModalOverlay = document.getElementById("moveItemModalOverlay");
+  if (!moveItemModalOverlay) return;
+
+  moveItemCtx = entry;
+  document.getElementById("moveItemError").hidden = true;
+  document.getElementById("moveItemForm").reset();
+
+  document.getElementById("moveItemContext").textContent =
+    `"${entry.name}" — ${entry.quantity} unit${entry.quantity === 1 ? "" : "s"} at ${entry.storageLabel}`;
+
+  const qtyInput = document.getElementById("moveItemQuantity");
+  qtyInput.max = entry.quantity;
+  qtyInput.value = entry.quantity;
+
+  populateRackSelect(document.getElementById("moveItemStorage"), entry.raw.storageId || "");
+  document.getElementById("moveItemStatus").value = entry.raw.status;
+
+  moveItemModalOverlay.hidden = false;
+}
+
+function closeMoveItemModal() {
+  document.getElementById("moveItemModalOverlay").hidden = true;
+  moveItemCtx = null;
+}
+
+(function initMoveItemModal() {
+  const moveItemModalOverlay = document.getElementById("moveItemModalOverlay");
+  if (!moveItemModalOverlay) return;
+
+  const moveItemForm = document.getElementById("moveItemForm");
+  const moveItemError = document.getElementById("moveItemError");
+
+  document.getElementById("moveItemModalClose").addEventListener("click", closeMoveItemModal);
+  document.getElementById("moveItemCancel").addEventListener("click", closeMoveItemModal);
+  moveItemModalOverlay.addEventListener("click", function (e) {
+    if (e.target === moveItemModalOverlay) closeMoveItemModal();
+  });
+
+  moveItemForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!moveItemCtx) return;
+
+    const entry = moveItemCtx;
+    const item = entry.raw;
+    const quantity = parseInt(document.getElementById("moveItemQuantity").value, 10);
+    const destStorageId = document.getElementById("moveItemStorage").value || null;
+    const destStatus = document.getElementById("moveItemStatus").value;
+
+    if (isNaN(quantity) || quantity < 1 || quantity > item.quantity) {
+      moveItemError.textContent = `Enter a quantity between 1 and ${item.quantity}.`;
+      moveItemError.hidden = false;
+      return;
+    }
+
+    const sourceRack = entry.rack;
+    const destRack = destStorageId ? findRack(destStorageId) : null;
+    const storageChanged = destStorageId !== (item.storageId || null);
+    const statusChanged = destStatus !== item.status;
+
+    if (quantity === item.quantity && !storageChanged && !statusChanged) {
+      moveItemError.textContent = "Nothing changed — pick a different quantity, storage, or status.";
+      moveItemError.hidden = false;
+      return;
+    }
+
+    if (quantity === item.quantity) {
+      // Taking everything — update this item in place, no split needed.
+      item.storageId = destStorageId;
+      item.status = destStatus;
+      saveGlobalItems(globalItems);
+      if (storageChanged) {
+        logTransaction("out", item.name, quantity, sourceRack, null);
+        logTransaction("in", item.name, quantity, destRack, null);
+      }
+      if (statusChanged) logStatusChange(item, destStatus, destRack);
+    } else {
+      // Taking part of it — split it into a new entry, leave the rest where it was.
+      item.quantity -= quantity;
+      const moved = {
+        id: nextItemCode(), name: item.name, tags: (item.tags || []).slice(),
+        quantity: quantity, remarks: item.remarks || "", images: (item.images || []).slice(),
+        storageId: destStorageId, status: destStatus, createdAt: Date.now(),
+      };
+      globalItems.push(moved);
+      saveGlobalItems(globalItems);
+      if (storageChanged) {
+        logTransaction("out", item.name, quantity, sourceRack, null);
+        logTransaction("in", item.name, quantity, destRack, null);
+      }
+      if (statusChanged) logStatusChange(moved, destStatus, destRack);
+    }
+
+    showToast(
+      storageChanged
+        ? `Moved ${quantity} unit${quantity === 1 ? "" : "s"} of "${item.name}" to ${destRack ? destRack.name : "Unassigned"}`
+        : `${quantity} unit${quantity === 1 ? "" : "s"} of "${item.name}" marked ${ITEM_STATUS_LABELS[destStatus]}`,
+      "success"
+    );
+
+    closeMoveItemModal();
+    if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+  });
+})();
+
 // ---------- IN / OUT transaction log ----------
 const LOG_KEY = "srItemLogV1";
 
@@ -494,11 +702,11 @@ const LOG_KEY = "srItemLogV1";
 function sampleOutLogEntries() {
   const ONE_DAY = 86400000;
   const examples = [
-    { rackId: "ST-1001", rackName: "Tool Rack 1", itemName: "Wrenches", quantity: 4, user: "jane.m" },
-    { rackId: "ST-1002", rackName: "Supply Cupboard 1", itemName: "Cutlery Sets", quantity: 3, user: "sam.v" },
-    { rackId: "ST-1003", rackName: "Stationery Bureau", itemName: "Notebooks", quantity: 5, user: "admin" },
-    { rackId: "ST-1004", rackName: "Uniform Wardrobe", itemName: "Jackets", quantity: 2, user: "jane.m" },
-    { rackId: "ST-1006", rackName: "Electronics Cabinet", itemName: "USB Adapters", quantity: 6, user: "admin" },
+    { rackId: "ST-1001", rackName: "Spare Parts Rack", itemName: "Hydraulic Hoses", quantity: 3, user: "jane.m" },
+    { rackId: "ST-1002", rackName: "Cleaning Cupboard", itemName: "Floor Cleaner", quantity: 4, user: "sam.v" },
+    { rackId: "ST-1003", rackName: "Paperwork Bureau", itemName: "Invoice Binders", quantity: 2, user: "admin" },
+    { rackId: "ST-1004", rackName: "Safety Gear Wardrobe", itemName: "Hard Hats", quantity: 5, user: "jane.m" },
+    { rackId: "ST-1006", rackName: "Server Cabinet", itemName: "Patch Cables", quantity: 10, user: "admin" },
   ];
   const out = [];
   examples.forEach(function (ex) {
@@ -618,15 +826,6 @@ function logStatusChange(item, newStatus, rack) {
   saveLog(itemLog);
 }
 
-function removeNodeDeep(nodes, id) {
-  const idx = nodes.findIndex(function (n) { return n.id === id; });
-  if (idx !== -1) { nodes.splice(idx, 1); return true; }
-  for (let i = 0; i < nodes.length; i++) {
-    if (nodes[i].children && removeNodeDeep(nodes[i].children, id)) return true;
-  }
-  return false;
-}
-
 // ---------- Shared helpers ----------
 function escapeHtml(str) {
   const div = document.createElement("div");
@@ -695,9 +894,72 @@ function imagesPreviewHtml(images, size) {
   if (!images.length) return "";
   size = size || 44;
   return `<div class="rack-images-preview">` + images.map(function (src) {
-    return `<img class="rack-image-thumb" src="${src}" alt="" style="width:${size}px;height:${size}px">`;
+    return `<img class="rack-image-thumb" src="${src}" alt="" title="Click to view" style="width:${size}px;height:${size}px">`;
   }).join("") + `</div>`;
 }
+
+// ---------- Image lightbox (click any picture thumbnail, anywhere, to view it full-size) ----------
+let lightboxImages = [];
+let lightboxIndex = 0;
+
+function buildLightbox() {
+  let el = document.getElementById("imageLightbox");
+  if (el) return el;
+
+  el = document.createElement("div");
+  el.id = "imageLightbox";
+  el.className = "lightbox-overlay";
+  el.hidden = true;
+  el.innerHTML = `
+    <button type="button" class="lightbox-close" title="Close">&times;</button>
+    <button type="button" class="lightbox-nav lightbox-prev" title="Previous">${ICONS.chevronLeft}</button>
+    <img class="lightbox-img" src="" alt="">
+    <button type="button" class="lightbox-nav lightbox-next" title="Next">${ICONS.chevronRight}</button>
+    <div class="lightbox-counter"></div>
+  `;
+  document.body.appendChild(el);
+
+  function close() { el.hidden = true; }
+  function show(i) {
+    lightboxIndex = (i + lightboxImages.length) % lightboxImages.length;
+    el.querySelector(".lightbox-img").src = lightboxImages[lightboxIndex];
+    const multi = lightboxImages.length > 1;
+    el.querySelector(".lightbox-prev").hidden = !multi;
+    el.querySelector(".lightbox-next").hidden = !multi;
+    el.querySelector(".lightbox-counter").textContent = multi ? `${lightboxIndex + 1} / ${lightboxImages.length}` : "";
+    el.querySelector(".lightbox-counter").hidden = !multi;
+  }
+
+  el.querySelector(".lightbox-close").addEventListener("click", close);
+  el.querySelector(".lightbox-prev").addEventListener("click", function () { show(lightboxIndex - 1); });
+  el.querySelector(".lightbox-next").addEventListener("click", function () { show(lightboxIndex + 1); });
+  el.addEventListener("click", function (e) { if (e.target === el) close(); });
+  document.addEventListener("keydown", function (e) {
+    if (el.hidden) return;
+    if (e.key === "Escape") close();
+    else if (e.key === "ArrowLeft") show(lightboxIndex - 1);
+    else if (e.key === "ArrowRight") show(lightboxIndex + 1);
+  });
+
+  el._show = show;
+  return el;
+}
+
+function openLightbox(images, startIndex) {
+  const el = buildLightbox();
+  lightboxImages = images;
+  el._show(startIndex || 0);
+  el.hidden = false;
+}
+
+document.addEventListener("click", function (e) {
+  const thumb = e.target.closest(".rack-image-thumb");
+  if (!thumb) return;
+  e.stopPropagation();
+  const container = thumb.closest(".rack-images-preview") || thumb.parentElement;
+  const thumbs = Array.from(container.querySelectorAll(".rack-image-thumb"));
+  openLightbox(thumbs.map(function (img) { return img.src; }), thumbs.indexOf(thumb));
+}, true);
 
 // ---------- Shared tag-input / image-input controls (Add + Edit storage forms) ----------
 function createTagInput(chipsEl, textEl, initialTags) {
@@ -813,7 +1075,6 @@ function buildItemsPreviewHtml(items) {
 // ---------- Rack card / row builders ----------
 function buildRackCard(rack) {
   const totalItems = unitItemCount(rack);
-  const nodeCount = unitNodeCount(rack);
 
   const tags = rackTags(rack);
   const images = rackImages(rack);
@@ -838,10 +1099,9 @@ function buildRackCard(rack) {
       ${tagsHtml(tags)}
     </div>
     ${imagesPreviewHtml(images)}
-    ${buildItemsPreviewHtml(collectAllItems(rack))}
+    ${buildItemsPreviewHtml(collectAllItems(rack).concat(activeGlobalItemsForRack(rack.id)))}
     <div class="rack-meta">
       <span><strong>${totalItems}</strong> items</span>
-      <span><strong>${nodeCount}</strong> location${nodeCount === 1 ? "" : "s"}</span>
     </div>
   `;
 
