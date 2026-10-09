@@ -22,10 +22,10 @@
           <span class="nav-icon">🏠</span> Overview
         </a>
         <a href="items.html" class="nav-item" data-route="items">
-          <span class="nav-icon">🏷️</span> All Items
+          <span class="nav-icon">🏷️</span> Items
         </a>
         <a href="storage.html" class="nav-item" data-route="storage">
-          <span class="nav-icon">🗄️</span> All Storages
+          <span class="nav-icon">🗄️</span> Storages
         </a>
         <a href="log.html" class="nav-item" data-route="log">
           <span class="nav-icon">🔄</span> IN/OUT Log
@@ -78,6 +78,14 @@
           </select>
           <select id="filterRoom">
             <option value="all">All Locations</option>
+          </select>
+          <select id="filterSort">
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="roomLabel-asc">Location (A-Z)</option>
+            <option value="typeLabel-asc">Type (A-Z)</option>
+            <option value="itemCount-desc">Items (most first)</option>
+            <option value="itemCount-asc">Items (fewest first)</option>
           </select>
           <button class="btn-secondary" id="filterReset">Reset</button>
         </div>
@@ -143,6 +151,7 @@
     </div>
   </div>
 
+<script src="js/vendor/qrcode.js"></script>
 <script src="js/toast.js"></script>
 <script src="js/common.js"></script>
 <script src="js/storage.js"></script>

@@ -2,74 +2,134 @@ function roleUserCount(roleId) {
   return users.filter(function (u) { return u.roleId === roleId; }).length;
 }
 
-function buildRoleCard(role) {
-  const count = roleUserCount(role.id);
-  const card = document.createElement("div");
-  card.className = "rack-card clickable";
-  card.style.borderLeft = `3px solid ${getCategoryColor(role.name).solid}`;
-  card.innerHTML = `
-    <div class="rack-card-head">
-      <div>
-        <span class="rack-id-badge">${escapeHtml(role.id)}</span>
-        <div class="rack-name">${escapeHtml(role.name)}</div>
-      </div>
-      <div class="rack-card-actions">
-        <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
-        <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
-      </div>
-    </div>
-    <div class="rack-location">${escapeHtml(role.description || "No description")}</div>
-    <div class="perm-chip-row">${permissionSummary(role.permissions)}</div>
-    <div class="rack-meta">
-      <span><strong>${count}</strong> user${count === 1 ? "" : "s"} assigned</span>
-    </div>
+let roleCurrentPage = 1;
+let roleSortField = "name";
+let roleSortDir = "asc";
+
+function buildRoleEntry(role) {
+  return { role: role, name: role.name, userCount: roleUserCount(role.id) };
+}
+
+function sortRoleEntries(list) {
+  const dir = roleSortDir === "asc" ? 1 : -1;
+  return list.slice().sort(function (a, b) {
+    let av = a[roleSortField];
+    let bv = b[roleSortField];
+    if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+}
+
+function syncRoleSortIndicators() {
+  document.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
+    const arrow = th.querySelector(".sort-arrow");
+    if (th.dataset.sort === roleSortField) {
+      th.classList.add("sorted");
+      arrow.textContent = roleSortDir === "asc" ? "▲" : "▼";
+    } else {
+      th.classList.remove("sorted");
+      arrow.textContent = "";
+    }
+  });
+}
+
+function buildRoleTableRow(entry) {
+  const role = entry.role;
+  const row = document.createElement("tr");
+  row.className = "clickable";
+  row.innerHTML = `
+    <td data-label="Role"><span class="rack-id-badge">${escapeHtml(role.id)}</span> ${escapeHtml(role.name)}</td>
+    <td data-label="Description" class="muted">${escapeHtml(role.description || "No description")}</td>
+    <td data-label="Permissions"><div class="perm-chip-row">${permissionSummary(role.permissions)}</div></td>
+    <td data-label="Users"><strong>${entry.userCount}</strong></td>
+    <td data-label="Actions">
+      <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
+      <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
+    </td>
   `;
 
-  card.addEventListener("click", function () { openRoleModal(role); });
-  card.querySelector(".edit-btn").addEventListener("click", function (e) {
+  row.addEventListener("click", function () { openRoleModal(role); });
+  row.querySelector(".edit-btn").addEventListener("click", function (e) {
     e.stopPropagation();
     openRoleModal(role);
   });
-  card.querySelector(".delete-btn").addEventListener("click", function (e) {
+  row.querySelector(".delete-btn").addEventListener("click", function (e) {
     e.stopPropagation();
     const count = roleUserCount(role.id);
     if (count > 0) {
       showToast(`Reassign its ${count} user(s) to another role first`, "danger");
       return;
     }
-    if (!confirm(`Delete role "${role.name}"? This cannot be undone.`)) return;
-    roles = roles.filter(function (r) { return r.id !== role.id; });
-    saveRoles(roles);
-    showToast(`"${role.name}" deleted`, "danger");
-    renderRoles();
+    confirmDialog(`Delete role "${role.name}"? This cannot be undone.`, function () {
+      roles = roles.filter(function (r) { return r.id !== role.id; });
+      saveRoles(roles);
+      showToast(`"${role.name}" deleted`, "danger");
+      applyRoleFilters();
+    }, { confirmLabel: "Delete" });
   });
 
-  return card;
+  return row;
 }
 
-let roleCurrentPage = 1;
+function applyRoleFilters() {
+  const query = document.getElementById("roleFilterSearch").value.trim().toLowerCase();
 
-function renderRoles() {
-  const totalPages = Math.max(1, Math.ceil(roles.length / PAGE_SIZE));
+  const filtered = roles.filter(function (r) {
+    return !query ||
+      r.name.toLowerCase().indexOf(query) !== -1 ||
+      (r.description || "").toLowerCase().indexOf(query) !== -1;
+  });
+
+  let entries = sortRoleEntries(filtered.map(buildRoleEntry));
+  syncRoleSortIndicators();
+
+  const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
   if (roleCurrentPage > totalPages) roleCurrentPage = totalPages;
 
-  const grid = document.getElementById("roleGrid");
+  const tbody = document.getElementById("roleTableBody");
   const emptyState = document.getElementById("emptyState");
-  grid.innerHTML = "";
+  const table = document.querySelector(".log-table-wrap");
+  tbody.innerHTML = "";
 
-  if (roles.length === 0) {
+  if (entries.length === 0) {
     emptyState.hidden = false;
+    table.hidden = true;
   } else {
     emptyState.hidden = true;
-    paginateArray(roles, roleCurrentPage, PAGE_SIZE).forEach(function (role) { grid.appendChild(buildRoleCard(role)); });
-    grid.appendChild(buildAddGhostCard("Add Role", function () { openRoleModal(null); }));
+    table.hidden = false;
+    paginateArray(entries, roleCurrentPage, PAGE_SIZE).forEach(function (entry) {
+      tbody.appendChild(buildRoleTableRow(entry));
+    });
   }
 
-  renderPagination(document.getElementById("rolePagination"), roles.length, roleCurrentPage, PAGE_SIZE, function (page) {
+  renderPagination(document.getElementById("rolePagination"), entries.length, roleCurrentPage, PAGE_SIZE, function (page) {
     roleCurrentPage = page;
-    renderRoles();
+    applyRoleFilters();
   });
 }
+
+document.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
+  th.addEventListener("click", function () {
+    const field = th.dataset.sort;
+    if (roleSortField === field) {
+      roleSortDir = roleSortDir === "asc" ? "desc" : "asc";
+    } else {
+      roleSortField = field;
+      roleSortDir = "asc";
+    }
+    roleCurrentPage = 1;
+    applyRoleFilters();
+  });
+});
+
+document.getElementById("roleFilterSearch").addEventListener("input", function () { roleCurrentPage = 1; applyRoleFilters(); });
+document.getElementById("roleFilterReset").addEventListener("click", function () {
+  document.getElementById("roleFilterSearch").value = "";
+  roleCurrentPage = 1;
+  applyRoleFilters();
+});
 
 // ---------- Permission matrix builder ----------
 function buildPermMatrixHtml() {
@@ -161,7 +221,7 @@ roleForm.addEventListener("submit", function (e) {
 
   saveRoles(roles);
   closeRoleModal();
-  renderRoles();
+  applyRoleFilters();
 });
 
-renderRoles();
+applyRoleFilters();

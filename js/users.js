@@ -21,49 +21,75 @@ function roleBadgeHtml(roleId) {
   return `<span class="rack-category-badge" style="background:${c.bg};border-color:${c.border};color:${c.text}">${escapeHtml(role.name)}</span>`;
 }
 
-function buildUserCard(user) {
-  const card = document.createElement("div");
-  card.className = "rack-card clickable";
-  card.style.borderLeft = `3px solid ${getCategoryColor(roleLabel(user.roleId)).solid}`;
-  card.innerHTML = `
-    <div class="rack-card-head">
-      <div>
-        <span class="rack-id-badge">${escapeHtml(user.id)}</span>
-        <div class="rack-name">${escapeHtml(user.name)}</div>
-      </div>
-      <div class="rack-card-actions">
-        <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
-        <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
-      </div>
-    </div>
-    <div class="rack-location"><span class="inline-icon">${ICONS.user}</span> @${escapeHtml(user.username)} ${user.email ? "· " + escapeHtml(user.email) : ""}</div>
-    <div class="rack-sub-meta">
-      ${roleBadgeHtml(user.roleId)}
-      ${statusBadgeHtml(user.status)}
-    </div>
-    <div class="rack-meta">
-      <span>Added ${new Date(user.createdAt).toLocaleDateString()}</span>
-    </div>
+let userCurrentPage = 1;
+let userSortField = "name";
+let userSortDir = "asc";
+
+function buildUserEntry(user) {
+  return {
+    user: user, name: user.name, username: user.username, status: user.status,
+    roleLabel: roleLabel(user.roleId), createdAt: user.createdAt,
+  };
+}
+
+function sortUserEntries(list) {
+  const dir = userSortDir === "asc" ? 1 : -1;
+  return list.slice().sort(function (a, b) {
+    let av = a[userSortField];
+    let bv = b[userSortField];
+    if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+}
+
+function syncUserSortIndicators() {
+  document.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
+    const arrow = th.querySelector(".sort-arrow");
+    if (th.dataset.sort === userSortField) {
+      th.classList.add("sorted");
+      arrow.textContent = userSortDir === "asc" ? "▲" : "▼";
+    } else {
+      th.classList.remove("sorted");
+      arrow.textContent = "";
+    }
+  });
+}
+
+function buildUserTableRow(entry) {
+  const user = entry.user;
+  const row = document.createElement("tr");
+  row.className = "clickable";
+  row.innerHTML = `
+    <td data-label="User"><span class="rack-id-badge">${escapeHtml(user.id)}</span> ${escapeHtml(user.name)}</td>
+    <td data-label="Username / Email" class="muted">@${escapeHtml(user.username)}${user.email ? " · " + escapeHtml(user.email) : ""}</td>
+    <td data-label="Role">${roleBadgeHtml(user.roleId)}</td>
+    <td data-label="Status">${statusBadgeHtml(user.status)}</td>
+    <td data-label="Added" class="muted">${new Date(user.createdAt).toLocaleDateString()}</td>
+    <td data-label="Actions">
+      <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
+      <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
+    </td>
   `;
 
-  card.addEventListener("click", function () { openUserModal(user); });
-  card.querySelector(".edit-btn").addEventListener("click", function (e) {
+  row.addEventListener("click", function () { openUserModal(user); });
+  row.querySelector(".edit-btn").addEventListener("click", function (e) {
     e.stopPropagation();
     openUserModal(user);
   });
-  card.querySelector(".delete-btn").addEventListener("click", function (e) {
+  row.querySelector(".delete-btn").addEventListener("click", function (e) {
     e.stopPropagation();
-    if (!confirm(`Delete user "${user.name}"? This cannot be undone.`)) return;
-    users = users.filter(function (u) { return u.id !== user.id; });
-    saveUsers(users);
-    showToast(`"${user.name}" deleted`, "danger");
-    applyUserFilters();
+    confirmDialog(`Delete user "${user.name}"? This cannot be undone.`, function () {
+      users = users.filter(function (u) { return u.id !== user.id; });
+      saveUsers(users);
+      showToast(`"${user.name}" deleted`, "danger");
+      applyUserFilters();
+    }, { confirmLabel: "Delete" });
   });
 
-  return card;
+  return row;
 }
-
-let userCurrentPage = 1;
 
 function applyUserFilters() {
   const query = document.getElementById("userFilterSearch").value.trim().toLowerCase();
@@ -78,26 +104,47 @@ function applyUserFilters() {
     return matchesQuery && matchesRole;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  let entries = sortUserEntries(filtered.map(buildUserEntry));
+  syncUserSortIndicators();
+
+  const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
   if (userCurrentPage > totalPages) userCurrentPage = totalPages;
 
-  const grid = document.getElementById("userGrid");
+  const tbody = document.getElementById("userTableBody");
   const emptyState = document.getElementById("emptyState");
-  grid.innerHTML = "";
+  const table = document.querySelector(".log-table-wrap");
+  tbody.innerHTML = "";
 
-  if (filtered.length === 0) {
+  if (entries.length === 0) {
     emptyState.hidden = false;
+    table.hidden = true;
   } else {
     emptyState.hidden = true;
-    paginateArray(filtered, userCurrentPage, PAGE_SIZE).forEach(function (u) { grid.appendChild(buildUserCard(u)); });
-    grid.appendChild(buildAddGhostCard("Add User", function () { openUserModal(null); }));
+    table.hidden = false;
+    paginateArray(entries, userCurrentPage, PAGE_SIZE).forEach(function (entry) {
+      tbody.appendChild(buildUserTableRow(entry));
+    });
   }
 
-  renderPagination(document.getElementById("userPagination"), filtered.length, userCurrentPage, PAGE_SIZE, function (page) {
+  renderPagination(document.getElementById("userPagination"), entries.length, userCurrentPage, PAGE_SIZE, function (page) {
     userCurrentPage = page;
     applyUserFilters();
   });
 }
+
+document.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
+  th.addEventListener("click", function () {
+    const field = th.dataset.sort;
+    if (userSortField === field) {
+      userSortDir = userSortDir === "asc" ? "desc" : "asc";
+    } else {
+      userSortField = field;
+      userSortDir = "asc";
+    }
+    userCurrentPage = 1;
+    applyUserFilters();
+  });
+});
 
 document.getElementById("userFilterSearch").addEventListener("input", function () { userCurrentPage = 1; applyUserFilters(); });
 document.getElementById("userFilterRole").addEventListener("change", function () { userCurrentPage = 1; applyUserFilters(); });

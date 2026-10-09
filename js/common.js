@@ -444,13 +444,14 @@ function itemStatusBadgeHtml(status) {
 
 // ---------- Item lifecycle actions (shared by items.html and item-detail.html) ----------
 function archiveGlobalItem(item, rack, onSuccess) {
-  if (!confirm(`Remove "${item.name}" to the archive?`)) return;
-  item.status = "removed";
-  saveGlobalItems(globalItems);
-  logStatusChange(item, "removed", rack);
-  showToast(`"${item.name}" moved to archive`, "danger");
-  if (onSuccess) onSuccess();
-  if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+  confirmDialog(`Remove "${item.name}" to the archive?`, function () {
+    item.status = "removed";
+    saveGlobalItems(globalItems);
+    logStatusChange(item, "removed", rack);
+    showToast(`"${item.name}" moved to archive`, "danger");
+    if (onSuccess) onSuccess();
+    if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+  }, { confirmLabel: "Archive" });
 }
 
 function restoreGlobalItem(item, rack, onSuccess) {
@@ -463,12 +464,13 @@ function restoreGlobalItem(item, rack, onSuccess) {
 }
 
 function purgeGlobalItem(item, onSuccess) {
-  if (!confirm(`Permanently delete "${item.name}"? This cannot be undone.`)) return;
-  globalItems = globalItems.filter(function (i) { return i.id !== item.id; });
-  saveGlobalItems(globalItems);
-  showToast(`"${item.name}" permanently deleted`, "danger");
-  if (onSuccess) onSuccess();
-  if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+  confirmDialog(`Permanently delete "${item.name}"? This cannot be undone.`, function () {
+    globalItems = globalItems.filter(function (i) { return i.id !== item.id; });
+    saveGlobalItems(globalItems);
+    showToast(`"${item.name}" permanently deleted`, "danger");
+    if (onSuccess) onSuccess();
+    if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+  }, { confirmLabel: "Delete Forever" });
 }
 
 // ---------- Shared Add / Edit Item modal (present on items.html and item-detail.html) ----------
@@ -481,6 +483,138 @@ function populateRackSelect(selectEl, selectedId) {
     return `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)} (${escapeHtml(r.id)}) — ${escapeHtml(roomLabel(r.storeRoomId))}</option>`;
   }).join("");
   selectEl.value = selectedId || "";
+}
+
+// ---------- Quick Add Storage (from within the Add/Edit Item modal) ----------
+const QA_STORAGE_TYPE_HINTS = {
+  shelf: "Open shelving.",
+  rack: "A multi-tier rack for bulkier goods.",
+  cupboard: "An enclosed unit with doors.",
+  bureau: "A desk or unit built from drawers.",
+  wardrobe: "A tall unit for hanging or folded items.",
+  cabinet: "An enclosed storage cabinet.",
+  box: "A single container.",
+  custom: "Anything that doesn't fit the other types.",
+};
+
+function openQuickAddStorageModal(onCreated) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h3>Add Storage</h3>
+        <button type="button" class="modal-close qa-storage-close">&times;</button>
+      </div>
+      <form class="modal-form qa-storage-form">
+        <div class="field-group">
+          <div class="field">
+            <label>Storage ID <span class="req">*</span></label>
+            <input type="text" class="qa-storage-id" placeholder="e.g. ST-101 or A1-05" required>
+            <p class="field-hint">A unique ID used to find this storage later.</p>
+          </div>
+          <div class="field">
+            <label>Storage Name <span class="req">*</span></label>
+            <input type="text" class="qa-storage-name" placeholder="e.g. Rack A1" required>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <label>Type <span class="req">*</span></label>
+            <select class="qa-storage-type" required></select>
+            <p class="field-hint qa-storage-type-hint"></p>
+          </div>
+          <div class="field">
+            <label>Location <span class="req">*</span></label>
+            <select class="qa-storage-room" required></select>
+            <p class="field-hint">No location yet? <a href="storerooms.html" target="_blank">Create one first →</a></p>
+          </div>
+        </div>
+        <div class="field">
+          <label>Tags</label>
+          <div class="tag-input qa-storage-tag-input">
+            <div class="tag-input-chips qa-storage-tag-chips"></div>
+            <input type="text" class="qa-storage-tag-text" placeholder="Type a tag and press Enter">
+          </div>
+          <p class="field-hint">e.g. Electronics, Spare Parts — press Enter or comma after each one.</p>
+        </div>
+        <div class="field">
+          <label>Pictures</label>
+          <div class="image-input qa-storage-image-input">
+            <div class="image-input-previews qa-storage-image-previews"></div>
+            <label class="image-input-add qa-storage-image-add">
+              <span class="add-ghost-icon">+</span> Add Pictures
+              <input type="file" class="qa-storage-image-file" accept="image/*" multiple hidden>
+            </label>
+          </div>
+          <p class="field-hint">Up to 5 pictures, 2MB each.</p>
+        </div>
+        <p class="error-msg qa-storage-error" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary qa-storage-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Add Storage</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const typeSelect = overlay.querySelector(".qa-storage-type");
+  typeSelect.innerHTML = Object.keys(STORAGE_TYPES).map(function (key) {
+    return `<option value="${escapeHtml(key)}">${escapeHtml(STORAGE_TYPES[key].label)}</option>`;
+  }).join("");
+  const typeHintEl = overlay.querySelector(".qa-storage-type-hint");
+  function syncTypeHint() { typeHintEl.textContent = QA_STORAGE_TYPE_HINTS[typeSelect.value] || ""; }
+  typeSelect.addEventListener("change", syncTypeHint);
+  syncTypeHint();
+
+  const roomSelect = overlay.querySelector(".qa-storage-room");
+  roomSelect.innerHTML = rooms.map(function (r) {
+    return `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`;
+  }).join("");
+  if (rooms.length === 0) {
+    roomSelect.disabled = true;
+    overlay.querySelector("button[type=submit]").disabled = true;
+  }
+
+  const qaTagInput = createTagInput(overlay.querySelector(".qa-storage-tag-chips"), overlay.querySelector(".qa-storage-tag-text"), []);
+  const qaImageInput = createImageInput(overlay.querySelector(".qa-storage-image-previews"), overlay.querySelector(".qa-storage-image-file"), {});
+
+  function close() { overlay.remove(); }
+  overlay.querySelector(".qa-storage-close").addEventListener("click", close);
+  overlay.querySelector(".qa-storage-cancel").addEventListener("click", close);
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+
+  overlay.querySelector(".qa-storage-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const id = overlay.querySelector(".qa-storage-id").value.trim();
+    const name = overlay.querySelector(".qa-storage-name").value.trim();
+    const type = typeSelect.value;
+    const storeRoomId = roomSelect.value;
+    const errorEl = overlay.querySelector(".qa-storage-error");
+
+    if (!id || !name || !type || !storeRoomId) {
+      errorEl.textContent = "Please fill in the storage ID, name, type, and location.";
+      errorEl.hidden = false;
+      return;
+    }
+    if (racks.some(function (r) { return r.id.toLowerCase() === id.toLowerCase(); })) {
+      errorEl.textContent = `Storage ID "${id}" is already in use. Choose a different ID.`;
+      errorEl.hidden = false;
+      return;
+    }
+
+    const rack = {
+      id: id, name: name, storeRoomId: storeRoomId, type: type,
+      tags: qaTagInput.getTags(), images: qaImageInput.getImages(),
+      nodes: [], createdAt: Date.now(),
+    };
+    racks.push(rack);
+    saveRacks(racks);
+    showToast(`"${name}" created`, "success");
+    close();
+    if (onCreated) onCreated(rack);
+  });
 }
 
 function openAddItemModal(existingItem, presetStorageId) {
@@ -525,6 +659,15 @@ function closeAddItemModal() {
   document.getElementById("addItemModalClose").addEventListener("click", closeAddItemModal);
   document.getElementById("addItemPageCancel").addEventListener("click", closeAddItemModal);
   addItemModalOverlay.addEventListener("click", function (e) { if (e.target === addItemModalOverlay) closeAddItemModal(); });
+
+  const placeRackAddBtn = document.getElementById("placeRackAddBtn");
+  if (placeRackAddBtn) {
+    placeRackAddBtn.addEventListener("click", function () {
+      openQuickAddStorageModal(function (newRack) {
+        populateRackSelect(placeRackSelect, newRack.id);
+      });
+    });
+  }
 
   addItemPageForm.addEventListener("submit", function (e) {
     e.preventDefault();
@@ -833,6 +976,46 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+// ---------- Custom confirm dialog (replaces native confirm()) ----------
+function confirmDialog(message, onConfirm, options) {
+  options = options || {};
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay confirm-dialog-overlay";
+  overlay.innerHTML = `
+    <div class="modal modal-narrow">
+      <div class="modal-header">
+        <h3>${escapeHtml(options.title || "Please Confirm")}</h3>
+        <button type="button" class="modal-close confirm-dialog-close">&times;</button>
+      </div>
+      <div class="confirm-dialog-body">
+        <p>${escapeHtml(message)}</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary confirm-dialog-cancel">${escapeHtml(options.cancelLabel || "Cancel")}</button>
+        <button type="button" class="${options.danger === false ? "btn-primary" : "btn-danger"} confirm-dialog-ok">${escapeHtml(options.confirmLabel || "Confirm")}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  function close() {
+    overlay.remove();
+    document.removeEventListener("keydown", onEsc);
+  }
+  function onEsc(e) { if (e.key === "Escape") close(); }
+
+  overlay.querySelector(".confirm-dialog-close").addEventListener("click", close);
+  overlay.querySelector(".confirm-dialog-cancel").addEventListener("click", close);
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+  overlay.querySelector(".confirm-dialog-ok").addEventListener("click", function () {
+    close();
+    onConfirm();
+  });
+  document.addEventListener("keydown", onEsc);
+
+  overlay.querySelector(".confirm-dialog-ok").focus();
+}
+
 // ---------- Category / item colors ----------
 const CATEGORY_PALETTE = [
   { bg: "#e0f2fe", border: "#7dd3fc", text: "#0369a1", solid: "#0ea5e9" }, // sky
@@ -1073,6 +1256,16 @@ function buildItemsPreviewHtml(items) {
 }
 
 // ---------- Rack card / row builders ----------
+function rackQrThumbHtml(rack) {
+  if (typeof qrcode === "undefined") return "";
+  const detailUrl = new URL(rackDetailUrl(rack.id), window.location.href).href;
+  const qr = qrcode(0, "M");
+  qr.addData(detailUrl);
+  qr.make();
+  const svg = qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true });
+  return `<div class="rack-card-qr" title="Storage QR code">${svg}</div>`;
+}
+
 function buildRackCard(rack) {
   const totalItems = unitItemCount(rack);
 
@@ -1089,6 +1282,7 @@ function buildRackCard(rack) {
         <div class="rack-name">${escapeHtml(rack.name)}</div>
       </div>
       <div class="rack-card-actions">
+        ${rackQrThumbHtml(rack)}
         <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
         <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
       </div>
@@ -1098,7 +1292,7 @@ function buildRackCard(rack) {
       ${typeBadgeHtml(rack.type)}
       ${tagsHtml(tags)}
     </div>
-    ${imagesPreviewHtml(images)}
+    ${imagesPreviewHtml(images, 64)}
     ${buildItemsPreviewHtml(collectAllItems(rack).concat(activeGlobalItemsForRack(rack.id)))}
     <div class="rack-meta">
       <span><strong>${totalItems}</strong> items</span>
@@ -1157,7 +1351,6 @@ function buildAddGhostCard(label, onClick) {
 function deleteRack(id, onSuccess, elToAnimate) {
   const rack = findRack(id);
   if (!rack) return;
-  if (!confirm(`Delete "${rack.name}" (${rack.id})? This cannot be undone.`)) return;
 
   function finish() {
     racks = racks.filter(function (r) { return r.id !== id; });
@@ -1165,12 +1358,14 @@ function deleteRack(id, onSuccess, elToAnimate) {
     if (onSuccess) onSuccess(rack);
   }
 
-  if (elToAnimate) {
-    elToAnimate.classList.add("removing");
-    elToAnimate.addEventListener("animationend", finish, { once: true });
-  } else {
-    finish();
-  }
+  confirmDialog(`Delete "${rack.name}" (${rack.id})? This cannot be undone.`, function () {
+    if (elToAnimate) {
+      elToAnimate.classList.add("removing");
+      elToAnimate.addEventListener("animationend", finish, { once: true });
+    } else {
+      finish();
+    }
+  }, { confirmLabel: "Delete" });
 }
 
 // ---------- Shared Edit Storage Unit modal (present on storage.html and storage-detail.html) ----------

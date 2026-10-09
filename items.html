@@ -22,10 +22,10 @@
           <span class="nav-icon">🏠</span> Overview
         </a>
         <a href="items.html" class="nav-item" data-route="items">
-          <span class="nav-icon">🏷️</span> All Items
+          <span class="nav-icon">🏷️</span> Items
         </a>
         <a href="storage.html" class="nav-item" data-route="storage">
-          <span class="nav-icon">🗄️</span> All Storages
+          <span class="nav-icon">🗄️</span> Storages
         </a>
         <a href="log.html" class="nav-item" data-route="log">
           <span class="nav-icon">🔄</span> IN/OUT Log
@@ -151,9 +151,12 @@
           </div>
           <div class="field">
             <label for="placeRackSelect">Storage <span class="optional-tag">(optional)</span></label>
-            <select id="placeRackSelect">
-              <option value="">— Unassigned —</option>
-            </select>
+            <div class="select-with-add">
+              <select id="placeRackSelect">
+                <option value="">— Unassigned —</option>
+              </select>
+              <button type="button" class="btn-secondary" id="placeRackAddBtn" title="Add a new storage">+ New</button>
+            </div>
           </div>
         </div>
         <div class="field">

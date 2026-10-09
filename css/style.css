@@ -926,12 +926,13 @@ select:disabled {
 
 .filters-bar {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 20px;
 }
 
 .filters-bar input {
-  flex: 1;
+  flex: 1 1 200px;
   padding: 9px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -963,6 +964,29 @@ select:disabled {
   padding: 9px 16px;
 }
 
+.date-filter-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.date-filter-field span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.filters-bar input[type="date"] {
+  flex: 0 0 150px;
+}
+
+.activity-filters-bar {
+  margin-bottom: 16px;
+}
+
 /* ---------- Rack grid / cards ---------- */
 
 .rack-grid {
@@ -985,6 +1009,7 @@ select:disabled {
 
 .rack-card.clickable { cursor: pointer; }
 .rack-row.clickable { cursor: pointer; }
+.log-table tr.clickable { cursor: pointer; }
 
 .rack-card:hover {
   transform: translateY(-2px);
@@ -1359,8 +1384,22 @@ select:disabled {
 
 .rack-card-actions {
   display: flex;
+  align-items: center;
   gap: 6px;
 }
+
+.rack-card-qr {
+  width: 56px;
+  height: 56px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.rack-card-qr svg { width: 100%; height: 100%; display: block; }
 
 .icon-btn {
   border: 1px solid var(--border);
@@ -1370,7 +1409,7 @@ select:disabled {
   height: 28px;
   border-radius: 6px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: background .15s, border-color .15s;
@@ -2005,6 +2044,14 @@ select:disabled {
   gap: 14px;
 }
 
+.select-with-add {
+  display: flex;
+  gap: 8px;
+}
+
+.select-with-add select { flex: 1; min-width: 0; }
+.select-with-add .btn-secondary { flex-shrink: 0; padding: 9px 14px; white-space: nowrap; }
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -2027,6 +2074,19 @@ select:disabled {
 .btn-secondary:hover { background: var(--surface-alt); border-color: var(--border-strong); }
 
 .modal-actions .btn-primary { width: auto; }
+
+.modal-actions.modal-actions-center { justify-content: center; }
+
+.confirm-dialog-body {
+  padding: 4px 22px 22px;
+}
+
+.confirm-dialog-body p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 0;
+}
 
 /* ---------- Responsive ---------- */
 

@@ -22,10 +22,10 @@
           <span class="nav-icon">🏠</span> Overview
         </a>
         <a href="items.html" class="nav-item" data-route="items">
-          <span class="nav-icon">🏷️</span> All Items
+          <span class="nav-icon">🏷️</span> Items
         </a>
         <a href="storage.html" class="nav-item" data-route="storage">
-          <span class="nav-icon">🗄️</span> All Storages
+          <span class="nav-icon">🗄️</span> Storages
         </a>
         <a href="log.html" class="nav-item" data-route="log">
           <span class="nav-icon">🔄</span> IN/OUT Log
@@ -79,7 +79,23 @@
           <button class="btn-secondary" id="userFilterReset">Reset</button>
         </div>
 
-        <section class="rack-grid" id="userGrid"></section>
+        <div class="panel">
+          <div class="log-table-wrap">
+            <table class="log-table">
+              <thead>
+                <tr>
+                  <th data-sort="name">User <span class="sort-arrow"></span></th>
+                  <th data-sort="username">Username / Email <span class="sort-arrow"></span></th>
+                  <th data-sort="roleLabel">Role <span class="sort-arrow"></span></th>
+                  <th data-sort="status">Status <span class="sort-arrow"></span></th>
+                  <th data-sort="createdAt">Added <span class="sort-arrow"></span></th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="userTableBody"></tbody>
+            </table>
+          </div>
+        </div>
         <p class="empty-state" id="emptyState" hidden>No users match your filters.</p>
         <div class="pagination" id="userPagination"></div>
 

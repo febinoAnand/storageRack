@@ -22,10 +22,10 @@
           <span class="nav-icon">🏠</span> Overview
         </a>
         <a href="items.html" class="nav-item" data-route="items">
-          <span class="nav-icon">🏷️</span> All Items
+          <span class="nav-icon">🏷️</span> Items
         </a>
         <a href="storage.html" class="nav-item" data-route="storage">
-          <span class="nav-icon">🗄️</span> All Storages
+          <span class="nav-icon">🗄️</span> Storages
         </a>
         <a href="log.html" class="nav-item" data-route="log">
           <span class="nav-icon">🔄</span> IN/OUT Log
@@ -71,8 +71,28 @@
           <button class="btn-primary btn-add" id="addRoleBtn">+ Add Role</button>
         </div>
 
-        <section class="rack-grid" id="roleGrid"></section>
-        <p class="empty-state" id="emptyState" hidden>No roles yet.</p>
+        <div class="filters-bar">
+          <input type="text" id="roleFilterSearch" placeholder="Search by name or description">
+          <button class="btn-secondary" id="roleFilterReset">Reset</button>
+        </div>
+
+        <div class="panel">
+          <div class="log-table-wrap">
+            <table class="log-table">
+              <thead>
+                <tr>
+                  <th data-sort="name">Role <span class="sort-arrow"></span></th>
+                  <th>Description</th>
+                  <th>Permissions</th>
+                  <th data-sort="userCount">Users <span class="sort-arrow"></span></th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="roleTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="empty-state" id="emptyState" hidden>No roles match your filters.</p>
         <div class="pagination" id="rolePagination"></div>
 
       </main>

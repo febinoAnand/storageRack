@@ -1,11 +1,25 @@
 const itemDetailParams = new URLSearchParams(window.location.search);
 const currentItemId = itemDetailParams.get("id");
 
-function itemActivityPanelHtml(item) {
-  const entries = itemLog.filter(function (e) { return e.itemName === item.name; }).slice(0, 8);
-  const rowsHtml = entries.length
+const ITEM_ACTIVITY_TYPE_META = { in: "IN", out: "OUT", in_store: "IN STORE", in_use: "IN USE", removed: "REMOVED" };
+let itemActivityFilter = "all";
+let itemActivityFrom = "";
+let itemActivityTo = "";
+
+function itemActivityRowsHtml(item) {
+  const fromTs = itemActivityFrom ? new Date(itemActivityFrom + "T00:00:00").getTime() : null;
+  const toTs = itemActivityTo ? new Date(itemActivityTo + "T23:59:59.999").getTime() : null;
+
+  const entries = itemLog
+    .filter(function (e) { return e.itemName === item.name; })
+    .filter(function (e) { return itemActivityFilter === "all" || e.type === itemActivityFilter; })
+    .filter(function (e) { return fromTs === null || e.timestamp >= fromTs; })
+    .filter(function (e) { return toTs === null || e.timestamp <= toTs; })
+    .slice(0, 10);
+
+  return entries.length
     ? entries.map(function (e) {
-        const meta = { in: "IN", out: "OUT", in_store: "IN STORE", in_use: "IN USE", removed: "REMOVED" }[e.type] || e.type;
+        const meta = ITEM_ACTIVITY_TYPE_META[e.type] || e.type;
         const d = new Date(e.timestamp);
         return `
           <div class="item-row">
@@ -16,15 +30,36 @@ function itemActivityPanelHtml(item) {
             </div>
           </div>`;
       }).join("")
-    : `<p class="empty-state">No activity recorded yet.</p>`;
+    : `<p class="empty-state">No activity matches your filters.</p>`;
+}
 
+function itemActivityPanelHtml(item) {
   return `
     <div class="panel">
       <div class="panel-head">
         <h3>Recent Activity</h3>
         <a href="log.html" class="link-more">Full log →</a>
       </div>
-      ${rowsHtml}
+      <div class="filters-bar activity-filters-bar">
+        <select id="itemActivityFilterSelect">
+          <option value="all">All Movements</option>
+          <option value="in">IN only</option>
+          <option value="out">OUT only</option>
+          <option value="in_store">In Store only</option>
+          <option value="in_use">In Use only</option>
+          <option value="removed">Removed only</option>
+        </select>
+        <label class="date-filter-field">
+          <span>From</span>
+          <input type="date" id="itemActivityFrom">
+        </label>
+        <label class="date-filter-field">
+          <span>To</span>
+          <input type="date" id="itemActivityTo">
+        </label>
+        <button type="button" class="btn-secondary" id="itemActivityReset">Reset</button>
+      </div>
+      <div id="itemActivityBody">${itemActivityRowsHtml(item)}</div>
     </div>`;
 }
 
@@ -118,6 +153,39 @@ function renderItemDetail() {
       });
     }
   }
+
+  function refreshActivity() {
+    document.getElementById("itemActivityBody").innerHTML = itemActivityRowsHtml(item);
+  }
+
+  const activityFilterSelect = document.getElementById("itemActivityFilterSelect");
+  const activityFromInput = document.getElementById("itemActivityFrom");
+  const activityToInput = document.getElementById("itemActivityTo");
+  activityFilterSelect.value = itemActivityFilter;
+  activityFromInput.value = itemActivityFrom;
+  activityToInput.value = itemActivityTo;
+
+  activityFilterSelect.addEventListener("change", function () {
+    itemActivityFilter = activityFilterSelect.value;
+    refreshActivity();
+  });
+  activityFromInput.addEventListener("change", function () {
+    itemActivityFrom = activityFromInput.value;
+    refreshActivity();
+  });
+  activityToInput.addEventListener("change", function () {
+    itemActivityTo = activityToInput.value;
+    refreshActivity();
+  });
+  document.getElementById("itemActivityReset").addEventListener("click", function () {
+    itemActivityFilter = "all";
+    itemActivityFrom = "";
+    itemActivityTo = "";
+    activityFilterSelect.value = "all";
+    activityFromInput.value = "";
+    activityToInput.value = "";
+    refreshActivity();
+  });
 }
 
 window.onItemDataChanged = renderItemDetail;

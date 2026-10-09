@@ -154,13 +154,45 @@ const DATA_KEYS = [
   "srPassword",       // any password set via Forgot Password
 ];
 
+// Self-contained confirm dialog (this page doesn't load common.js, so it can't use
+// the shared confirmDialog() there — but it reuses the same CSS classes from style.css).
+function loginConfirmDialog(message, onConfirm) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal modal-narrow">
+      <div class="modal-header">
+        <h3>Please Confirm</h3>
+        <button type="button" class="modal-close">&times;</button>
+      </div>
+      <div class="confirm-dialog-body"><p></p></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary confirm-dialog-cancel">Cancel</button>
+        <button type="button" class="btn-danger confirm-dialog-ok">Continue</button>
+      </div>
+    </div>
+  `;
+  overlay.querySelector(".confirm-dialog-body p").textContent = message;
+  document.body.appendChild(overlay);
+
+  function close() { overlay.remove(); }
+  overlay.querySelector(".modal-close").addEventListener("click", close);
+  overlay.querySelector(".confirm-dialog-cancel").addEventListener("click", close);
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+  overlay.querySelector(".confirm-dialog-ok").addEventListener("click", function () {
+    close();
+    onConfirm();
+  });
+}
+
 document.getElementById("resetDataLink").addEventListener("click", function (e) {
   e.preventDefault();
-  if (!confirm("This will permanently delete every storage, location, item, user, role, and log entry, and recreate the original demo data. Continue?")) return;
-  DATA_KEYS.forEach(function (key) { localStorage.removeItem(key); });
-  sessionStorage.removeItem("srLoggedIn");
-  sessionStorage.removeItem("srUser");
-  window.location.reload();
+  loginConfirmDialog("This will permanently delete every storage, location, item, user, role, and log entry, and recreate the original demo data. Continue?", function () {
+    DATA_KEYS.forEach(function (key) { localStorage.removeItem(key); });
+    sessionStorage.removeItem("srLoggedIn");
+    sessionStorage.removeItem("srUser");
+    window.location.reload();
+  });
 });
 
 // ---------- Icons (self-contained — this page doesn't load common.js) ----------
