@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Storage | All Items</title>
+<title>Storage | Item Details</title>
 <script src="js/theme.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -62,58 +62,7 @@
       </header>
 
       <main class="dash-main">
-
-        <div class="toolbar">
-          <div>
-            <h2 id="itemViewTitle">All Items</h2>
-            <p class="muted" id="itemViewSubtitle">Every item across every storage unit, in one place</p>
-          </div>
-          <div class="node-actions">
-            <button class="btn-secondary" id="itemArchiveToggle"></button>
-            <button class="btn-secondary" id="importItemsBtn">⬆ Import</button>
-            <div class="export-dropdown">
-              <button class="btn-secondary" id="exportBtn">⬇ Export</button>
-              <div class="export-menu" id="exportMenu" hidden>
-                <button type="button" id="exportCsvBtn">📄 Export as CSV</button>
-                <button type="button" id="exportPdfBtn">📕 Export as PDF</button>
-              </div>
-            </div>
-            <button class="btn-primary btn-add" id="addItemPageBtn">+ Add Item</button>
-          </div>
-        </div>
-
-        <div class="filters-bar">
-          <input type="text" id="itemFilterSearch" placeholder="Search by item, storage, tag or location">
-          <select id="itemFilterType">
-            <option value="all">All Types</option>
-          </select>
-          <button class="btn-secondary" id="itemFilterReset">Reset</button>
-        </div>
-
-        <div class="panel">
-          <div class="panel-head">
-            <h3 id="itemListHeading">Items</h3>
-          </div>
-          <div class="log-table-wrap">
-            <table class="log-table">
-              <thead>
-                <tr>
-                  <th data-sort="name">Item <span class="sort-arrow"></span></th>
-                  <th data-sort="storageLabel">Storage <span class="sort-arrow"></span></th>
-                  <th>Tags</th>
-                  <th data-sort="typeLabel">Type <span class="sort-arrow"></span></th>
-                  <th data-sort="statusLabel">Status <span class="sort-arrow"></span></th>
-                  <th data-sort="quantity">Qty <span class="sort-arrow"></span></th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="itemTableBody"></tbody>
-            </table>
-          </div>
-          <p class="empty-state" id="itemEmptyState" hidden>No items match your filters.</p>
-          <div class="pagination" id="itemPagination"></div>
-        </div>
-
+        <div id="itemDetailContent"></div>
       </main>
     </div>
   </div>
@@ -218,60 +167,8 @@
     </div>
   </div>
 
-  <!-- Import Items Modal -->
-  <div class="modal-overlay" id="importModalOverlay" hidden>
-    <div class="modal modal-wide">
-      <div class="modal-header">
-        <h3>Import Items</h3>
-        <button class="modal-close" id="importModalClose">&times;</button>
-      </div>
-
-      <!-- Step 1: pick a file -->
-      <div class="modal-form" id="importStepUpload">
-        <div class="field">
-          <label for="importFile">CSV or Excel file</label>
-          <input type="file" id="importFile" accept=".csv,.xlsx">
-          <p class="field-hint">Columns: name, itemId (optional), tags, quantity, storageId (optional), remarks, status (optional — In Store/In Use).</p>
-        </div>
-        <p id="importParseError" class="error-msg" hidden></p>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="importDownloadTemplate">Download Template</button>
-          <button type="button" class="btn-secondary" id="importCancel1">Cancel</button>
-        </div>
-      </div>
-
-      <!-- Step 2: preview + confirm -->
-      <div class="modal-form" id="importStepPreview" hidden>
-        <p class="field-hint" id="importSummary"></p>
-        <div class="log-table-wrap import-preview-wrap">
-          <table class="log-table">
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th>Name</th>
-                <th>Item ID</th>
-                <th>Tags</th>
-                <th>Qty</th>
-                <th>Storage</th>
-                <th>Remarks</th>
-              </tr>
-            </thead>
-            <tbody id="importPreviewBody"></tbody>
-          </table>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="importBack">Back</button>
-          <button type="button" class="btn-primary" id="importConfirm">Import Items</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<script src="js/vendor/xlsx.js"></script>
-<script src="js/vendor/jspdf.js"></script>
-<script src="js/vendor/jspdf.autotable.js"></script>
 <script src="js/toast.js"></script>
 <script src="js/common.js"></script>
-<script src="js/items.js"></script>
+<script src="js/item-detail.js"></script>
 </body>
 </html>

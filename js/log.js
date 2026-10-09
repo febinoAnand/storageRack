@@ -12,6 +12,7 @@ const LOG_PAGE_SIZE = 10;
 let logCurrentPage = 1;
 let logSortField = "timestamp";
 let logSortDir = "desc";
+let currentFilteredLog = [];
 
 function formatLogDate(ts) {
   const d = new Date(ts);
@@ -88,6 +89,7 @@ function applyLogFilters() {
 
   filtered = sortLog(filtered);
   syncSortIndicators();
+  currentFilteredLog = filtered;
 
   document.getElementById("logListHeading").textContent = `Log (${filtered.length} of ${itemLog.length})`;
 
@@ -139,6 +141,78 @@ document.getElementById("logFilterReset").addEventListener("click", function () 
   document.getElementById("logFilterRack").value = "all";
   logCurrentPage = 1;
   applyLogFilters();
+});
+
+// ---------- Export (CSV / PDF) ----------
+const exportBtn = document.getElementById("exportBtn");
+const exportMenu = document.getElementById("exportMenu");
+
+exportBtn.addEventListener("click", function (e) {
+  e.stopPropagation();
+  exportMenu.hidden = !exportMenu.hidden;
+});
+document.addEventListener("click", function () { exportMenu.hidden = true; });
+exportMenu.addEventListener("click", function (e) { e.stopPropagation(); });
+
+function exportLogFileBaseName() {
+  return "log-" + new Date().toISOString().slice(0, 10);
+}
+
+function exportLogRowsAsObjects() {
+  return currentFilteredLog.map(function (entry) {
+    return {
+      "Date / Time": formatLogDate(entry.timestamp),
+      Type: (LOG_TYPE_META[entry.type] || LOG_TYPE_META.in).label,
+      Item: entry.itemName,
+      Quantity: entry.quantity,
+      Storage: entry.rackId ? `${entry.rackName} (${entry.rackId})` : (entry.rackName || "Unassigned"),
+      Location: entry.path || "",
+      User: entry.user,
+    };
+  });
+}
+
+function csvEscape(val) {
+  const s = String(val == null ? "" : val);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+document.getElementById("exportCsvBtn").addEventListener("click", function () {
+  const rows = exportLogRowsAsObjects();
+  if (!rows.length) { showToast("Nothing to export.", "danger"); return; }
+  const headers = Object.keys(rows[0]);
+  const lines = [headers.join(",")].concat(rows.map(function (r) {
+    return headers.map(function (h) { return csvEscape(r[h]); }).join(",");
+  }));
+  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = exportLogFileBaseName() + ".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  exportMenu.hidden = true;
+});
+
+document.getElementById("exportPdfBtn").addEventListener("click", function () {
+  const rows = exportLogRowsAsObjects();
+  if (!rows.length) { showToast("Nothing to export.", "danger"); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+  const headers = Object.keys(rows[0]);
+  doc.setFontSize(14);
+  doc.text("IN/OUT Log", 14, 15);
+  doc.setFontSize(9);
+  doc.text(new Date().toLocaleString(), 14, 21);
+  doc.autoTable({
+    head: [headers],
+    body: rows.map(function (r) { return headers.map(function (h) { return String(r[h]); }); }),
+    startY: 26,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [37, 99, 235] },
+  });
+  doc.save(exportLogFileBaseName() + ".pdf");
+  exportMenu.hidden = true;
 });
 
 applyLogFilters();
