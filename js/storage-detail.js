@@ -40,21 +40,31 @@ document.addEventListener("click", function (e) {
 
 function globalItemsPanelHtml(rack) {
   const items = activeGlobalItemsForRack(rack.id);
-  const rowsHtml = items.length
-    ? `<div class="items-list">` + items.map(function (item) {
-        const dotColor = getItemColor(item.name).solid;
-        const tags = item.tags && item.tags.length ? `<span class="item-qty">${escapeHtml(item.tags.join(", "))}</span>` : "";
-        return `
-          <div class="item-row">
-            <div class="item-info">
-              <span class="item-dot" style="background:${dotColor}"></span>
-              <a class="item-name" href="${itemDetailUrl(item.id)}">${escapeHtml(item.name)}</a>
-              <span class="item-qty">${item.quantity} unit${item.quantity === 1 ? "" : "s"}</span>
-              ${itemStatusBadgeHtml(item.status)}
-              ${tags}
-            </div>
-          </div>`;
-      }).join("") + `</div>`
+  const bodyHtml = items.length
+    ? `<div class="log-table-wrap">
+        <table class="log-table">
+          <thead>
+            <tr><th>Item</th><th>Tags</th><th>Status</th><th>Qty</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            ${items.map(function (item) {
+              const dotColor = getItemColor(item.name).solid;
+              const tagsText = item.tags && item.tags.length ? item.tags.join(", ") : "—";
+              return `
+                <tr data-item-id="${escapeHtml(item.id)}">
+                  <td data-label="Item"><span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span><a href="${itemDetailUrl(item.id)}">${escapeHtml(item.name)}</a></td>
+                  <td data-label="Tags" class="muted">${escapeHtml(tagsText)}</td>
+                  <td data-label="Status"><button type="button" class="status-picker-btn" title="Move or change status">${itemStatusBadgeHtml(item.status)}</button></td>
+                  <td data-label="Qty"><strong>${item.quantity}</strong></td>
+                  <td data-label="Actions">
+                    <button class="icon-btn item-edit-btn" title="Edit">${ICONS.edit}</button>
+                    <button class="icon-btn delete item-archive-btn" title="Remove (send to Archive)">${ICONS.archive}</button>
+                  </td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`
     : `<p class="empty-state">No items yet.</p>`;
 
   return `
@@ -66,7 +76,7 @@ function globalItemsPanelHtml(rack) {
           <a href="items.html" class="link-more">Manage in All Items →</a>
         </div>
       </div>
-      ${rowsHtml}
+      ${bodyHtml}
     </div>`;
 }
 
@@ -136,6 +146,23 @@ function renderDetail() {
       window.location.href = "storage.html";
     });
   });
+
+  container.querySelectorAll("tr[data-item-id]").forEach(function (row) {
+    const item = findGlobalItem(row.dataset.itemId);
+    if (!item) return;
+    row.querySelector(".status-picker-btn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      openMoveItemModal({ raw: item, rack: rack, name: item.name, quantity: item.quantity, storageLabel: rack.name });
+    });
+    row.querySelector(".item-edit-btn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      openAddItemModal(item);
+    });
+    row.querySelector(".item-archive-btn").addEventListener("click", function (e) {
+      e.stopPropagation();
+      archiveGlobalItem(item, rack);
+    });
+  });
 }
 
 window.onRackDataChanged = renderDetail;
@@ -167,7 +194,6 @@ function closeQrModal() {
 }
 
 document.getElementById("qrModalClose").addEventListener("click", closeQrModal);
-document.getElementById("qrModalCloseBtn").addEventListener("click", closeQrModal);
 qrModalOverlay.addEventListener("click", function (e) { if (e.target === qrModalOverlay) closeQrModal(); });
 document.getElementById("qrPrintBtn").addEventListener("click", function () { window.print(); });
 

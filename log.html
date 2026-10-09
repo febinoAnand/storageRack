@@ -22,10 +22,10 @@
           <span class="nav-icon">🏠</span> Overview
         </a>
         <a href="items.html" class="nav-item" data-route="items">
-          <span class="nav-icon">🏷️</span> All Items
+          <span class="nav-icon">🏷️</span> Items
         </a>
         <a href="storage.html" class="nav-item" data-route="storage">
-          <span class="nav-icon">🗄️</span> All Storages
+          <span class="nav-icon">🗄️</span> Storages
         </a>
         <a href="log.html" class="nav-item" data-route="log">
           <span class="nav-icon">🔄</span> IN/OUT Log
@@ -92,6 +92,14 @@
           <select id="logFilterRack">
             <option value="all">All Storages</option>
           </select>
+          <label class="date-filter-field">
+            <span>From</span>
+            <input type="date" id="logFilterFrom">
+          </label>
+          <label class="date-filter-field">
+            <span>To</span>
+            <input type="date" id="logFilterTo">
+          </label>
           <button class="btn-secondary" id="logFilterReset">Reset</button>
         </div>
 

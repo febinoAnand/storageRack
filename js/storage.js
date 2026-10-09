@@ -19,10 +19,31 @@
 
 let storageCurrentPage = 1;
 
+function rackSortValue(rack, field) {
+  if (field === "roomLabel") return roomLabel(rack.storeRoomId);
+  if (field === "typeLabel") return typeInfo(rack.type).label;
+  if (field === "itemCount") return unitItemCount(rack);
+  return rack.name;
+}
+
+function sortRacks(list, sortKey) {
+  const [field, dir] = sortKey.split("-");
+  const mult = dir === "desc" ? -1 : 1;
+  return list.slice().sort(function (a, b) {
+    let av = rackSortValue(a, field);
+    let bv = rackSortValue(b, field);
+    if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return -1 * mult;
+    if (av > bv) return 1 * mult;
+    return 0;
+  });
+}
+
 function applyRacksFilters() {
   const query = document.getElementById("filterSearch").value.trim().toLowerCase();
   const typeFilter = document.getElementById("filterType").value;
   const roomFilter = document.getElementById("filterRoom").value;
+  const sortKey = document.getElementById("filterSort").value;
 
   const filtered = racks.filter(function (r) {
     const matchesQuery = !query ||
@@ -34,23 +55,25 @@ function applyRacksFilters() {
     return matchesQuery && matchesType && matchesRoom;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const sorted = sortRacks(filtered, sortKey);
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   if (storageCurrentPage > totalPages) storageCurrentPage = totalPages;
 
   const rackGrid = document.getElementById("rackGrid");
   const emptyState = document.getElementById("emptyState");
   rackGrid.innerHTML = "";
 
-  if (filtered.length === 0) {
+  if (sorted.length === 0) {
     emptyState.hidden = false;
   } else {
     emptyState.hidden = true;
-    paginateArray(filtered, storageCurrentPage, PAGE_SIZE).forEach(function (rack) {
+    paginateArray(sorted, storageCurrentPage, PAGE_SIZE).forEach(function (rack) {
       rackGrid.appendChild(buildRackCard(rack));
     });
   }
 
-  renderPagination(document.getElementById("storagePagination"), filtered.length, storageCurrentPage, PAGE_SIZE, function (page) {
+  renderPagination(document.getElementById("storagePagination"), sorted.length, storageCurrentPage, PAGE_SIZE, function (page) {
     storageCurrentPage = page;
     applyRacksFilters();
   });
@@ -61,10 +84,12 @@ window.onRackDataChanged = applyRacksFilters;
 document.getElementById("filterSearch").addEventListener("input", function () { storageCurrentPage = 1; applyRacksFilters(); });
 document.getElementById("filterType").addEventListener("change", function () { storageCurrentPage = 1; applyRacksFilters(); });
 document.getElementById("filterRoom").addEventListener("change", function () { storageCurrentPage = 1; applyRacksFilters(); });
+document.getElementById("filterSort").addEventListener("change", function () { storageCurrentPage = 1; applyRacksFilters(); });
 document.getElementById("filterReset").addEventListener("click", function () {
   document.getElementById("filterSearch").value = "";
   document.getElementById("filterType").value = "all";
   document.getElementById("filterRoom").value = "all";
+  document.getElementById("filterSort").value = "name-asc";
   storageCurrentPage = 1;
   applyRacksFilters();
 });

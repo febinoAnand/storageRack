@@ -14,74 +14,135 @@ function nextRoomId() {
   return "SR-" + (max + 1);
 }
 
-function buildRoomCard(room) {
-  const count = roomUnitCount(room.id);
-  const card = document.createElement("div");
-  card.className = "rack-card clickable";
-  card.style.borderLeft = `3px solid ${getCategoryColor(room.name).solid}`;
-  card.innerHTML = `
-    <div class="rack-card-head">
-      <div>
-        <span class="rack-id-badge">${escapeHtml(room.id)}</span>
-        <div class="rack-name">${escapeHtml(room.name)}</div>
-      </div>
-      <div class="rack-card-actions">
-        <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
-        <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
-      </div>
-    </div>
-    <div class="rack-location">${escapeHtml(room.location || "No location set")}</div>
-    <div class="rack-meta">
-      <span><strong>${count}</strong> storage unit${count === 1 ? "" : "s"}</span>
-    </div>
+let roomCurrentPage = 1;
+let roomSortField = "name";
+let roomSortDir = "asc";
+
+function buildRoomEntry(room) {
+  return { room: room, name: room.name, location: room.location || "", unitCount: roomUnitCount(room.id) };
+}
+
+function sortRoomEntries(list) {
+  const dir = roomSortDir === "asc" ? 1 : -1;
+  return list.slice().sort(function (a, b) {
+    let av = a[roomSortField];
+    let bv = b[roomSortField];
+    if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+}
+
+function syncRoomSortIndicators() {
+  document.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
+    const arrow = th.querySelector(".sort-arrow");
+    if (th.dataset.sort === roomSortField) {
+      th.classList.add("sorted");
+      arrow.textContent = roomSortDir === "asc" ? "▲" : "▼";
+    } else {
+      th.classList.remove("sorted");
+      arrow.textContent = "";
+    }
+  });
+}
+
+function buildRoomTableRow(entry) {
+  const room = entry.room;
+  const row = document.createElement("tr");
+  row.className = "clickable";
+  row.innerHTML = `
+    <td data-label="Location"><span class="rack-id-badge">${escapeHtml(room.id)}</span> ${escapeHtml(room.name)}</td>
+    <td data-label="Area" class="muted">${escapeHtml(entry.location || "No location set")}</td>
+    <td data-label="Storage Units"><strong>${entry.unitCount}</strong></td>
+    <td data-label="Actions">
+      <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
+      <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
+    </td>
   `;
 
-  card.addEventListener("click", function () {
+  row.addEventListener("click", function () {
     window.location.href = "storage.html?room=" + encodeURIComponent(room.id);
   });
-  card.querySelector(".edit-btn").addEventListener("click", function (e) {
+  row.querySelector(".edit-btn").addEventListener("click", function (e) {
     e.stopPropagation();
     openRoomModal(room);
   });
-  card.querySelector(".delete-btn").addEventListener("click", function (e) {
+  row.querySelector(".delete-btn").addEventListener("click", function (e) {
     e.stopPropagation();
-    if (roomUnitCount(room.id) > 0) {
-      showToast(`Move or delete its ${roomUnitCount(room.id)} storage unit(s) first`, "danger");
+    const count = roomUnitCount(room.id);
+    if (count > 0) {
+      showToast(`Move or delete its ${count} storage unit(s) first`, "danger");
       return;
     }
-    if (!confirm(`Delete location "${room.name}"? This cannot be undone.`)) return;
-    rooms = rooms.filter(function (r) { return r.id !== room.id; });
-    saveRooms(rooms);
-    showToast(`"${room.name}" deleted`, "danger");
-    renderRooms();
+    confirmDialog(`Delete location "${room.name}"? This cannot be undone.`, function () {
+      rooms = rooms.filter(function (r) { return r.id !== room.id; });
+      saveRooms(rooms);
+      showToast(`"${room.name}" deleted`, "danger");
+      applyRoomFilters();
+    }, { confirmLabel: "Delete" });
   });
 
-  return card;
+  return row;
 }
 
-let roomCurrentPage = 1;
+function applyRoomFilters() {
+  const query = document.getElementById("roomFilterSearch").value.trim().toLowerCase();
 
-function renderRooms() {
-  const totalPages = Math.max(1, Math.ceil(rooms.length / PAGE_SIZE));
+  const filtered = rooms.filter(function (r) {
+    return !query ||
+      r.name.toLowerCase().indexOf(query) !== -1 ||
+      (r.location || "").toLowerCase().indexOf(query) !== -1;
+  });
+
+  let entries = sortRoomEntries(filtered.map(buildRoomEntry));
+  syncRoomSortIndicators();
+
+  const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
   if (roomCurrentPage > totalPages) roomCurrentPage = totalPages;
 
-  const grid = document.getElementById("roomGrid");
+  const tbody = document.getElementById("roomTableBody");
   const emptyState = document.getElementById("emptyState");
-  grid.innerHTML = "";
+  const table = document.querySelector(".log-table-wrap");
+  tbody.innerHTML = "";
 
-  if (rooms.length === 0) {
+  if (entries.length === 0) {
     emptyState.hidden = false;
+    table.hidden = true;
   } else {
     emptyState.hidden = true;
-    paginateArray(rooms, roomCurrentPage, PAGE_SIZE).forEach(function (room) { grid.appendChild(buildRoomCard(room)); });
-    grid.appendChild(buildAddGhostCard("Add Location", function () { openRoomModal(null); }));
+    table.hidden = false;
+    paginateArray(entries, roomCurrentPage, PAGE_SIZE).forEach(function (entry) {
+      tbody.appendChild(buildRoomTableRow(entry));
+    });
   }
 
-  renderPagination(document.getElementById("roomPagination"), rooms.length, roomCurrentPage, PAGE_SIZE, function (page) {
+  renderPagination(document.getElementById("roomPagination"), entries.length, roomCurrentPage, PAGE_SIZE, function (page) {
     roomCurrentPage = page;
-    renderRooms();
+    applyRoomFilters();
   });
 }
+
+document.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
+  th.addEventListener("click", function () {
+    const field = th.dataset.sort;
+    if (roomSortField === field) {
+      roomSortDir = roomSortDir === "asc" ? "desc" : "asc";
+    } else {
+      roomSortField = field;
+      roomSortDir = "asc";
+    }
+    roomCurrentPage = 1;
+    applyRoomFilters();
+  });
+});
+
+document.getElementById("roomFilterSearch").addEventListener("input", function () { roomCurrentPage = 1; applyRoomFilters(); });
+document.getElementById("roomFilterReset").addEventListener("click", function () {
+  document.getElementById("roomFilterSearch").value = "";
+  roomCurrentPage = 1;
+  applyRoomFilters();
+});
 
 // ---------- Add / Edit modal ----------
 const roomModalOverlay = document.getElementById("roomModalOverlay");
@@ -136,7 +197,7 @@ roomForm.addEventListener("submit", function (e) {
 
   saveRooms(rooms);
   closeRoomModal();
-  renderRooms();
+  applyRoomFilters();
 });
 
-renderRooms();
+applyRoomFilters();

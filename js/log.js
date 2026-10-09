@@ -75,6 +75,10 @@ function applyLogFilters() {
   const query = document.getElementById("logFilterSearch").value.trim().toLowerCase();
   const typeFilter = document.getElementById("logFilterType").value;
   const rackFilter = document.getElementById("logFilterRack").value;
+  const fromVal = document.getElementById("logFilterFrom").value;
+  const toVal = document.getElementById("logFilterTo").value;
+  const fromTs = fromVal ? new Date(fromVal + "T00:00:00").getTime() : null;
+  const toTs = toVal ? new Date(toVal + "T23:59:59.999").getTime() : null;
 
   let filtered = itemLog.filter(function (entry) {
     const matchesQuery = !query ||
@@ -84,7 +88,9 @@ function applyLogFilters() {
       entry.user.toLowerCase().indexOf(query) !== -1;
     const matchesType = typeFilter === "all" || entry.type === typeFilter;
     const matchesRack = rackFilter === "all" || entry.rackId === rackFilter;
-    return matchesQuery && matchesType && matchesRack;
+    const matchesFrom = fromTs === null || entry.timestamp >= fromTs;
+    const matchesTo = toTs === null || entry.timestamp <= toTs;
+    return matchesQuery && matchesType && matchesRack && matchesFrom && matchesTo;
   });
 
   filtered = sortLog(filtered);
@@ -135,10 +141,14 @@ document.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
 document.getElementById("logFilterSearch").addEventListener("input", function () { logCurrentPage = 1; applyLogFilters(); });
 document.getElementById("logFilterType").addEventListener("change", function () { logCurrentPage = 1; applyLogFilters(); });
 document.getElementById("logFilterRack").addEventListener("change", function () { logCurrentPage = 1; applyLogFilters(); });
+document.getElementById("logFilterFrom").addEventListener("change", function () { logCurrentPage = 1; applyLogFilters(); });
+document.getElementById("logFilterTo").addEventListener("change", function () { logCurrentPage = 1; applyLogFilters(); });
 document.getElementById("logFilterReset").addEventListener("click", function () {
   document.getElementById("logFilterSearch").value = "";
   document.getElementById("logFilterType").value = "all";
   document.getElementById("logFilterRack").value = "all";
+  document.getElementById("logFilterFrom").value = "";
+  document.getElementById("logFilterTo").value = "";
   logCurrentPage = 1;
   applyLogFilters();
 });

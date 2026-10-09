@@ -55,7 +55,10 @@ function buildItemTableRow(entry) {
   const dotColor = getItemColor(entry.name).solid;
   const row = document.createElement("tr");
 
-  const locText = entry.path ? `${escapeHtml(entry.storageLabel)} → ${escapeHtml(entry.path)}` : escapeHtml(entry.storageLabel);
+  const storageNameHtml = entry.rack
+    ? `<a href="${rackDetailUrl(entry.rack.id)}">${escapeHtml(entry.storageLabel)}</a>`
+    : escapeHtml(entry.storageLabel);
+  const locText = entry.path ? `${storageNameHtml} → ${escapeHtml(entry.path)}` : storageNameHtml;
   const tagsText = entry.tags.length ? entry.tags.join(", ") : "—";
 
   let actionsHtml = "";
@@ -75,11 +78,16 @@ function buildItemTableRow(entry) {
     ? `<a href="${itemDetailUrl(entry.raw.id)}">${escapeHtml(entry.name)}</a>`
     : escapeHtml(entry.name);
 
+  const images = entry.kind === "global" ? (entry.raw.images || []) : [];
+  const thumbHtml = images.length
+    ? `<img class="rack-image-thumb item-table-thumb" src="${images[0]}" alt="" title="Click to view" style="width:40px;height:40px;margin-right:10px;vertical-align:middle;">`
+    : `<span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span>`;
+
   row.innerHTML = `
-    <td data-label="Item"><span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span>${nameHtml}</td>
+    <td data-label="Item">${thumbHtml}${nameHtml}</td>
     <td data-label="Storage">${entry.rack ? `<a href="${rackDetailUrl(entry.rack.id)}" class="rack-id-badge">${escapeHtml(entry.rack.id)}</a> ` : ""}${locText}</td>
     <td data-label="Tags" class="muted">${escapeHtml(tagsText)}</td>
-    <td data-label="Type">${entry.rack ? typeBadgeHtml(entry.rack.type) : `<span class="type-badge">Unassigned</span>`}</td>
+    <td data-label="Type">${entry.rack ? `<a href="${rackDetailUrl(entry.rack.id)}" title="Go to ${escapeHtml(entry.rack.name)}">${typeBadgeHtml(entry.rack.type)}</a>` : `<span class="type-badge">Unassigned</span>`}</td>
     <td data-label="Status">${entry.kind === "global" && !showArchive
       ? `<button type="button" class="status-picker-btn" title="Move or change status">${itemStatusBadgeHtml(entry.status)}</button>`
       : entry.kind === "global" ? itemStatusBadgeHtml(entry.status) : "—"}</td>
