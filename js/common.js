@@ -127,6 +127,18 @@ function roomLabel(id) {
   return room ? room.name : "No location";
 }
 
+function nextRoomId() {
+  let max = 1000;
+  rooms.forEach(function (r) {
+    const m = /^SR-(\d+)$/.exec(r.id);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n > max) max = n;
+    }
+  });
+  return "SR-" + (max + 1);
+}
+
 // ---------- Roles & permissions ----------
 const PERMISSION_MODULES = [
   { key: "storage", label: "Storage Units" },
@@ -426,12 +438,6 @@ function activeGlobalItemsForRack(rackId) {
   return globalItemsForRack(rackId).filter(function (i) { return i.status !== "removed"; });
 }
 
-function globalItemStorageLabel(item) {
-  if (!item.storageId) return "Unassigned";
-  const rack = findRack(item.storageId);
-  return rack ? rack.name : "Unassigned";
-}
-
 // ---------- Item status (In Store / In Use / Removed-to-Archive) ----------
 const ITEM_STATUS_LABELS = { in_store: "In Store", in_use: "In Use", removed: "Removed" };
 const ITEM_STATUS_BADGE_CLASS = { in_store: "", in_use: "warning", removed: "neutral" };
@@ -485,6 +491,61 @@ function populateRackSelect(selectEl, selectedId) {
   selectEl.value = selectedId || "";
 }
 
+// ---------- Quick Add Location (from within the Quick Add Storage modal) ----------
+function openQuickAddLocationModal(onCreated) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Location</h3>
+        <button type="button" class="modal-close qa-room-close">&times;</button>
+      </div>
+      <form class="modal-form qa-room-form">
+        <div class="field">
+          <label>Location Name <span class="req">*</span></label>
+          <input type="text" class="qa-room-name" placeholder="e.g. Location 1" required>
+        </div>
+        <div class="field">
+          <label>Area</label>
+          <input type="text" class="qa-room-area" placeholder="e.g. Warehouse 1, Ground Floor">
+        </div>
+        <p class="error-msg qa-room-error" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary qa-room-cancel">Cancel</button>
+          <button type="submit" class="btn-primary">Add Location</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  function close() { overlay.remove(); }
+  overlay.querySelector(".qa-room-close").addEventListener("click", close);
+  overlay.querySelector(".qa-room-cancel").addEventListener("click", close);
+  overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+
+  overlay.querySelector(".qa-room-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const name = overlay.querySelector(".qa-room-name").value.trim();
+    const location = overlay.querySelector(".qa-room-area").value.trim();
+    const errorEl = overlay.querySelector(".qa-room-error");
+
+    if (!name) {
+      errorEl.textContent = "Please enter a location name.";
+      errorEl.hidden = false;
+      return;
+    }
+
+    const room = { id: nextRoomId(), name: name, location: location, createdAt: Date.now() };
+    rooms.push(room);
+    saveRooms(rooms);
+    showToast(`"${name}" created`, "success");
+    close();
+    if (onCreated) onCreated(room);
+  });
+}
+
 // ---------- Quick Add Storage (from within the Add/Edit Item modal) ----------
 const QA_STORAGE_TYPE_HINTS = {
   shelf: "Open shelving.",
@@ -526,8 +587,10 @@ function openQuickAddStorageModal(onCreated) {
           </div>
           <div class="field">
             <label>Location <span class="req">*</span></label>
-            <select class="qa-storage-room" required></select>
-            <p class="field-hint">No location yet? <a href="storerooms.html" target="_blank">Create one first →</a></p>
+            <div class="select-with-add">
+              <select class="qa-storage-room" required></select>
+              <button type="button" class="btn-secondary qa-storage-room-add" title="Add a new location">+ New</button>
+            </div>
           </div>
         </div>
         <div class="field">
@@ -569,13 +632,21 @@ function openQuickAddStorageModal(onCreated) {
   syncTypeHint();
 
   const roomSelect = overlay.querySelector(".qa-storage-room");
-  roomSelect.innerHTML = rooms.map(function (r) {
-    return `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`;
-  }).join("");
-  if (rooms.length === 0) {
-    roomSelect.disabled = true;
-    overlay.querySelector("button[type=submit]").disabled = true;
+  function refreshRoomSelect(selectedId) {
+    roomSelect.innerHTML = rooms.map(function (r) {
+      return `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`;
+    }).join("");
+    roomSelect.disabled = rooms.length === 0;
+    overlay.querySelector("button[type=submit]").disabled = rooms.length === 0;
+    if (selectedId) roomSelect.value = selectedId;
   }
+  refreshRoomSelect();
+
+  overlay.querySelector(".qa-storage-room-add").addEventListener("click", function () {
+    openQuickAddLocationModal(function (newRoom) {
+      refreshRoomSelect(newRoom.id);
+    });
+  });
 
   const qaTagInput = createTagInput(overlay.querySelector(".qa-storage-tag-chips"), overlay.querySelector(".qa-storage-tag-text"), []);
   const qaImageInput = createImageInput(overlay.querySelector(".qa-storage-image-previews"), overlay.querySelector(".qa-storage-image-file"), {});
@@ -1271,31 +1342,35 @@ function buildRackCard(rack) {
 
   const tags = rackTags(rack);
   const images = rackImages(rack);
+  const extraImages = Math.max(0, images.length - 1);
 
   const card = document.createElement("div");
   card.className = "rack-card clickable";
   card.style.borderLeft = `3px solid ${getCategoryColor(tags[0] || "").solid}`;
   card.innerHTML = `
-    <div class="rack-card-head">
-      <div>
-        <span class="rack-id-badge">${escapeHtml(rack.id)}</span>
-        <div class="rack-name">${escapeHtml(rack.name)}</div>
-      </div>
+    <div class="rack-card-media">
       <div class="rack-card-actions">
-        ${rackQrThumbHtml(rack)}
         <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
         <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
       </div>
+      ${rackQrThumbHtml(rack)}
+      ${imagesPreviewHtml(images.slice(0, 1), 56)}
+      ${extraImages > 0 ? `<span class="rack-card-more-badge">+${extraImages} more</span>` : ""}
+    </div>
+    <div class="rack-card-body">
+    <div class="rack-card-head">
+      <span class="rack-id-badge">${escapeHtml(rack.id)}</span>
+      <div class="rack-name">${escapeHtml(rack.name)}</div>
     </div>
     <div class="rack-location"><span class="inline-icon">${ICONS.door}</span> ${escapeHtml(roomLabel(rack.storeRoomId))}</div>
     <div class="rack-sub-meta">
       ${typeBadgeHtml(rack.type)}
       ${tagsHtml(tags)}
     </div>
-    ${imagesPreviewHtml(images, 64)}
     ${buildItemsPreviewHtml(collectAllItems(rack).concat(activeGlobalItemsForRack(rack.id)))}
     <div class="rack-meta">
       <span><strong>${totalItems}</strong> items</span>
+    </div>
     </div>
   `;
 
@@ -1337,14 +1412,6 @@ function buildRackRow(rack) {
     </div>
   `;
   return row;
-}
-
-function buildAddGhostCard(label, onClick) {
-  const card = document.createElement("div");
-  card.className = "rack-card clickable add-ghost-card";
-  card.innerHTML = `<span class="add-ghost-icon">+</span><span>${escapeHtml(label)}</span>`;
-  card.addEventListener("click", onClick);
-  return card;
 }
 
 // ---------- Delete rack ----------

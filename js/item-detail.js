@@ -63,6 +63,99 @@ function itemActivityPanelHtml(item) {
     </div>`;
 }
 
+// itemEditingField: null, or which single field is currently click-to-edit active:
+// "name" | "storage" | "tags" | "quantity" | "remarks" | "images"
+let itemEditingField = null;
+
+function itemEditableIconBtns() {
+  return `<button type="button" class="icon-btn editable-save-btn" title="Save">${ICONS.check}</button>
+          <button type="button" class="icon-btn delete editable-cancel-btn" title="Cancel">&times;</button>`;
+}
+
+function itemDetailNameFieldHtml(item) {
+  if (itemEditingField === "name") {
+    return `<span class="editable-field editing" data-field="name">
+      <input type="text" id="editFieldInput" class="inline-edit-input" value="${escapeHtml(item.name)}">
+      ${itemEditableIconBtns()}
+    </span> <span class="rack-id-badge large">${escapeHtml(item.id)}</span>`;
+  }
+  return `<span class="editable-field" data-field="name" title="Click to edit">${escapeHtml(item.name)} ${ICONS.edit}</span> <span class="rack-id-badge large">${escapeHtml(item.id)}</span>`;
+}
+
+function itemDetailStorageFieldHtml(item, rack) {
+  if (itemEditingField === "storage") {
+    return `<span class="editable-field editing" data-field="storage">
+      <div class="select-with-add">
+        <select id="editFieldInput"></select>
+        <button type="button" class="btn-secondary" id="editFieldStorageAdd" title="Add a new storage">+ New</button>
+      </div>
+      ${itemEditableIconBtns()}
+    </span>`;
+  }
+  const label = rack ? `${escapeHtml(rack.name)} (${escapeHtml(rack.id)})` : "Unassigned";
+  return `<span class="editable-field" data-field="storage" title="Click to edit">${label} ${ICONS.edit}</span>`;
+}
+
+function itemDetailTagsFieldHtml(item) {
+  if (itemEditingField === "tags") {
+    return `<span class="editable-field editing" data-field="tags">
+      <div class="tag-input" id="editFieldTagInput">
+        <div class="tag-input-chips" id="editFieldTagChips"></div>
+        <input type="text" id="editFieldTagText" placeholder="Type a tag and press Enter">
+      </div>
+      ${itemEditableIconBtns()}
+    </span>`;
+  }
+  const tags = item.tags || [];
+  return `<span class="editable-field" data-field="tags" title="Click to edit">${tagsHtml(tags)}${tags.length ? "" : "<span class=\"muted\">No tags</span>"} ${ICONS.edit}</span>`;
+}
+
+function itemDetailQuantityFieldHtml(item) {
+  if (itemEditingField === "quantity") {
+    return `<span class="editable-field editing" data-field="quantity">
+      <input type="number" min="1" id="editFieldInput" class="inline-edit-input" style="width:90px;" value="${item.quantity}">
+      ${itemEditableIconBtns()}
+    </span>`;
+  }
+  return `<span class="editable-field" data-field="quantity" title="Click to edit"><span class="stat-value" id="itemStatQty">0</span> ${ICONS.edit}</span>`;
+}
+
+function itemDetailRemarksFieldHtml(item) {
+  if (itemEditingField === "remarks") {
+    return `
+      <div class="editable-field editable-field-block editing" data-field="remarks">
+        <textarea id="editFieldInput" class="inline-edit-input" rows="2" placeholder="Any notes about this item">${escapeHtml(item.remarks || "")}</textarea>
+        ${itemEditableIconBtns()}
+      </div>`;
+  }
+  return `
+    <div class="editable-field editable-field-block" data-field="remarks" title="Click to edit">
+      <p class="${item.remarks ? "" : "empty-state"}">${item.remarks ? escapeHtml(item.remarks) : "No remarks."} ${ICONS.edit}</p>
+    </div>`;
+}
+
+function itemDetailImagesFieldHtml(item) {
+  if (itemEditingField === "images") {
+    return `
+      <div class="editable-field editable-field-block editing" data-field="images">
+        <div class="image-input" id="editFieldImageInput">
+          <div class="image-input-previews" id="editFieldImagePreviews"></div>
+          <label class="image-input-add" for="editFieldImageFile">
+            <span class="add-ghost-icon">+</span> Add Pictures
+          </label>
+          <input type="file" id="editFieldImageFile" accept="image/*" multiple hidden>
+        </div>
+        ${itemEditableIconBtns()}
+      </div>`;
+  }
+  const images = item.images || [];
+  return `
+    <div class="editable-field editable-field-block" data-field="images" title="Click to edit pictures">
+      ${imagesPreviewHtml(images, 56)}
+      <button type="button" class="btn-secondary editable-pencil-btn">${ICONS.edit} Edit Pictures</button>
+    </div>`;
+}
+
 function renderItemDetail() {
   const item = findGlobalItem(currentItemId);
   const container = document.getElementById("itemDetailContent");
@@ -77,30 +170,29 @@ function renderItemDetail() {
 
   const rack = item.storageId ? findRack(item.storageId) : null;
   const isArchived = item.status === "removed";
+  if (isArchived) itemEditingField = null;
 
   const actionsHtml = isArchived
     ? `
       <button class="btn-secondary" id="itemRestoreBtn">${ICONS.restore} Restore</button>
       <button class="btn-danger" id="itemPurgeBtn">${ICONS.trash} Delete Forever</button>`
     : `
-      <button class="btn-secondary" id="itemEditBtn">${ICONS.edit} Edit Item</button>
       <button class="btn-danger" id="itemArchiveBtn">${ICONS.archive} Remove to Archive</button>`;
 
   container.innerHTML = `
     <a href="items.html" class="back-link">← Back to Items</a>
 
     <div class="detail-title-row">
-      <div>
-        <h2>${escapeHtml(item.name)} <span class="rack-id-badge large">${escapeHtml(item.id)}</span></h2>
-        <p class="muted">
-          <span class="inline-icon">${ICONS.door}</span>
-          ${rack ? `<a href="${rackDetailUrl(rack.id)}">${escapeHtml(rack.name)} (${escapeHtml(rack.id)})</a>` : "Unassigned"}
-        </p>
+      <div class="detail-title-info">
+        <h2>${itemDetailNameFieldHtml(item)}</h2>
+        ${isArchived
+          ? `<div class="muted detail-room-row"><span class="inline-icon">${ICONS.door}</span> ${rack ? `${escapeHtml(rack.name)} (${escapeHtml(rack.id)})` : "Unassigned"}</div>`
+          : `<div class="muted detail-room-row"><span class="inline-icon">${ICONS.door}</span> ${itemDetailStorageFieldHtml(item, rack)}</div>`}
         <div class="rack-sub-meta">
           ${isArchived ? itemStatusBadgeHtml("removed") : `<button type="button" class="status-picker-btn" title="Move or change status">${itemStatusBadgeHtml(item.status)}</button>`}
-          ${tagsHtml(item.tags || [])}
+          ${itemDetailTagsFieldHtml(item)}
         </div>
-        ${imagesPreviewHtml(item.images || [], 56)}
+        ${itemDetailImagesFieldHtml(item)}
       </div>
       <div class="detail-actions">
         ${actionsHtml}
@@ -111,7 +203,7 @@ function renderItemDetail() {
       <div class="stat-card">
         <div class="stat-icon c-amber">${ICONS.box}</div>
         <div>
-          <div class="stat-value" id="itemStatQty">0</div>
+          ${itemDetailQuantityFieldHtml(item)}
           <div class="stat-label">Quantity</div>
         </div>
       </div>
@@ -121,13 +213,129 @@ function renderItemDetail() {
       <div class="panel-head">
         <h3>Remarks</h3>
       </div>
-      <p class="${item.remarks ? "" : "empty-state"}">${item.remarks ? escapeHtml(item.remarks) : "No remarks."}</p>
+      ${itemDetailRemarksFieldHtml(item)}
     </div>
 
     ${itemActivityPanelHtml(item)}
   `;
 
-  animateNumber(document.getElementById("itemStatQty"), item.quantity);
+  const qtyStatEl = document.getElementById("itemStatQty");
+  if (qtyStatEl) animateNumber(qtyStatEl, item.quantity);
+
+  function startEditing(field) {
+    itemEditingField = field;
+    renderItemDetail();
+  }
+  function stopEditing() {
+    itemEditingField = null;
+    renderItemDetail();
+  }
+
+  if (itemEditingField) {
+    const editableWrap = container.querySelector(`.editable-field[data-field="${itemEditingField}"]`);
+    editableWrap.querySelector(".editable-cancel-btn").addEventListener("click", stopEditing);
+
+    if (itemEditingField === "name") {
+      const input = document.getElementById("editFieldInput");
+      input.focus();
+      input.select();
+      function save() {
+        const name = input.value.trim();
+        if (!name) { input.focus(); return; }
+        item.name = name;
+        saveGlobalItems(globalItems);
+        showToast(`"${item.name}" updated`, "success");
+        stopEditing();
+      }
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") save();
+        if (e.key === "Escape") stopEditing();
+      });
+      editableWrap.querySelector(".editable-save-btn").addEventListener("click", save);
+    }
+
+    if (itemEditingField === "storage") {
+      const storageSelect = document.getElementById("editFieldInput");
+      populateRackSelect(storageSelect, item.storageId);
+      document.getElementById("editFieldStorageAdd").addEventListener("click", function () {
+        openQuickAddStorageModal(function (newRack) {
+          populateRackSelect(storageSelect, newRack.id);
+        });
+      });
+      function save() {
+        item.storageId = storageSelect.value || null;
+        saveGlobalItems(globalItems);
+        showToast(`"${item.name}" updated`, "success");
+        stopEditing();
+      }
+      editableWrap.querySelector(".editable-save-btn").addEventListener("click", save);
+    }
+
+    if (itemEditingField === "tags") {
+      const tagInput = createTagInput(document.getElementById("editFieldTagChips"), document.getElementById("editFieldTagText"), item.tags || []);
+      function save() {
+        item.tags = tagInput.getTags();
+        saveGlobalItems(globalItems);
+        showToast(`"${item.name}" updated`, "success");
+        stopEditing();
+      }
+      editableWrap.querySelector(".editable-save-btn").addEventListener("click", save);
+    }
+
+    if (itemEditingField === "quantity") {
+      const input = document.getElementById("editFieldInput");
+      input.focus();
+      input.select();
+      function save() {
+        const quantity = parseInt(input.value, 10);
+        if (isNaN(quantity) || quantity < 1) { input.focus(); return; }
+        const delta = quantity - item.quantity;
+        item.quantity = quantity;
+        saveGlobalItems(globalItems);
+        if (delta > 0) logTransaction("in", item.name, delta, rack, null);
+        else if (delta < 0) logTransaction("out", item.name, -delta, rack, null);
+        showToast(`"${item.name}" updated`, "success");
+        stopEditing();
+      }
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") save();
+        if (e.key === "Escape") stopEditing();
+      });
+      editableWrap.querySelector(".editable-save-btn").addEventListener("click", save);
+    }
+
+    if (itemEditingField === "remarks") {
+      const input = document.getElementById("editFieldInput");
+      input.focus();
+      function save() {
+        item.remarks = input.value.trim();
+        saveGlobalItems(globalItems);
+        showToast(`"${item.name}" updated`, "success");
+        stopEditing();
+      }
+      editableWrap.querySelector(".editable-save-btn").addEventListener("click", save);
+    }
+
+    if (itemEditingField === "images") {
+      const imageInput = createImageInput(document.getElementById("editFieldImagePreviews"), document.getElementById("editFieldImageFile"), { initialImages: item.images || [] });
+      function save() {
+        item.images = imageInput.getImages();
+        saveGlobalItems(globalItems);
+        showToast(`"${item.name}" updated`, "success");
+        stopEditing();
+      }
+      editableWrap.querySelector(".editable-save-btn").addEventListener("click", save);
+    }
+  } else {
+    container.querySelectorAll(".editable-field[data-field]").forEach(function (el) {
+      const pencilBtn = el.querySelector(".editable-pencil-btn");
+      const trigger = pencilBtn || el;
+      trigger.addEventListener("click", function (e) {
+        e.stopPropagation();
+        startEditing(el.dataset.field);
+      });
+    });
+  }
 
   if (isArchived) {
     document.getElementById("itemRestoreBtn").addEventListener("click", function () {
@@ -137,9 +345,6 @@ function renderItemDetail() {
       purgeGlobalItem(item, function () { window.location.href = "items.html"; });
     });
   } else {
-    document.getElementById("itemEditBtn").addEventListener("click", function () {
-      openAddItemModal(item);
-    });
     document.getElementById("itemArchiveBtn").addEventListener("click", function () {
       archiveGlobalItem(item, rack);
     });

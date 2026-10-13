@@ -23,6 +23,7 @@ function rackSortValue(rack, field) {
   if (field === "roomLabel") return roomLabel(rack.storeRoomId);
   if (field === "typeLabel") return typeInfo(rack.type).label;
   if (field === "itemCount") return unitItemCount(rack);
+  if (field === "createdAt") return rack.createdAt;
   return rack.name;
 }
 
@@ -92,6 +93,13 @@ document.getElementById("filterReset").addEventListener("click", function () {
   document.getElementById("filterSort").value = "name-asc";
   storageCurrentPage = 1;
   applyRacksFilters();
+});
+
+document.getElementById("addStorageBtn").addEventListener("click", function () {
+  openQuickAddStorageModal(function () {
+    storageCurrentPage = 1;
+    applyRacksFilters();
+  });
 });
 
 // Prefill filters from query params (?search= from the top-bar ID search fallback, ?room= from a Location card)

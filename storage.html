@@ -68,7 +68,7 @@
             <h2>All Storages</h2>
             <p class="muted">Every storage unit across all your locations</p>
           </div>
-          <a href="add-storage.html" class="btn-primary btn-add">+ Add Storage</a>
+          <button type="button" class="btn-primary btn-add" id="addStorageBtn">+ Add Storage</button>
         </div>
 
         <div class="filters-bar">
@@ -82,6 +82,8 @@
           <select id="filterSort">
             <option value="name-asc">Name (A-Z)</option>
             <option value="name-desc">Name (Z-A)</option>
+            <option value="createdAt-desc">Newest First</option>
+            <option value="createdAt-asc">Oldest First</option>
             <option value="roomLabel-asc">Location (A-Z)</option>
             <option value="typeLabel-asc">Type (A-Z)</option>
             <option value="itemCount-desc">Items (most first)</option>

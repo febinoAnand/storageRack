@@ -411,18 +411,6 @@ select:disabled {
   font-size: 13px;
 }
 
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  accent-color: var(--primary);
-}
-
 .forgot-link {
   color: var(--primary);
   text-decoration: none;
@@ -736,7 +724,6 @@ select:disabled {
   margin-bottom: 32px;
 }
 
-.stats-row-3 { grid-template-columns: repeat(3, 1fr); }
 .stats-row-1 { grid-template-columns: minmax(0, 260px); }
 
 .stat-card {
@@ -857,11 +844,6 @@ select:disabled {
 }
 
 .link-more:hover { text-decoration: underline; transform: translateX(2px); }
-
-.form-panel { max-width: 640px; }
-.form-panel .field { margin-bottom: 18px; }
-.form-panel > .field-group { margin-bottom: 18px; }
-.form-panel > .field-group .field { margin-bottom: 0; }
 
 /* ---------- Rack row (overview lists) ---------- */
 
@@ -997,6 +979,7 @@ select:disabled {
 }
 
 .rack-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--surface);
@@ -1006,6 +989,8 @@ select:disabled {
   box-shadow: var(--shadow-sm);
   transition: transform .15s var(--ease), box-shadow .15s ease, border-color .15s ease, background .25s ease;
 }
+
+.rack-card-body { padding-right: 84px; }
 
 .rack-card.clickable { cursor: pointer; }
 .rack-row.clickable { cursor: pointer; }
@@ -1017,36 +1002,7 @@ select:disabled {
   box-shadow: var(--shadow-md);
 }
 
-.add-ghost-card {
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 112px;
-  border: 1.5px dashed var(--border-strong);
-  background: transparent;
-  box-shadow: none;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.add-ghost-card:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-  background: var(--primary-soft);
-  box-shadow: none;
-}
-
-.add-ghost-card .add-ghost-icon {
-  font-size: 18px;
-  line-height: 1;
-}
-
 .rack-card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   margin-bottom: 4px;
 }
 
@@ -1106,11 +1062,6 @@ select:disabled {
   padding: 3px 10px;
   border-radius: 20px;
   border: 1px solid;
-}
-
-.rack-layout {
-  font-size: 12px;
-  color: var(--muted);
 }
 
 .type-badge {
@@ -1382,6 +1333,32 @@ select:disabled {
   border-style: dashed;
 }
 
+.rack-card-media {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.rack-card-media .rack-images-preview {
+  margin-bottom: 0;
+  justify-content: flex-end;
+}
+
+.rack-card-more-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
 .rack-card-actions {
   display: flex;
   align-items: center;
@@ -1413,6 +1390,7 @@ select:disabled {
   align-items: center;
   justify-content: center;
   transition: background .15s, border-color .15s;
+  text-decoration: none;
 }
 
 .icon-btn svg { width: 14px; height: 14px; }
@@ -1420,42 +1398,6 @@ select:disabled {
 
 .icon-btn:hover { background: var(--primary-soft); border-color: var(--border-strong); }
 .icon-btn.delete:hover { background: var(--danger-bg); border-color: var(--danger-border); }
-
-.rack-progress-track {
-  width: 100%;
-  height: 6px;
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
-.rack-progress-track.small {
-  height: 6px;
-  width: 120px;
-  margin-bottom: 0;
-}
-
-.rack-progress-track.large {
-  height: 10px;
-  margin-bottom: 28px;
-}
-
-.rack-progress-fill {
-  height: 100%;
-  border-radius: 6px;
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-  width: 0;
-  transition: width .6s var(--ease);
-}
-
-.rack-progress-fill.warning {
-  background: linear-gradient(90deg, #f59e0b, #d97706);
-}
-.rack-progress-fill.full {
-  background: linear-gradient(90deg, #ef4444, #dc2626);
-}
 
 .rack-meta {
   display: flex;
@@ -1605,6 +1547,10 @@ select:disabled {
 .log-table tbody tr:last-child td { border-bottom: none; }
 .log-table tbody tr:hover td { background: var(--surface-alt); }
 
+.log-table tr.editing-row td { background: var(--surface-alt); }
+.log-table .row-edit-name { width: 100%; min-width: 120px; box-sizing: border-box; }
+.log-table td .tag-input { font-size: 13px; }
+
 .log-type-badge {
   display: inline-flex;
   align-items: center;
@@ -1710,6 +1656,7 @@ select:disabled {
 
 .detail-title-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
@@ -1721,10 +1668,120 @@ select:disabled {
 
 .detail-title-row h2 { font-size: 20px; font-weight: 700; }
 
+.detail-title-info {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* ---------- Click-to-edit inline fields (storage / item detail pages) ---------- */
+
+.editable-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  transition: background .15s ease;
+}
+
+.editable-field:hover { background: var(--surface-alt); }
+
+.editable-field svg {
+  width: 13px;
+  height: 13px;
+  color: var(--muted);
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+
+.editable-field:hover svg { opacity: 1; }
+
+/* Touch devices have no :hover, so the pencil must stay visible or the field
+   never signals that it's editable. */
+@media (hover: none) {
+  .editable-field svg { opacity: 1; }
+}
+
+.editable-field.editing {
+  cursor: default;
+  background: none;
+  padding: 0;
+  margin: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.editable-field.editing:hover { background: none; }
+
+.inline-edit-input {
+  padding: 7px 10px;
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-soft);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.editable-field.editing { min-width: 0; max-width: 100%; flex-wrap: wrap; }
+
+.editable-field select,
+.editable-field .tag-input {
+  font-size: 13px;
+}
+
+.editable-field-block {
+  display: block;
+  cursor: default;
+}
+
+.editable-pencil-btn {
+  margin-top: 10px;
+  font-size: 12px;
+  padding: 7px 12px;
+}
+
+.editable-field-block.editing .image-input { margin-bottom: 10px; }
+
+.editable-field-block.editing textarea.inline-edit-input {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+
 .detail-actions {
   display: flex;
+  align-items: center;
   gap: 10px;
   flex-shrink: 0;
+}
+
+.detail-qr-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-qr-block .rack-card-qr {
+  width: 96px;
+  height: 96px;
+}
+
+.detail-actions .btn-primary,
+.detail-actions .btn-secondary,
+.detail-actions .btn-danger {
+  width: auto;
 }
 
 /* ---------- Amazon-style product gallery (storage detail hero) ---------- */
@@ -1769,12 +1826,6 @@ select:disabled {
   display: block;
 }
 
-.items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .item-row {
   display: flex;
   align-items: center;
@@ -1814,46 +1865,6 @@ select:disabled {
   white-space: nowrap;
 }
 
-.item-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-
-/* ---------- Slot grid (rack layout) ---------- */
-
-.slot-grid-wrap {
-  max-height: 320px;
-  overflow-y: auto;
-  padding: 4px;
-}
-
-.slot-grid {
-  display: grid;
-  gap: 5px;
-  animation: fadeIn .4s ease both;
-}
-
-.slot-cell {
-  aspect-ratio: 1 / 1;
-  min-width: 14px;
-  border-radius: 3px;
-  background: var(--surface-alt);
-  border: 1px solid var(--border);
-  transition: transform .12s ease;
-}
-
-.slot-cell.filled {
-  border-color: transparent;
-}
-
-.slot-cell:hover {
-  transform: scale(1.15);
-  z-index: 1;
-  position: relative;
-}
-
 /* ---------- Modal ---------- */
 
 .modal-overlay {
@@ -1887,15 +1898,6 @@ select:disabled {
 
 .modal.modal-wide { max-width: 620px; }
 .modal.modal-narrow { max-width: 300px; }
-
-.qr-modal-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 4px 22px 22px;
-  text-align: center;
-}
 
 .qr-code-box {
   width: 200px;
@@ -2075,8 +2077,6 @@ select:disabled {
 
 .modal-actions .btn-primary { width: auto; }
 
-.modal-actions.modal-actions-center { justify-content: center; }
-
 .confirm-dialog-body {
   padding: 4px 22px 22px;
 }
@@ -2110,7 +2110,6 @@ select:disabled {
 @media (max-width: 700px) {
   .rack-row { grid-template-columns: 1fr; align-items: flex-start; gap: 8px; }
   .rack-row-progress { width: 100%; }
-  .rack-progress-track.small { width: 100%; }
   .rack-row-meta { justify-content: space-between; width: 100%; }
 }
 

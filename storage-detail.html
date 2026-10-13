@@ -67,58 +67,6 @@
     </div>
   </div>
 
-  <!-- Edit Storage Unit Modal -->
-  <div class="modal-overlay" id="editModalOverlay" hidden>
-    <div class="modal">
-      <div class="modal-header">
-        <h3>Edit Storage</h3>
-        <button class="modal-close" id="editModalClose">&times;</button>
-      </div>
-      <form id="editRackForm" class="modal-form">
-        <div class="field-group">
-          <div class="field">
-            <label for="editRackId">Storage ID</label>
-            <input type="text" id="editRackId" disabled>
-          </div>
-          <div class="field">
-            <label for="editRackType">Type</label>
-            <input type="text" id="editRackType" disabled>
-          </div>
-        </div>
-        <div class="field">
-          <label for="editRackName">Storage Name</label>
-          <input type="text" id="editRackName" required>
-        </div>
-        <div class="field">
-          <label for="editRackRoom">Location</label>
-          <select id="editRackRoom" required></select>
-        </div>
-        <div class="field">
-          <label for="editRackTagText">Tags</label>
-          <div class="tag-input" id="editRackTagInput">
-            <div class="tag-input-chips" id="editRackTagChips"></div>
-            <input type="text" id="editRackTagText" placeholder="Type a tag and press Enter">
-          </div>
-        </div>
-        <div class="field">
-          <label for="editRackImageFile">Pictures</label>
-          <div class="image-input" id="editRackImageInput">
-            <div class="image-input-previews" id="editRackImagePreviews"></div>
-            <label class="image-input-add" for="editRackImageFile">
-              <span class="add-ghost-icon">+</span> Add Pictures
-            </label>
-            <input type="file" id="editRackImageFile" accept="image/*" multiple hidden>
-          </div>
-          <p class="field-hint">Up to 5 pictures, 2MB each.</p>
-        </div>
-        <p id="editRackError" class="error-msg" hidden></p>
-        <div class="modal-actions">
-          <button type="button" class="btn-secondary" id="editRackCancel">Cancel</button>
-          <button type="submit" class="btn-primary">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <!-- Add / Edit Item Modal -->
   <div class="modal-overlay" id="addItemModalOverlay" hidden>
@@ -220,24 +168,6 @@
           <button type="submit" class="btn-primary" id="moveItemSave">Confirm</button>
         </div>
       </form>
-    </div>
-  </div>
-
-  <!-- QR Code Modal -->
-  <div class="modal-overlay" id="qrModalOverlay" hidden>
-    <div class="modal modal-narrow">
-      <div class="modal-header">
-        <h3>Storage QR Code</h3>
-        <button class="modal-close" id="qrModalClose">&times;</button>
-      </div>
-      <div class="qr-modal-body">
-        <div class="qr-code-box" id="qrCodeBox"></div>
-        <div class="qr-code-id" id="qrCodeId"></div>
-        <div class="qr-code-name" id="qrCodeName"></div>
-      </div>
-      <div class="modal-actions modal-actions-center">
-        <button type="button" class="btn-primary" id="qrPrintBtn">🖨️ Print</button>
-      </div>
     </div>
   </div>
 
