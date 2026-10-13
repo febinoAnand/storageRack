@@ -83,9 +83,14 @@
         </div>
 
         <div class="filters-bar">
-          <input type="text" id="itemFilterSearch" placeholder="Search by item, storage, tag or location">
+          <input type="text" id="itemFilterSearch" placeholder="Search by item, item ID, storage, storage ID, tag or location">
           <select id="itemFilterType">
             <option value="all">All Types</option>
+          </select>
+          <select id="itemFilterStatus">
+            <option value="all">All Statuses</option>
+            <option value="in_store">In Store</option>
+            <option value="in_use">In Use</option>
           </select>
           <button class="btn-secondary" id="itemFilterReset">Reset</button>
         </div>
@@ -98,6 +103,8 @@
             <table class="log-table">
               <thead>
                 <tr>
+                  <th>Image</th>
+                  <th data-sort="id">Item ID <span class="sort-arrow"></span></th>
                   <th data-sort="name">Item <span class="sort-arrow"></span></th>
                   <th data-sort="storageLabel">Storage <span class="sort-arrow"></span></th>
                   <th>Tags</th>
@@ -130,13 +137,17 @@
         <div class="field-group">
           <div class="field">
             <label for="placeItemName">Item Name <span class="req">*</span></label>
-            <input type="text" id="placeItemName" placeholder="e.g. Circuit Boards - Box 12" required>
+            <div class="item-picker">
+              <input type="text" id="placeItemName" placeholder="e.g. Circuit Boards - Box 12" required autocomplete="off">
+              <div class="item-picker-dropdown" id="addItemExistingDropdown" hidden></div>
+            </div>
           </div>
           <div class="field">
             <label for="placeItemId">Item ID <span class="optional-tag">(optional)</span></label>
             <input type="text" id="placeItemId" placeholder="Auto-generated if left blank">
           </div>
         </div>
+        <p class="field-hint" style="margin-top:-10px;">Matching an existing item while typing lets you move it into the Storage below instead of creating a new one.</p>
         <div class="field">
           <label for="placeItemTagText">Item Tags</label>
           <div class="tag-input" id="placeItemTagInput">

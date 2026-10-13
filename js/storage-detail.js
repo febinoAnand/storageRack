@@ -42,10 +42,21 @@ document.addEventListener("click", function (e) {
 // inline-editing within the Items panel below (click-to-edit, not a modal).
 let storageEditingItemId = null;
 
+function itemRowImageHtml(item) {
+  const images = item.images || [];
+  if (images.length) {
+    return `<img class="rack-image-thumb item-table-thumb" src="${images[0]}" alt="" title="Click to view" style="width:40px;height:40px;">`;
+  }
+  const dotColor = getItemColor(item.name).solid;
+  const initial = item.name.trim().charAt(0).toUpperCase() || "?";
+  return `<span class="item-avatar" style="background:${dotColor};" title="No picture">${escapeHtml(initial)}</span>`;
+}
+
 function itemRowHtml(item) {
   if (storageEditingItemId === item.id) {
     return `
       <tr data-item-id="${escapeHtml(item.id)}" class="editing-row">
+        <td data-label="Image">${itemRowImageHtml(item)}</td>
         <td data-label="Item"><input type="text" class="inline-edit-input row-edit-name" id="rowEditName" value="${escapeHtml(item.name)}"></td>
         <td data-label="Tags">
           <div class="tag-input" id="rowEditTagInput">
@@ -61,12 +72,12 @@ function itemRowHtml(item) {
         </td>
       </tr>`;
   }
-  const dotColor = getItemColor(item.name).solid;
-  const tagsText = item.tags && item.tags.length ? item.tags.join(", ") : "—";
+  const tagsCellHtml = item.tags && item.tags.length ? tagsHtml(item.tags) : `<span class="muted">—</span>`;
   return `
     <tr data-item-id="${escapeHtml(item.id)}">
-      <td data-label="Item"><span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span><span class="editable-field row-name-trigger" title="Click to edit">${escapeHtml(item.name)} ${ICONS.edit}</span></td>
-      <td data-label="Tags" class="muted">${escapeHtml(tagsText)}</td>
+      <td data-label="Image">${itemRowImageHtml(item)}</td>
+      <td data-label="Item"><span class="editable-field row-name-trigger" title="Click to edit">${escapeHtml(item.name)} ${ICONS.edit}</span></td>
+      <td data-label="Tags">${tagsCellHtml}</td>
       <td data-label="Status"><button type="button" class="status-picker-btn" title="Move or change status">${itemStatusBadgeHtml(item.status)}</button></td>
       <td data-label="Qty"><strong>${item.quantity}</strong></td>
       <td data-label="Actions">
@@ -129,6 +140,7 @@ function globalItemsPanelHtml(rack) {
         <table class="log-table">
           <thead>
             <tr>
+              <th>Image</th>
               ${itemsPanelSortThHtml("name", "Item")}
               ${itemsPanelSortThHtml("tags", "Tags")}
               ${itemsPanelSortThHtml("status", "Status")}
@@ -260,10 +272,6 @@ function renderDetail() {
         <div class="detail-title-info">
           <h2>${detailNameFieldHtml(rack)}</h2>
           <div class="muted detail-room-row"><span class="inline-icon">${ICONS.door}</span> ${detailRoomFieldHtml(rack)}</div>
-          <div class="rack-sub-meta">
-            ${typeBadgeHtml(rack.type)}
-            ${detailTagsFieldHtml(rack)}
-          </div>
         </div>
         <div class="detail-actions">
           <div class="detail-qr-block" title="Scan to open this storage">
@@ -275,12 +283,26 @@ function renderDetail() {
       </div>
     </div>
 
-    <section class="stats-row stats-row-1">
+    <section class="stats-row stats-row-3">
       <div class="stat-card">
         <div class="stat-icon c-amber">${ICONS.box}</div>
         <div>
           <div class="stat-value" id="detailStatItems">0</div>
           <div class="stat-label">Items Stored</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon c-blue">${ICONS.layers}</div>
+        <div>
+          <div class="stat-value">${typeBadgeHtml(rack.type)}</div>
+          <div class="stat-label">Type</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon c-violet">${ICONS.tag}</div>
+        <div>
+          <div class="stat-value">${detailTagsFieldHtml(rack)}</div>
+          <div class="stat-label">Tags</div>
         </div>
       </div>
     </section>

@@ -80,13 +80,17 @@
         <div class="field-group">
           <div class="field">
             <label for="placeItemName">Item Name <span class="req">*</span></label>
-            <input type="text" id="placeItemName" placeholder="e.g. Circuit Boards - Box 12" required>
+            <div class="item-picker">
+              <input type="text" id="placeItemName" placeholder="e.g. Circuit Boards - Box 12" required autocomplete="off">
+              <div class="item-picker-dropdown" id="addItemExistingDropdown" hidden></div>
+            </div>
           </div>
           <div class="field">
             <label for="placeItemId">Item ID <span class="optional-tag">(optional)</span></label>
             <input type="text" id="placeItemId" placeholder="Auto-generated if left blank">
           </div>
         </div>
+        <p class="field-hint" style="margin-top:-10px;">Matching an existing item while typing lets you move it into the Storage below instead of creating a new one.</p>
         <div class="field">
           <label for="placeItemTagText">Item Tags</label>
           <div class="tag-input" id="placeItemTagInput">
