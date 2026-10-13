@@ -725,6 +725,7 @@ select:disabled {
 }
 
 .stats-row-1 { grid-template-columns: minmax(0, 260px); }
+.stats-row-3 { grid-template-columns: repeat(3, 1fr); }
 
 .stat-card {
   background: var(--surface);
@@ -1208,6 +1209,38 @@ select:disabled {
   padding: 4px 2px;
 }
 
+/* ---------- Item picker (searchable existing-items field) ---------- */
+
+.item-picker-dropdown {
+  margin-top: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.item-picker-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.item-picker-option .muted { font-size: 11px; }
+
+.item-picker-option:hover,
+.item-picker-option.highlighted { background: var(--surface-alt); }
+
+.item-picker-empty {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 /* ---------- Image input (storage Pictures field) ---------- */
 
 .image-input {
@@ -1451,7 +1484,7 @@ select:disabled {
 .empty-state {
   text-align: center;
   color: var(--muted);
-  padding: 60px 20px;
+  padding: 32px 20px;
   font-size: 14px;
   animation: fadeIn .3s ease both;
 }
@@ -1848,6 +1881,19 @@ select:disabled {
   width: 9px;
   height: 9px;
   border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.item-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
   flex-shrink: 0;
 }
 

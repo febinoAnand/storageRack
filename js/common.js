@@ -602,6 +602,17 @@ function openQuickAddStorageModal(onCreated) {
           <p class="field-hint">e.g. Electronics, Spare Parts — press Enter or comma after each one.</p>
         </div>
         <div class="field">
+          <label>Add Existing Items <span class="optional-tag">(optional)</span></label>
+          <div class="item-picker">
+            <div class="tag-input qa-storage-item-input">
+              <div class="tag-input-chips qa-storage-item-chips"></div>
+              <input type="text" class="qa-storage-item-search" placeholder="Search by item, tag, remarks or current storage" autocomplete="off">
+            </div>
+            <div class="item-picker-dropdown qa-storage-item-dropdown" hidden></div>
+          </div>
+          <p class="field-hint">Picking an item here moves it out of its current storage (if any) into this new one.</p>
+        </div>
+        <div class="field">
           <label>Pictures</label>
           <div class="image-input qa-storage-image-input">
             <div class="image-input-previews qa-storage-image-previews"></div>
@@ -651,7 +662,80 @@ function openQuickAddStorageModal(onCreated) {
   const qaTagInput = createTagInput(overlay.querySelector(".qa-storage-tag-chips"), overlay.querySelector(".qa-storage-tag-text"), []);
   const qaImageInput = createImageInput(overlay.querySelector(".qa-storage-image-previews"), overlay.querySelector(".qa-storage-image-file"), {});
 
-  function close() { overlay.remove(); }
+  // ---------- Existing-items picker (searchable, pick-to-move-in) ----------
+  let qaSelectedItemIds = [];
+  const qaItemChips = overlay.querySelector(".qa-storage-item-chips");
+  const qaItemSearch = overlay.querySelector(".qa-storage-item-search");
+  const qaItemDropdown = overlay.querySelector(".qa-storage-item-dropdown");
+
+  function qaItemCurrentLocation(item) {
+    if (!item.storageId) return "Unassigned";
+    const r = findRack(item.storageId);
+    return r ? r.name : "Unassigned";
+  }
+
+  function renderQaItemChips() {
+    qaItemChips.innerHTML = qaSelectedItemIds.map(function (id) {
+      const item = findGlobalItem(id);
+      if (!item) return "";
+      return `<span class="tag-chip" data-item-id="${escapeHtml(id)}">${escapeHtml(item.name)}<button type="button" class="tag-chip-remove">&times;</button></span>`;
+    }).join("");
+    qaItemChips.querySelectorAll(".tag-chip-remove").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const id = btn.closest(".tag-chip").dataset.itemId;
+        qaSelectedItemIds = qaSelectedItemIds.filter(function (x) { return x !== id; });
+        renderQaItemChips();
+      });
+    });
+  }
+
+  function renderQaItemDropdown() {
+    const query = qaItemSearch.value.trim().toLowerCase();
+    const matches = globalItems.filter(function (it) {
+      if (it.status === "removed") return false;
+      if (qaSelectedItemIds.indexOf(it.id) !== -1) return false;
+      if (!query) return true;
+      return it.name.toLowerCase().indexOf(query) !== -1 ||
+        it.id.toLowerCase().indexOf(query) !== -1 ||
+        (it.tags || []).some(function (t) { return t.toLowerCase().indexOf(query) !== -1; }) ||
+        qaItemCurrentLocation(it).toLowerCase().indexOf(query) !== -1 ||
+        (it.remarks || "").toLowerCase().indexOf(query) !== -1;
+    }).slice(0, 8);
+
+    if (!matches.length) {
+      qaItemDropdown.hidden = false;
+      qaItemDropdown.innerHTML = `<div class="item-picker-empty">No matching items.</div>`;
+      return;
+    }
+    qaItemDropdown.hidden = false;
+    qaItemDropdown.innerHTML = matches.map(function (it) {
+      return `<div class="item-picker-option" data-item-id="${escapeHtml(it.id)}">
+        <span>${escapeHtml(it.name)}</span>
+        <span class="muted">${escapeHtml(qaItemCurrentLocation(it))}</span>
+      </div>`;
+    }).join("");
+    qaItemDropdown.querySelectorAll(".item-picker-option").forEach(function (opt) {
+      opt.addEventListener("click", function () {
+        qaSelectedItemIds.push(opt.dataset.itemId);
+        qaItemSearch.value = "";
+        renderQaItemChips();
+        renderQaItemDropdown();
+        qaItemSearch.focus();
+      });
+    });
+  }
+
+  qaItemSearch.addEventListener("input", renderQaItemDropdown);
+  qaItemSearch.addEventListener("focus", renderQaItemDropdown);
+  function qaOutsideClick(e) {
+    if (!e.target.closest(".item-picker")) qaItemDropdown.hidden = true;
+  }
+  document.addEventListener("click", qaOutsideClick);
+
+  function close() {
+    document.removeEventListener("click", qaOutsideClick);
+    overlay.remove();
+  }
   overlay.querySelector(".qa-storage-close").addEventListener("click", close);
   overlay.querySelector(".qa-storage-cancel").addEventListener("click", close);
   overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
@@ -682,6 +766,16 @@ function openQuickAddStorageModal(onCreated) {
     };
     racks.push(rack);
     saveRacks(racks);
+
+    if (qaSelectedItemIds.length) {
+      qaSelectedItemIds.forEach(function (itemId) {
+        const item = findGlobalItem(itemId);
+        if (item) item.storageId = rack.id;
+      });
+      saveGlobalItems(globalItems);
+      if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+    }
+
     showToast(`"${name}" created`, "success");
     close();
     if (onCreated) onCreated(rack);
@@ -696,6 +790,9 @@ function openAddItemModal(existingItem, presetStorageId) {
   document.getElementById("addItemPageError").hidden = true;
   addItemPageForm.reset();
   populateRackSelect(document.getElementById("placeRackSelect"), existingItem ? existingItem.storageId : presetStorageId);
+
+  const existingDropdownEl = document.getElementById("addItemExistingDropdown");
+  if (existingDropdownEl) { existingDropdownEl.hidden = true; existingDropdownEl.innerHTML = ""; }
 
   editingGlobalItemId = existingItem ? existingItem.id : null;
   document.getElementById("addItemModalTitle").textContent = existingItem ? "Edit Item" : "Add Item";
@@ -737,6 +834,113 @@ function closeAddItemModal() {
       openQuickAddStorageModal(function (newRack) {
         populateRackSelect(placeRackSelect, newRack.id);
       });
+    });
+  }
+
+  // ---------- Item Name doubles as a searchable "reassign an existing item" picker ----------
+  const placeItemName = document.getElementById("placeItemName");
+  const addItemExistingDropdown = document.getElementById("addItemExistingDropdown");
+  let addItemHighlightIndex = -1;
+
+  function addItemCurrentLocation(item) {
+    if (!item.storageId) return "Unassigned";
+    const r = findRack(item.storageId);
+    return r ? r.name : "Unassigned";
+  }
+
+  function pickExistingItem(itemId) {
+    const targetStorageId = placeRackSelect.value || null;
+    if (!targetStorageId) {
+      addItemPageError.textContent = "Pick a Storage below first, then choose which existing item to move into it.";
+      addItemPageError.hidden = false;
+      return;
+    }
+    const item = findGlobalItem(itemId);
+    if (!item) return;
+    const rack = findRack(targetStorageId);
+    const fromLabel = addItemCurrentLocation(item);
+    confirmDialog(
+      `Move "${item.name}" into "${rack.name}"? It will be taken out of ${item.storageId ? `"${fromLabel}"` : "Unassigned"}.`,
+      function () {
+        item.storageId = targetStorageId;
+        saveGlobalItems(globalItems);
+        showToast(`"${item.name}" moved into "${rack.name}"`, "success");
+        closeAddItemModal();
+        if (typeof window.onItemDataChanged === "function") window.onItemDataChanged();
+      },
+      { confirmLabel: "Move", danger: false }
+    );
+  }
+
+  function syncAddItemHighlight() {
+    addItemExistingDropdown.querySelectorAll(".item-picker-option").forEach(function (opt, i) {
+      opt.classList.toggle("highlighted", i === addItemHighlightIndex);
+    });
+  }
+
+  function renderAddItemExistingDropdown() {
+    if (editingGlobalItemId) { addItemExistingDropdown.hidden = true; return; }
+    const query = placeItemName.value.trim().toLowerCase();
+    addItemHighlightIndex = -1;
+    if (!query) { addItemExistingDropdown.hidden = true; addItemExistingDropdown.innerHTML = ""; return; }
+
+    const matches = globalItems.filter(function (it) {
+      if (it.status === "removed") return false;
+      return it.name.toLowerCase().indexOf(query) !== -1 ||
+        it.id.toLowerCase().indexOf(query) !== -1 ||
+        (it.tags || []).some(function (t) { return t.toLowerCase().indexOf(query) !== -1; }) ||
+        addItemCurrentLocation(it).toLowerCase().indexOf(query) !== -1 ||
+        (it.remarks || "").toLowerCase().indexOf(query) !== -1;
+    }).slice(0, 8);
+
+    if (!matches.length) {
+      addItemExistingDropdown.hidden = true;
+      addItemExistingDropdown.innerHTML = "";
+      return;
+    }
+    addItemExistingDropdown.hidden = false;
+    addItemExistingDropdown.innerHTML = matches.map(function (it) {
+      return `<div class="item-picker-option" data-item-id="${escapeHtml(it.id)}">
+        <span>${escapeHtml(it.name)}</span>
+        <span class="muted">${escapeHtml(addItemCurrentLocation(it))}</span>
+      </div>`;
+    }).join("");
+    addItemExistingDropdown.querySelectorAll(".item-picker-option").forEach(function (opt) {
+      opt.addEventListener("mousedown", function (e) {
+        // mousedown (not click) so this runs before the input's blur fires
+        e.preventDefault();
+        pickExistingItem(opt.dataset.itemId);
+      });
+    });
+  }
+
+  if (placeItemName) {
+    placeItemName.addEventListener("input", renderAddItemExistingDropdown);
+    placeItemName.addEventListener("focus", renderAddItemExistingDropdown);
+    placeItemName.addEventListener("keydown", function (e) {
+      const options = addItemExistingDropdown.hidden ? [] : Array.from(addItemExistingDropdown.querySelectorAll(".item-picker-option"));
+      if (!options.length) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        addItemHighlightIndex = (addItemHighlightIndex + 1) % options.length;
+        syncAddItemHighlight();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        addItemHighlightIndex = (addItemHighlightIndex - 1 + options.length) % options.length;
+        syncAddItemHighlight();
+      } else if (e.key === "Enter") {
+        // Typing an existing item's name and pressing Enter should pick it,
+        // not submit the form as a brand-new duplicate item.
+        const index = addItemHighlightIndex >= 0 ? addItemHighlightIndex : 0;
+        e.preventDefault();
+        pickExistingItem(options[index].dataset.itemId);
+      } else if (e.key === "Escape") {
+        addItemExistingDropdown.hidden = true;
+      }
+    });
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest(".item-picker")) addItemExistingDropdown.hidden = true;
     });
   }
 

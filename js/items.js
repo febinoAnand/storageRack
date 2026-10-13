@@ -32,9 +32,9 @@ document.getElementById("itemArchiveToggle").addEventListener("click", function 
 function buildUnifiedRows() {
   const legacy = collectAllItemEntries().map(function (e) {
     return {
-      kind: "legacy", name: e.item.name, quantity: e.item.quantity,
+      kind: "legacy", id: "—", name: e.item.name, quantity: e.item.quantity,
       tags: [], remarks: "", images: [], status: "in_store",
-      rack: e.rack, path: e.path, storageLabel: e.rack.name,
+      rack: e.rack, rackId: e.rack.id, path: e.path, storageLabel: e.rack.name,
       typeLabel: typeInfo(e.rack.type).label, statusLabel: ITEM_STATUS_LABELS.in_store,
     };
   });
@@ -42,9 +42,9 @@ function buildUnifiedRows() {
     const rack = it.storageId ? findRack(it.storageId) : null;
     const status = it.status || "in_store";
     return {
-      kind: "global", raw: it, name: it.name, quantity: it.quantity,
+      kind: "global", raw: it, id: it.id, name: it.name, quantity: it.quantity,
       tags: it.tags || [], remarks: it.remarks || "", images: it.images || [], status: status,
-      rack: rack, path: null, storageLabel: rack ? rack.name : "Unassigned",
+      rack: rack, rackId: rack ? rack.id : "", path: null, storageLabel: rack ? rack.name : "Unassigned",
       typeLabel: rack ? typeInfo(rack.type).label : "Unassigned", statusLabel: ITEM_STATUS_LABELS[status] || status,
     };
   });
@@ -59,7 +59,7 @@ function buildItemTableRow(entry) {
     ? `<a href="${rackDetailUrl(entry.rack.id)}">${escapeHtml(entry.storageLabel)}</a>`
     : escapeHtml(entry.storageLabel);
   const locText = entry.path ? `${storageNameHtml} → ${escapeHtml(entry.path)}` : storageNameHtml;
-  const tagsText = entry.tags.length ? entry.tags.join(", ") : "—";
+  const tagsCellHtml = entry.tags.length ? tagsHtml(entry.tags) : `<span class="muted">—</span>`;
 
   let actionsHtml = "";
   if (entry.kind === "global" && !showArchive) {
@@ -79,14 +79,17 @@ function buildItemTableRow(entry) {
     : escapeHtml(entry.name);
 
   const images = entry.kind === "global" ? (entry.raw.images || []) : [];
+  const initial = entry.name.trim().charAt(0).toUpperCase() || "?";
   const thumbHtml = images.length
-    ? `<img class="rack-image-thumb item-table-thumb" src="${images[0]}" alt="" title="Click to view" style="width:40px;height:40px;margin-right:10px;vertical-align:middle;">`
-    : `<span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span>`;
+    ? `<img class="rack-image-thumb item-table-thumb" src="${images[0]}" alt="" title="Click to view" style="width:40px;height:40px;">`
+    : `<span class="item-avatar" style="background:${dotColor};" title="No picture">${escapeHtml(initial)}</span>`;
 
   row.innerHTML = `
-    <td data-label="Item">${thumbHtml}${nameHtml}</td>
+    <td data-label="Image">${thumbHtml}</td>
+    <td data-label="Item ID"><span class="rack-id-badge">${escapeHtml(entry.id)}</span></td>
+    <td data-label="Item">${nameHtml}</td>
     <td data-label="Storage">${entry.rack ? `<a href="${rackDetailUrl(entry.rack.id)}" class="rack-id-badge">${escapeHtml(entry.rack.id)}</a> ` : ""}${locText}</td>
-    <td data-label="Tags" class="muted">${escapeHtml(tagsText)}</td>
+    <td data-label="Tags">${tagsCellHtml}</td>
     <td data-label="Type">${entry.rack ? `<a href="${rackDetailUrl(entry.rack.id)}" title="Go to ${escapeHtml(entry.rack.name)}">${typeBadgeHtml(entry.rack.type)}</a>` : `<span class="type-badge">Unassigned</span>`}</td>
     <td data-label="Status">${entry.kind === "global" && !showArchive
       ? `<button type="button" class="status-picker-btn" title="Move or change status">${itemStatusBadgeHtml(entry.status)}</button>`
@@ -157,6 +160,7 @@ function syncItemSortIndicators() {
 function applyItemFilters() {
   const query = document.getElementById("itemFilterSearch").value.trim().toLowerCase();
   const typeFilter = document.getElementById("itemFilterType").value;
+  const statusFilter = document.getElementById("itemFilterStatus").value;
 
   const all = buildUnifiedRows().filter(function (entry) {
     if (showArchive) return entry.kind === "global" && entry.status === "removed";
@@ -166,12 +170,15 @@ function applyItemFilters() {
   let filtered = all.filter(function (entry) {
     const matchesQuery = !query ||
       entry.name.toLowerCase().indexOf(query) !== -1 ||
+      entry.id.toLowerCase().indexOf(query) !== -1 ||
+      entry.rackId.toLowerCase().indexOf(query) !== -1 ||
       entry.storageLabel.toLowerCase().indexOf(query) !== -1 ||
       entry.tags.some(function (t) { return t.toLowerCase().indexOf(query) !== -1; }) ||
       entry.remarks.toLowerCase().indexOf(query) !== -1 ||
       (entry.path || "").toLowerCase().indexOf(query) !== -1;
     const matchesType = typeFilter === "all" || (entry.rack && entry.rack.type === typeFilter);
-    return matchesQuery && matchesType;
+    const matchesStatus = statusFilter === "all" || entry.status === statusFilter;
+    return matchesQuery && matchesType && matchesStatus;
   });
 
   filtered = sortItemEntries(filtered);
@@ -223,9 +230,11 @@ document.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
 
 document.getElementById("itemFilterSearch").addEventListener("input", function () { itemCurrentPage = 1; applyItemFilters(); });
 document.getElementById("itemFilterType").addEventListener("change", function () { itemCurrentPage = 1; applyItemFilters(); });
+document.getElementById("itemFilterStatus").addEventListener("change", function () { itemCurrentPage = 1; applyItemFilters(); });
 document.getElementById("itemFilterReset").addEventListener("click", function () {
   document.getElementById("itemFilterSearch").value = "";
   document.getElementById("itemFilterType").value = "all";
+  document.getElementById("itemFilterStatus").value = "all";
   itemCurrentPage = 1;
   applyItemFilters();
 });

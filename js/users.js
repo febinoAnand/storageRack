@@ -61,7 +61,10 @@ function buildUserTableRow(entry) {
   const user = entry.user;
   const row = document.createElement("tr");
   row.className = "clickable";
+  const avatarColor = getItemColor(user.name).solid;
+  const avatarInitial = user.name.trim().charAt(0).toUpperCase() || "?";
   row.innerHTML = `
+    <td data-label="Avatar"><span class="item-avatar" style="background:${avatarColor};">${escapeHtml(avatarInitial)}</span></td>
     <td data-label="User"><span class="rack-id-badge">${escapeHtml(user.id)}</span> ${escapeHtml(user.name)}</td>
     <td data-label="Username / Email" class="muted">@${escapeHtml(user.username)}${user.email ? " · " + escapeHtml(user.email) : ""}</td>
     <td data-label="Role">${roleBadgeHtml(user.roleId)}</td>

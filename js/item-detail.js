@@ -188,10 +188,6 @@ function renderItemDetail() {
         ${isArchived
           ? `<div class="muted detail-room-row"><span class="inline-icon">${ICONS.door}</span> ${rack ? `${escapeHtml(rack.name)} (${escapeHtml(rack.id)})` : "Unassigned"}</div>`
           : `<div class="muted detail-room-row"><span class="inline-icon">${ICONS.door}</span> ${itemDetailStorageFieldHtml(item, rack)}</div>`}
-        <div class="rack-sub-meta">
-          ${isArchived ? itemStatusBadgeHtml("removed") : `<button type="button" class="status-picker-btn" title="Move or change status">${itemStatusBadgeHtml(item.status)}</button>`}
-          ${itemDetailTagsFieldHtml(item)}
-        </div>
         ${itemDetailImagesFieldHtml(item)}
       </div>
       <div class="detail-actions">
@@ -199,12 +195,26 @@ function renderItemDetail() {
       </div>
     </div>
 
-    <section class="stats-row stats-row-1">
+    <section class="stats-row stats-row-3">
       <div class="stat-card">
         <div class="stat-icon c-amber">${ICONS.box}</div>
         <div>
           ${itemDetailQuantityFieldHtml(item)}
           <div class="stat-label">Quantity</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon c-blue">${ICONS.repeat}</div>
+        <div>
+          <div class="stat-value">${isArchived ? itemStatusBadgeHtml("removed") : `<button type="button" class="status-picker-btn" title="Move or change status">${itemStatusBadgeHtml(item.status)}</button>`}</div>
+          <div class="stat-label">Status</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon c-violet">${ICONS.tag}</div>
+        <div>
+          <div class="stat-value">${itemDetailTagsFieldHtml(item)}</div>
+          <div class="stat-label">Tags</div>
         </div>
       </div>
     </section>
