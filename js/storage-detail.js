@@ -38,33 +38,122 @@ document.addEventListener("click", function (e) {
   }
 });
 
+// storageEditingItemId: null, or the id of the single item row currently
+// inline-editing within the Items panel below (click-to-edit, not a modal).
+let storageEditingItemId = null;
+
+function itemRowHtml(item) {
+  if (storageEditingItemId === item.id) {
+    return `
+      <tr data-item-id="${escapeHtml(item.id)}" class="editing-row">
+        <td data-label="Item"><input type="text" class="inline-edit-input row-edit-name" id="rowEditName" value="${escapeHtml(item.name)}"></td>
+        <td data-label="Tags">
+          <div class="tag-input" id="rowEditTagInput">
+            <div class="tag-input-chips" id="rowEditTagChips"></div>
+            <input type="text" id="rowEditTagText" placeholder="Type a tag and press Enter">
+          </div>
+        </td>
+        <td data-label="Status">${itemStatusBadgeHtml(item.status)}</td>
+        <td data-label="Qty"><input type="number" min="1" class="inline-edit-input row-edit-qty" id="rowEditQty" style="width:70px;" value="${item.quantity}"></td>
+        <td data-label="Actions">
+          <button class="icon-btn row-save-btn" title="Save">${ICONS.check}</button>
+          <button class="icon-btn delete row-cancel-btn" title="Cancel">&times;</button>
+        </td>
+      </tr>`;
+  }
+  const dotColor = getItemColor(item.name).solid;
+  const tagsText = item.tags && item.tags.length ? item.tags.join(", ") : "—";
+  return `
+    <tr data-item-id="${escapeHtml(item.id)}">
+      <td data-label="Item"><span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span><span class="editable-field row-name-trigger" title="Click to edit">${escapeHtml(item.name)} ${ICONS.edit}</span></td>
+      <td data-label="Tags" class="muted">${escapeHtml(tagsText)}</td>
+      <td data-label="Status"><button type="button" class="status-picker-btn" title="Move or change status">${itemStatusBadgeHtml(item.status)}</button></td>
+      <td data-label="Qty"><strong>${item.quantity}</strong></td>
+      <td data-label="Actions">
+        <a class="icon-btn row-view-btn" href="${itemDetailUrl(item.id)}" title="Open item's own page">${ICONS.chevronRight}</a>
+        <button class="icon-btn delete item-archive-btn" title="Remove (send to Archive)">${ICONS.archive}</button>
+      </td>
+    </tr>`;
+}
+
+// itemsPanelSortField/Dir drive the sortable column headers; itemsPanelQuery and
+// itemsPanelStatusFilter drive the panel's own search + status filter.
+let itemsPanelSortField = "name";
+let itemsPanelSortDir = "asc";
+let itemsPanelQuery = "";
+let itemsPanelStatusFilter = "all";
+
+function itemsPanelSortValue(item, field) {
+  if (field === "tags") return (item.tags || []).join(", ");
+  if (field === "status") return item.status;
+  if (field === "quantity") return item.quantity;
+  return item.name;
+}
+
+function sortPanelItems(list) {
+  const dir = itemsPanelSortDir === "asc" ? 1 : -1;
+  return list.slice().sort(function (a, b) {
+    let av = itemsPanelSortValue(a, itemsPanelSortField);
+    let bv = itemsPanelSortValue(b, itemsPanelSortField);
+    if (typeof av === "string") { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return 0;
+  });
+}
+
+function filteredPanelItems(rack) {
+  const query = itemsPanelQuery.trim().toLowerCase();
+  const all = activeGlobalItemsForRack(rack.id);
+  return all.filter(function (item) {
+    const matchesQuery = !query ||
+      item.name.toLowerCase().indexOf(query) !== -1 ||
+      (item.tags || []).some(function (t) { return t.toLowerCase().indexOf(query) !== -1; });
+    const matchesStatus = itemsPanelStatusFilter === "all" || item.status === itemsPanelStatusFilter;
+    return matchesQuery && matchesStatus;
+  });
+}
+
+function itemsPanelSortThHtml(field, label) {
+  const active = itemsPanelSortField === field;
+  const arrow = active ? (itemsPanelSortDir === "asc" ? "▲" : "▼") : "";
+  return `<th data-sort="${field}" class="${active ? "sorted" : ""}">${label} <span class="sort-arrow">${arrow}</span></th>`;
+}
+
 function globalItemsPanelHtml(rack) {
-  const items = activeGlobalItemsForRack(rack.id);
-  const bodyHtml = items.length
+  const allItems = activeGlobalItemsForRack(rack.id);
+  const items = sortPanelItems(filteredPanelItems(rack));
+
+  const tableHtml = items.length
     ? `<div class="log-table-wrap">
         <table class="log-table">
           <thead>
-            <tr><th>Item</th><th>Tags</th><th>Status</th><th>Qty</th><th>Actions</th></tr>
+            <tr>
+              ${itemsPanelSortThHtml("name", "Item")}
+              ${itemsPanelSortThHtml("tags", "Tags")}
+              ${itemsPanelSortThHtml("status", "Status")}
+              ${itemsPanelSortThHtml("quantity", "Qty")}
+              <th>Actions</th>
+            </tr>
           </thead>
-          <tbody>
-            ${items.map(function (item) {
-              const dotColor = getItemColor(item.name).solid;
-              const tagsText = item.tags && item.tags.length ? item.tags.join(", ") : "—";
-              return `
-                <tr data-item-id="${escapeHtml(item.id)}">
-                  <td data-label="Item"><span class="item-dot" style="background:${dotColor};display:inline-block;margin-right:6px;"></span><a href="${itemDetailUrl(item.id)}">${escapeHtml(item.name)}</a></td>
-                  <td data-label="Tags" class="muted">${escapeHtml(tagsText)}</td>
-                  <td data-label="Status"><button type="button" class="status-picker-btn" title="Move or change status">${itemStatusBadgeHtml(item.status)}</button></td>
-                  <td data-label="Qty"><strong>${item.quantity}</strong></td>
-                  <td data-label="Actions">
-                    <button class="icon-btn item-edit-btn" title="Edit">${ICONS.edit}</button>
-                    <button class="icon-btn delete item-archive-btn" title="Remove (send to Archive)">${ICONS.archive}</button>
-                  </td>
-                </tr>`;
-            }).join("")}
+          <tbody id="itemsPanelBody">
+            ${items.map(itemRowHtml).join("")}
           </tbody>
         </table>
       </div>`
+    : `<p class="empty-state">No items match your filters.</p>`;
+
+  const bodyHtml = allItems.length
+    ? `<div class="filters-bar items-panel-filters">
+        <input type="text" id="itemsPanelSearch" placeholder="Search items or tags" value="${escapeHtml(itemsPanelQuery)}">
+        <select id="itemsPanelStatusFilter">
+          <option value="all">All Statuses</option>
+          <option value="in_store">In Store</option>
+          <option value="in_use">In Use</option>
+        </select>
+        <button type="button" class="btn-secondary" id="itemsPanelFilterReset">Reset</button>
+      </div>
+      ${tableHtml}`
     : `<p class="empty-state">No items yet.</p>`;
 
   return `
@@ -77,6 +166,74 @@ function globalItemsPanelHtml(rack) {
         </div>
       </div>
       ${bodyHtml}
+    </div>`;
+}
+
+// storageEditingField: null, or which single field is currently click-to-edit active:
+// "name" | "room" | "tags" | "images"
+let storageEditingField = null;
+
+function editableIconBtns() {
+  return `<button type="button" class="icon-btn editable-save-btn" title="Save">${ICONS.check}</button>
+          <button type="button" class="icon-btn delete editable-cancel-btn" title="Cancel">&times;</button>`;
+}
+
+function detailNameFieldHtml(rack) {
+  if (storageEditingField === "name") {
+    return `<span class="editable-field editing" data-field="name">
+      <input type="text" id="editFieldInput" class="inline-edit-input" value="${escapeHtml(rack.name)}">
+      ${editableIconBtns()}
+    </span> <span class="rack-id-badge large">${escapeHtml(rack.id)}</span>`;
+  }
+  return `<span class="editable-field" data-field="name" title="Click to edit">${escapeHtml(rack.name)} ${ICONS.edit}</span> <span class="rack-id-badge large">${escapeHtml(rack.id)}</span>`;
+}
+
+function detailRoomFieldHtml(rack) {
+  if (storageEditingField === "room") {
+    return `<span class="editable-field editing" data-field="room">
+      <div class="select-with-add">
+        <select id="editFieldInput"></select>
+        <button type="button" class="btn-secondary" id="editFieldRoomAdd" title="Add a new location">+ New</button>
+      </div>
+      ${editableIconBtns()}
+    </span>`;
+  }
+  return `<span class="editable-field" data-field="room" title="Click to edit">${escapeHtml(roomLabel(rack.storeRoomId))} ${ICONS.edit}</span>`;
+}
+
+function detailTagsFieldHtml(rack) {
+  if (storageEditingField === "tags") {
+    return `<span class="editable-field editing" data-field="tags">
+      <div class="tag-input" id="editFieldTagInput">
+        <div class="tag-input-chips" id="editFieldTagChips"></div>
+        <input type="text" id="editFieldTagText" placeholder="Type a tag and press Enter">
+      </div>
+      ${editableIconBtns()}
+    </span>`;
+  }
+  const tags = rackTags(rack);
+  return `<span class="editable-field" data-field="tags" title="Click to edit">${tagsHtml(tags)}${tags.length ? "" : "<span class=\"muted\">No tags</span>"} ${ICONS.edit}</span>`;
+}
+
+function detailImagesFieldHtml(rack) {
+  if (storageEditingField === "images") {
+    return `
+      <div class="editable-field editing" data-field="images">
+        <div class="image-input" id="editFieldImageInput">
+          <div class="image-input-previews" id="editFieldImagePreviews"></div>
+          <label class="image-input-add" for="editFieldImageFile">
+            <span class="add-ghost-icon">+</span> Add Pictures
+          </label>
+          <input type="file" id="editFieldImageFile" accept="image/*" multiple hidden>
+        </div>
+        ${editableIconBtns()}
+      </div>`;
+  }
+  const images = rackImages(rack);
+  return `
+    <div class="editable-field editable-field-block" data-field="images" title="Click to edit pictures">
+      ${images.length ? productGalleryHtml(images) : `<p class="muted">No pictures yet.</p>`}
+      <button type="button" class="btn-secondary editable-pencil-btn">${ICONS.edit} Edit Pictures</button>
     </div>`;
 }
 
@@ -98,19 +255,21 @@ function renderDetail() {
     <a href="storage.html" class="back-link">← Back to Storage</a>
 
     <div class="detail-hero">
-      ${productGalleryHtml(rackImages(rack))}
+      ${detailImagesFieldHtml(rack)}
       <div class="detail-title-row">
-        <div>
-          <h2>${escapeHtml(rack.name)} <span class="rack-id-badge large">${escapeHtml(rack.id)}</span></h2>
-          <p class="muted"><span class="inline-icon">${ICONS.door}</span> ${escapeHtml(roomLabel(rack.storeRoomId))}</p>
+        <div class="detail-title-info">
+          <h2>${detailNameFieldHtml(rack)}</h2>
+          <div class="muted detail-room-row"><span class="inline-icon">${ICONS.door}</span> ${detailRoomFieldHtml(rack)}</div>
           <div class="rack-sub-meta">
             ${typeBadgeHtml(rack.type)}
-            ${tagsHtml(rackTags(rack))}
+            ${detailTagsFieldHtml(rack)}
           </div>
         </div>
         <div class="detail-actions">
-          <button class="btn-secondary" id="detailQrBtn">${ICONS.qr} QR Code</button>
-          <button class="btn-secondary" id="detailEditBtn">${ICONS.edit} Edit Storage</button>
+          <div class="detail-qr-block" title="Scan to open this storage">
+            ${rackQrThumbHtml(rack)}
+            <button type="button" class="icon-btn" id="detailQrPrintBtn" title="Print QR label">${ICONS.print}</button>
+          </div>
           <button class="btn-danger" id="detailDeleteBtn">${ICONS.trash} Delete Storage</button>
         </div>
       </div>
@@ -131,14 +290,98 @@ function renderDetail() {
 
   animateNumber(document.getElementById("detailStatItems"), totalItems);
 
-  container.querySelector("#detailQrBtn").addEventListener("click", function () {
-    openQrModal(rack);
+  function startEditing(field) {
+    storageEditingField = field;
+    renderDetail();
+  }
+  function stopEditing() {
+    storageEditingField = null;
+    renderDetail();
+  }
+
+  if (storageEditingField) {
+    const editableWrap = container.querySelector(`.editable-field[data-field="${storageEditingField}"]`);
+    editableWrap.querySelector(".editable-cancel-btn").addEventListener("click", stopEditing);
+
+    if (storageEditingField === "name") {
+      const input = document.getElementById("editFieldInput");
+      input.focus();
+      input.select();
+      function save() {
+        const name = input.value.trim();
+        if (!name) { input.focus(); return; }
+        rack.name = name;
+        saveRacks(racks);
+        showToast(`"${rack.name}" updated`, "success");
+        stopEditing();
+      }
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") save();
+        if (e.key === "Escape") stopEditing();
+      });
+      editableWrap.querySelector(".editable-save-btn").addEventListener("click", save);
+    }
+
+    if (storageEditingField === "room") {
+      const roomSelect = document.getElementById("editFieldInput");
+      function refreshRoomSelect(selectedId) {
+        roomSelect.innerHTML = rooms.map(function (r) {
+          return `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`;
+        }).join("");
+        roomSelect.value = selectedId || rack.storeRoomId;
+      }
+      refreshRoomSelect();
+      document.getElementById("editFieldRoomAdd").addEventListener("click", function () {
+        openQuickAddLocationModal(function (newRoom) { refreshRoomSelect(newRoom.id); });
+      });
+      function save() {
+        rack.storeRoomId = roomSelect.value;
+        delete rack.category;
+        saveRacks(racks);
+        showToast(`"${rack.name}" updated`, "success");
+        stopEditing();
+      }
+      editableWrap.querySelector(".editable-save-btn").addEventListener("click", save);
+    }
+
+    if (storageEditingField === "tags") {
+      const tagInput = createTagInput(document.getElementById("editFieldTagChips"), document.getElementById("editFieldTagText"), rackTags(rack));
+      function save() {
+        rack.tags = tagInput.getTags();
+        saveRacks(racks);
+        showToast(`"${rack.name}" updated`, "success");
+        stopEditing();
+      }
+      editableWrap.querySelector(".editable-save-btn").addEventListener("click", save);
+    }
+
+    if (storageEditingField === "images") {
+      const imageInput = createImageInput(document.getElementById("editFieldImagePreviews"), document.getElementById("editFieldImageFile"), { initialImages: rackImages(rack) });
+      function save() {
+        rack.images = imageInput.getImages();
+        saveRacks(racks);
+        showToast(`"${rack.name}" updated`, "success");
+        stopEditing();
+      }
+      editableWrap.querySelector(".editable-save-btn").addEventListener("click", save);
+    }
+  } else {
+    container.querySelectorAll(".editable-field[data-field]").forEach(function (el) {
+      const trigger = el.classList.contains("editable-field-block") ? el.querySelector(".editable-pencil-btn") : el;
+      trigger.addEventListener("click", function (e) {
+        e.stopPropagation();
+        startEditing(el.dataset.field);
+      });
+    });
+  }
+
+  populateQrPrintArea(rack);
+  container.querySelector("#detailQrPrintBtn").addEventListener("click", function (e) {
+    e.stopPropagation();
+    window.print();
   });
   container.querySelector("#detailAddItemBtn").addEventListener("click", function () {
     openAddItemModal(null, rack.id);
-  });
-  container.querySelector("#detailEditBtn").addEventListener("click", function () {
-    openEditModal(rack);
   });
   container.querySelector("#detailDeleteBtn").addEventListener("click", function () {
     deleteRack(rack.id, function (deletedRack) {
@@ -147,16 +390,97 @@ function renderDetail() {
     });
   });
 
+  container.querySelectorAll(".log-table th[data-sort]").forEach(function (th) {
+    th.addEventListener("click", function () {
+      const field = th.dataset.sort;
+      if (itemsPanelSortField === field) {
+        itemsPanelSortDir = itemsPanelSortDir === "asc" ? "desc" : "asc";
+      } else {
+        itemsPanelSortField = field;
+        itemsPanelSortDir = "asc";
+      }
+      renderDetail();
+    });
+  });
+
+  const itemsPanelSearchInput = container.querySelector("#itemsPanelSearch");
+  if (itemsPanelSearchInput) {
+    itemsPanelSearchInput.addEventListener("input", function () {
+      itemsPanelQuery = itemsPanelSearchInput.value;
+      const cursorPos = itemsPanelSearchInput.selectionStart;
+      renderDetail();
+      const newInput = document.getElementById("itemsPanelSearch");
+      if (newInput) {
+        newInput.focus();
+        newInput.setSelectionRange(cursorPos, cursorPos);
+      }
+    });
+  }
+  const itemsPanelStatusSelect = container.querySelector("#itemsPanelStatusFilter");
+  if (itemsPanelStatusSelect) {
+    itemsPanelStatusSelect.value = itemsPanelStatusFilter;
+    itemsPanelStatusSelect.addEventListener("change", function () {
+      itemsPanelStatusFilter = itemsPanelStatusSelect.value;
+      renderDetail();
+    });
+  }
+  const itemsPanelFilterReset = container.querySelector("#itemsPanelFilterReset");
+  if (itemsPanelFilterReset) {
+    itemsPanelFilterReset.addEventListener("click", function () {
+      itemsPanelQuery = "";
+      itemsPanelStatusFilter = "all";
+      renderDetail();
+    });
+  }
+
+  function stopEditingItemRow() {
+    storageEditingItemId = null;
+    renderDetail();
+  }
+
   container.querySelectorAll("tr[data-item-id]").forEach(function (row) {
     const item = findGlobalItem(row.dataset.itemId);
     if (!item) return;
+
+    if (storageEditingItemId === item.id) {
+      const nameInput = row.querySelector("#rowEditName");
+      const qtyInput = row.querySelector("#rowEditQty");
+      const tagInput = createTagInput(row.querySelector("#rowEditTagChips"), row.querySelector("#rowEditTagText"), item.tags || []);
+      function saveRow() {
+        const name = nameInput.value.trim();
+        const quantity = parseInt(qtyInput.value, 10);
+        if (!name || isNaN(quantity) || quantity < 1) { nameInput.focus(); return; }
+        const delta = quantity - item.quantity;
+        item.name = name;
+        item.quantity = quantity;
+        item.tags = tagInput.getTags();
+        saveGlobalItems(globalItems);
+        if (delta > 0) logTransaction("in", name, delta, rack, null);
+        else if (delta < 0) logTransaction("out", name, -delta, rack, null);
+        showToast(`"${name}" updated`, "success");
+        stopEditingItemRow();
+      }
+      nameInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") saveRow();
+        if (e.key === "Escape") stopEditingItemRow();
+      });
+      qtyInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") saveRow();
+        if (e.key === "Escape") stopEditingItemRow();
+      });
+      row.querySelector(".row-save-btn").addEventListener("click", saveRow);
+      row.querySelector(".row-cancel-btn").addEventListener("click", stopEditingItemRow);
+      return;
+    }
+
     row.querySelector(".status-picker-btn").addEventListener("click", function (e) {
       e.stopPropagation();
       openMoveItemModal({ raw: item, rack: rack, name: item.name, quantity: item.quantity, storageLabel: rack.name });
     });
-    row.querySelector(".item-edit-btn").addEventListener("click", function (e) {
+    row.querySelector(".row-name-trigger").addEventListener("click", function (e) {
       e.stopPropagation();
-      openAddItemModal(item);
+      storageEditingItemId = item.id;
+      renderDetail();
     });
     row.querySelector(".item-archive-btn").addEventListener("click", function (e) {
       e.stopPropagation();
@@ -168,33 +492,18 @@ function renderDetail() {
 window.onRackDataChanged = renderDetail;
 window.onItemDataChanged = renderDetail;
 
-// ---------- QR Code modal ----------
-const qrModalOverlay = document.getElementById("qrModalOverlay");
-
-function openQrModal(rack) {
+// ---------- QR code is always shown inline on the page; this just keeps the
+// off-screen printable label (swapped in via @media print) in sync. ----------
+function populateQrPrintArea(rack) {
   const detailUrl = new URL(rackDetailUrl(rack.id), window.location.href).href;
   const qr = qrcode(0, "M");
   qr.addData(detailUrl);
   qr.make();
   const svg = qr.createSvgTag({ cellSize: 6, margin: 12, scalable: true });
 
-  document.getElementById("qrCodeBox").innerHTML = svg;
-  document.getElementById("qrCodeId").textContent = rack.id;
-  document.getElementById("qrCodeName").textContent = rack.name;
-
   document.getElementById("qrPrintCodeBox").innerHTML = svg;
   document.getElementById("qrPrintId").textContent = rack.id;
   document.getElementById("qrPrintName").textContent = rack.name;
-
-  qrModalOverlay.hidden = false;
 }
-
-function closeQrModal() {
-  qrModalOverlay.hidden = true;
-}
-
-document.getElementById("qrModalClose").addEventListener("click", closeQrModal);
-qrModalOverlay.addEventListener("click", function (e) { if (e.target === qrModalOverlay) closeQrModal(); });
-document.getElementById("qrPrintBtn").addEventListener("click", function () { window.print(); });
 
 renderDetail();

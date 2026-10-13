@@ -2,18 +2,6 @@ function roomUnitCount(roomId) {
   return racks.filter(function (r) { return r.storeRoomId === roomId; }).length;
 }
 
-function nextRoomId() {
-  let max = 1000;
-  rooms.forEach(function (r) {
-    const m = /^SR-(\d+)$/.exec(r.id);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (n > max) max = n;
-    }
-  });
-  return "SR-" + (max + 1);
-}
-
 let roomCurrentPage = 1;
 let roomSortField = "name";
 let roomSortDir = "asc";
