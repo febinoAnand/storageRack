@@ -1521,11 +1521,17 @@ function buildItemsPreviewHtml(items) {
   if (items.length === 0) {
     return `<div class="rack-items-preview"><span class="rack-item-chip more">No items placed yet</span></div>`;
   }
+  const MAX_CHIPS = 2;
+  const shown = items.slice(0, MAX_CHIPS);
+  const extra = items.length - shown.length;
   let html = `<div class="rack-items-preview">`;
-  items.forEach(function (item) {
+  shown.forEach(function (item) {
     const c = getItemColor(item.name);
     html += `<span class="rack-item-chip" style="background:${c.bg};border-color:${c.border};color:${c.text}">${escapeHtml(item.name)} <span class="qty">× ${item.quantity}</span></span>`;
   });
+  if (extra > 0) {
+    html += `<span class="rack-item-chip more">+${extra} more</span>`;
+  }
   html += `</div>`;
   return html;
 }
@@ -1539,6 +1545,13 @@ function rackQrThumbHtml(rack) {
   qr.make();
   const svg = qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true });
   return `<div class="rack-card-qr" title="Storage QR code">${svg}</div>`;
+}
+
+function rackCardTagsHtml(tags) {
+  const MAX_TAGS = 2;
+  const shown = tags.slice(0, MAX_TAGS);
+  const extra = tags.length - shown.length;
+  return tagsHtml(shown) + (extra > 0 ? `<span class="rack-category-badge more">+${extra}</span>` : "");
 }
 
 function buildRackCard(rack) {
@@ -1569,7 +1582,7 @@ function buildRackCard(rack) {
     <div class="rack-location"><span class="inline-icon">${ICONS.door}</span> ${escapeHtml(roomLabel(rack.storeRoomId))}</div>
     <div class="rack-sub-meta">
       ${typeBadgeHtml(rack.type)}
-      ${tagsHtml(tags)}
+      ${rackCardTagsHtml(tags)}
     </div>
     ${buildItemsPreviewHtml(collectAllItems(rack).concat(activeGlobalItemsForRack(rack.id)))}
     <div class="rack-meta">
