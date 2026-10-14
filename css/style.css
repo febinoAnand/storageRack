@@ -983,6 +983,8 @@ select:disabled {
   position: relative;
   display: flex;
   flex-direction: column;
+  height: 260px;
+  overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -991,7 +993,13 @@ select:disabled {
   transition: transform .15s var(--ease), box-shadow .15s ease, border-color .15s ease, background .25s ease;
 }
 
-.rack-card-body { padding-right: 84px; }
+.rack-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding-right: 84px;
+}
 
 .rack-card.clickable { cursor: pointer; }
 .rack-row.clickable { cursor: pointer; }
@@ -1063,6 +1071,13 @@ select:disabled {
   padding: 3px 10px;
   border-radius: 20px;
   border: 1px solid;
+}
+
+.rack-category-badge.more {
+  color: var(--muted);
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--border-strong);
 }
 
 .type-badge {
