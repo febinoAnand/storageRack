@@ -1,8 +1,7 @@
 // ---------- Scan QR page: camera-based QR scanning for storage units ----------
-const scannerWrap = document.getElementById("scannerWrap");
-const scannerPlaceholder = document.getElementById("scannerPlaceholder");
+const scanOverlay = document.getElementById("scanOverlay");
+const scanOverlayFrameWrap = document.querySelector(".scan-overlay-frame-wrap");
 const scannerVideo = document.getElementById("scannerVideo");
-const scannerFrame = document.getElementById("scannerFrame");
 const scannerLine = document.getElementById("scannerLine");
 const scanStatus = document.getElementById("scanStatus");
 const startScanBtn = document.getElementById("startScanBtn");
@@ -45,7 +44,7 @@ function extractStorageId(decodedText) {
 
 function goToStorage(rack) {
   setStatus(`Found "${rack.name}" (${rack.id}) — opening…`, "success");
-  scannerFrame.classList.add("found");
+  scanOverlayFrameWrap.classList.add("found");
   if (navigator.vibrate) navigator.vibrate(80);
   stopCamera();
   setTimeout(function () {
@@ -99,6 +98,13 @@ function cameraSupportError() {
   return null;
 }
 
+function openScanOverlay() {
+  scanOverlay.hidden = false;
+}
+function closeScanOverlay() {
+  scanOverlay.hidden = true;
+}
+
 function startCamera() {
   const unsupported = cameraSupportError();
   if (unsupported) {
@@ -113,14 +119,10 @@ function startCamera() {
       scanFoundAt = 0;
       scannerVideo.srcObject = stream;
       scannerVideo.play();
-      scannerPlaceholder.hidden = true;
       scannerVideo.hidden = false;
-      scannerFrame.hidden = false;
-      scannerFrame.classList.remove("found");
+      scanOverlayFrameWrap.classList.remove("found");
       scannerLine.hidden = false;
-      startScanBtn.hidden = true;
-      stopScanBtn.hidden = false;
-      setStatus("Point the camera at a storage's QR code");
+      setStatus("Align QR code within the frame");
       scanRafId = requestAnimationFrame(scanFrame);
     })
     .catch(function (err) {
@@ -141,16 +143,16 @@ function stopCamera() {
   scannerVideo.pause();
   scannerVideo.srcObject = null;
   scannerVideo.hidden = true;
-  scannerFrame.hidden = true;
   scannerLine.hidden = true;
-  scannerPlaceholder.hidden = false;
-  startScanBtn.hidden = false;
-  stopScanBtn.hidden = true;
 }
 
-startScanBtn.addEventListener("click", startCamera);
+startScanBtn.addEventListener("click", function () {
+  openScanOverlay();
+  startCamera();
+});
 stopScanBtn.addEventListener("click", function () {
   stopCamera();
+  closeScanOverlay();
   setStatus("");
 });
 
@@ -160,13 +162,16 @@ scanManualForm.addEventListener("submit", function (e) {
   if (!id) return;
   const rack = findRack(id);
   if (!rack) {
-    setStatus(`No storage found for "${id}"`, "error");
+    showToast(`No storage found for "${id}"`, "danger");
     return;
   }
   goToStorage(rack);
 });
 
 document.addEventListener("visibilitychange", function () {
-  if (document.hidden) stopCamera();
+  if (document.hidden) {
+    stopCamera();
+    closeScanOverlay();
+  }
 });
 window.addEventListener("beforeunload", stopCamera);

@@ -326,17 +326,90 @@ button.user-chip svg { width: 15px; height: 15px; }
    with no extra positioning math.
    ====================================================================== */
 @media (min-width: 560px) {
-  body.m-view:not(.m-login-body) {
+  body.m-view {
     background: var(--surface-alt);
-  }
-  .m-shell {
-    max-width: 480px;
-    margin: 0 auto;
     min-height: 100vh;
     min-height: 100dvh;
-    border-left: 1px solid var(--border-strong);
-    border-right: 1px solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* The frame's own height (below) caps at 844px, so on a viewport taller
+       than 844px + margin it no longer fills the available space — these
+       two custom properties compute how much empty space is left above/
+       below it once centered, so position: fixed overlays (the bottom tab
+       bar, the toast container) can still line up with its actual edges
+       at any viewport height instead of assuming a constant offset. */
+    --frame-h: min(844px, calc(100vh - 48px));
+    --frame-gap: calc((100vh - var(--frame-h)) / 2);
+    /* Frame's INNER screen is 390px outer width − 12px bezel × 2 = 366px;
+       this is that inner area's horizontal distance from the viewport edge
+       once centered, used to keep position: fixed overlays (modals) inside
+       the visible screen, not just inside the frame's outer silhouette
+       (which would let them cover the bezel itself). */
+    --frame-left: calc((100vw - 366px) / 2);
+  }
+  /* The login body sets align-items: flex-start elsewhere (for the native,
+     top-aligned layout on an actual phone) — re-centered here, at equal
+     selector specificity, so it wins by source order within this
+     wide-screen-only breakpoint. */
+  .m-login-body.login-body {
+    align-items: center;
+  }
+
+  /* Phone-frame treatment on wide screens — dimensions matched exactly to
+     the reference app's own .m-phone rule (D:/restaurant_app, assets/css/
+     style.css, the "@media (min-width: 521px)" device-frame block): 390px
+     wide, height min(844px, viewport − 48px), 12px bezel, 54px corners,
+     a 110×30 notch. Only the colors differ — the app's own border/shadow
+     tokens throughout, never the reference's literal brown/black bezel. */
+  .m-shell,
+  .m-login-shell {
+    width: 390px;
+    max-width: none;
+    margin: 0;
+    flex-shrink: 0;
+    min-height: 0;
+    height: var(--frame-h);
+    overflow: hidden auto;
+    border: 12px solid var(--border-strong);
+    border-radius: 54px;
     box-shadow: var(--shadow-md);
+    position: relative;
+    scrollbar-width: none; /* Firefox */
+  }
+  /* A real desktop scrollbar inside the frame (reserving ~15-20px of width)
+     breaks the clean, seamless device-screen look — reclaimed by hiding it
+     while keeping the scroll functionality that the fixed-height frame
+     above depends on. */
+  .m-shell::-webkit-scrollbar,
+  .m-login-shell::-webkit-scrollbar {
+    display: none;
+  }
+  /* .m-shell paints its own background and clips naturally at the bottom;
+     only the topbar (a child with its own square background) needs its top
+     corners rounded to match the frame instead of using overflow:hidden on
+     .m-shell, which would turn it into a new sticky-positioning container
+     and break the topbar's position: sticky. */
+  .m-shell .m-topbar {
+    border-radius: 42px 42px 0 0;
+  }
+  .m-login-shell {
+    padding-top: 56px;
+  }
+  .m-shell::before,
+  .m-login-shell::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 110px;
+    height: 30px;
+    border-radius: 20px;
+    background: var(--border-strong);
+    z-index: 25;
+    pointer-events: none;
   }
 
   /* #toastContainer is appended to <body>, not inside .m-shell, so its
@@ -346,7 +419,91 @@ button.user-chip svg { width: 15px; height: 15px; }
   body.m-view #toastContainer {
     left: 50%;
     right: auto;
+    bottom: calc(var(--frame-gap) + 12px + 73px + 10px);
     transform: translateX(-50%);
-    width: min(calc(100% - 32px), 480px);
+    width: min(calc(100% - 32px), 342px);
+  }
+
+  /* Bottom tab bar docked flush inside the frame on wide screens, matching
+     the device-mockup reference: an edge-to-edge bar sitting right at the
+     bottom of the "screen," not the floating inset pill used on an actual
+     phone (where there's no bezel to dock against). This stays
+     position: fixed (viewport-relative, not .m-shell-relative) on purpose:
+     .m-shell is the element that scrolls internally, and a descendant of a
+     scrolling element — even position: absolute — still scrolls with it,
+     since its containing block only fixes its coordinate origin, not its
+     exemption from the ancestor's scroll offset. Only position: fixed
+     (anchored to the viewport, since .m-shell has no transform) escapes
+     that. Its "bottom" offset uses the --frame-gap variable (above) instead
+     of a constant, since the frame is centered and only fills the full
+     viewport height up to its 844px cap. */
+  .m-bottom-nav {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--frame-gap) + 12px);
+    transform: translateX(-50%);
+    width: 366px; /* frame's inner content width: 390px outer − 12px bezel × 2 */
+    padding: 8px 6px;
+    border: none;
+    border-top: 1px solid var(--border-strong);
+    border-radius: 0 0 42px 42px;
+    box-shadow: none;
+    box-sizing: border-box;
+  }
+
+  /* Modals (the More menu, add/edit forms, the lightbox) are position:
+     fixed and appended outside .m-shell, so without this they cover the
+     full browser window instead of staying inside the phone mockup —
+     constrained here to the frame's own bounds using the same --frame-gap/
+     --frame-left variables as the tab bar and toast above. */
+  .m-view .modal-overlay {
+    /* --frame-gap/--frame-left (above) locate the frame's OUTER edge; the
+       overlay needs the INNER screen edge, 12px (the bezel width) further
+       in on every side — without this it was extending over the bezel
+       itself instead of staying within the visible screen. */
+    top: calc(var(--frame-gap) + 12px);
+    left: var(--frame-left);
+    right: var(--frame-left);
+    bottom: calc(var(--frame-gap) + 12px);
+    border-radius: 42px; /* inner screen curve, not the bezel's outer 54px */
+  }
+  .m-view .modal {
+    /* Capped at 88% of the inner screen height (matching the reference
+       app's own .modal-box max-height: 88% convention), not the full inner
+       height — a modal whose content needs scrolling would otherwise grow
+       to fill nearly the entire frame, leaving no gap above it to show the
+       page underneath, which reads as a full-screen page takeover rather
+       than a bottom-sheet overlay. */
+    max-height: calc((var(--frame-h) - 24px) * 0.88);
+    /* A modal tall enough to reach the frame's bottom edge (the More menu,
+       long forms) otherwise keeps its square bottom-sheet corners, which
+       poke out past the frame's curved bezel instead of sitting inside it
+       — rounded to match the topbar/tab bar's 42px inner curve. The
+       bottom-RIGHT corner is the exception: a vertical scrollbar is always
+       a straight bar flush against that edge, so rounding it just moves
+       the visual conflict from "square corner past the bezel" to
+       "scrollbar cutting through the curve" instead of fixing it — left
+       square on purpose, which only costs a small, much less noticeable
+       seam against the frame's curve on that one corner. */
+    border-radius: 20px 20px 0 42px;
+    /* Unlike .m-shell's scrollbar (hidden outright — the bottom tab bar is
+       always visible as its own navigation cue), a modal has no other
+       affordance telling the viewer there's more content below on a short
+       window: hiding this scrollbar entirely made the More menu look like
+       it was simply cut off after "Dark Mode," with Account/Logout
+       unreachable-looking even though scrolling still worked. Shown here
+       instead, as a slim themed bar rather than the bulky native one. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  .m-view .modal::-webkit-scrollbar {
+    width: 6px;
+  }
+  .m-view .modal::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .m-view .modal::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
   }
 }

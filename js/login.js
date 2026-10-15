@@ -8,9 +8,14 @@ function getCurrentPassword() {
 const loginForm = document.getElementById("loginForm");
 const errorMsg = document.getElementById("errorMsg");
 
-// If already logged in, skip straight to dashboard
+// Mobile opens straight into the scanner after login (its main home-screen
+// action); web has no scanner, so it still lands on the dashboard. Detected
+// via togglePasswordBtn, which only exists on the mobile login markup.
+const POST_LOGIN_PAGE = document.getElementById("togglePasswordBtn") ? "scan.html" : "dashboard.html";
+
+// If already logged in, skip straight past the login screen
 if (sessionStorage.getItem("srLoggedIn") === "true") {
-  window.location.href = "dashboard.html";
+  window.location.href = POST_LOGIN_PAGE;
 }
 
 loginForm.addEventListener("submit", function (e) {
@@ -23,7 +28,7 @@ loginForm.addEventListener("submit", function (e) {
     sessionStorage.setItem("srLoggedIn", "true");
     sessionStorage.setItem("srUser", username);
     setFlashMessage(`Welcome back, ${username}!`, "success");
-    window.location.href = "dashboard.html";
+    window.location.href = POST_LOGIN_PAGE;
   } else {
     errorMsg.hidden = false;
     const card = document.querySelector(".login-card");
