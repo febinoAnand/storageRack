@@ -22,32 +22,37 @@
 
     <main class="dash-main">
 
-      <div class="view-head">
-        <h2>Scan QR</h2>
-        <p class="muted">Point your camera at a storage unit's QR code to open its details instantly</p>
-      </div>
-
       <div class="scan-page">
-        <div class="scanner-wrap" id="scannerWrap">
-          <p class="scanner-placeholder" id="scannerPlaceholder">Camera preview will appear here</p>
-          <video class="scanner-video" id="scannerVideo" playsinline muted hidden></video>
-          <div class="scanner-frame" id="scannerFrame" hidden></div>
-          <div class="scanner-line" id="scannerLine" hidden></div>
+        <p class="scan-section-label">Quick Scan</p>
+        <div class="scan-card">
+          <div class="scan-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="32" height="32">
+              <rect x="3" y="3" width="7" height="7" rx="1.3"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1.3"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1.3"></rect>
+              <path d="M14 14h3v3h-3zM19 14v2M14 19h2.5M19 19h2"></path>
+            </svg>
+          </div>
+          <h3 class="scan-card-title">Scan QR Code</h3>
+          <p class="scan-card-desc">Point your camera at a storage unit's QR code to instantly open its details.</p>
+
+          <div class="scan-controls">
+            <button type="button" class="scan-tap-btn" id="startScanBtn">
+              <span class="scan-tap-icon">⛶</span> Tap to Scan QR
+            </button>
+          </div>
         </div>
 
-        <p class="scan-status" id="scanStatus"></p>
-
-        <div class="scan-controls">
-          <button type="button" class="btn-primary" id="startScanBtn">📷 Start Camera</button>
-          <button type="button" class="btn-secondary" id="stopScanBtn" hidden>Stop Camera</button>
+        <p class="scan-section-label">Search by ID</p>
+        <div class="scan-card scan-card-search">
+          <form class="scan-manual" id="scanManualForm">
+            <div class="scan-search-input-wrap">
+              <span class="scan-search-icon">🔍</span>
+              <input type="text" id="scanManualInput" placeholder="e.g. ST-1008" autocomplete="off">
+            </div>
+            <button type="submit" class="scan-search-btn">Search</button>
+          </form>
         </div>
-
-        <div class="scan-divider">or enter an ID</div>
-
-        <form class="scan-manual" id="scanManualForm">
-          <input type="text" id="scanManualInput" placeholder="e.g. ST-1008" autocomplete="off">
-          <button type="submit" class="btn-secondary">Go</button>
-        </form>
       </div>
 
     </main>
@@ -59,17 +64,40 @@
       <a href="items.html" class="nav-item" data-route="items">
         <span class="nav-icon">🏷️</span><span class="m-nav-label">Items</span>
       </a>
-      <a href="storage.html" class="nav-item" data-route="storage">
-        <span class="nav-icon">🗄️</span><span class="m-nav-label">Storages</span>
-      </a>
       <a href="scan.html" class="nav-item" data-route="scan">
         <span class="nav-icon">📷</span><span class="m-nav-label">Scan</span>
+      </a>
+      <a href="storage.html" class="nav-item" data-route="storage">
+        <span class="nav-icon">🗄️</span><span class="m-nav-label">Storages</span>
       </a>
       <button type="button" class="nav-item" data-route="more" data-open-more>
         <span class="nav-icon">☰</span><span class="m-nav-label">More</span>
       </button>
     </nav>
 
+  </div>
+
+  <!-- Fullscreen scanner overlay, opened by "Tap to Scan QR" -->
+  <div class="scan-overlay" id="scanOverlay" hidden>
+    <div class="scan-overlay-inner">
+      <p class="scan-overlay-title">QR Code Scanner</p>
+
+      <div class="scan-overlay-frame-wrap">
+        <video class="scanner-video" id="scannerVideo" playsinline muted hidden></video>
+        <span class="scan-corner scan-corner-tl"></span>
+        <span class="scan-corner scan-corner-tr"></span>
+        <span class="scan-corner scan-corner-bl"></span>
+        <span class="scan-corner scan-corner-br"></span>
+        <div class="scanner-line" id="scannerLine" hidden></div>
+      </div>
+
+      <h3 class="scan-overlay-heading">Scan QR Code</h3>
+      <p class="scan-overlay-desc">Point your camera at a QR code to instantly look up item details.</p>
+
+      <p class="scan-status" id="scanStatus"></p>
+
+      <button type="button" class="scan-cancel-btn" id="stopScanBtn">Cancel</button>
+    </div>
   </div>
 
   <!-- More menu (shared across every mobile page) -->

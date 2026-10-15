@@ -2337,57 +2337,117 @@ select:disabled {
 .scan-page {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 18px;
+  gap: 10px;
   max-width: 460px;
   margin: 0 auto;
   padding: 4px 0 32px;
 }
-.scan-intro { text-align: center; color: var(--muted); margin: 0; }
-.scanner-wrap {
-  position: relative;
+.scan-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted-dim);
+  margin: 4px 2px 0;
+}
+.scan-card {
   width: 100%;
-  aspect-ratio: 1 / 1;
-  background: #000;
-  border-radius: 16px;
-  overflow: hidden;
+  box-sizing: border-box;
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 22px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.scan-icon-badge {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 12px;
 }
+.scan-card-title { font-size: 18px; font-weight: 800; color: var(--text); margin: 0 0 6px; }
+.scan-card-desc { font-size: 13px; line-height: 1.5; color: var(--muted); margin: 0 0 20px; max-width: 320px; }
+.scan-tap-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -10px var(--primary);
+  transition: filter .15s ease, transform .15s ease;
+}
+.scan-tap-btn:hover { filter: brightness(1.06); }
+.scan-tap-btn:active { transform: scale(.98); }
+.scan-tap-icon { font-size: 16px; }
+.scan-card-search { padding: 16px; }
+.scan-manual { display: flex; gap: 10px; width: 100%; }
+.scan-search-input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 14px;
+}
+.scan-search-input-wrap input {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 13px 0;
+  color: var(--text);
+  font-size: 14px;
+}
+.scan-search-input-wrap input:focus { outline: none; }
+.scan-search-icon { color: var(--muted); font-size: 14px; }
+.scan-search-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 0 20px;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+.scan-search-btn:hover { background: var(--primary-dark); }
 .scanner-video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .scanner-video[hidden] { display: none; }
-.scanner-placeholder {
-  width: 100%;
-  color: #8a8f9e;
-  font-size: 13px;
-  text-align: center;
-  padding: 0 24px;
-  box-sizing: border-box;
-}
-.scanner-frame {
-  position: absolute;
-  inset: 12%;
-  border: 3px solid rgba(255, 255, 255, .85);
-  border-radius: 16px;
-  box-shadow: 0 0 0 2000px rgba(0, 0, 0, .38);
-  pointer-events: none;
-}
-.scanner-frame.found { border-color: var(--success); }
 .scanner-line {
   position: absolute;
-  left: 12%;
-  right: 12%;
-  top: 12%;
+  left: 10px;
+  right: 10px;
+  top: 10px;
   height: 2px;
   background: var(--primary);
   box-shadow: 0 0 8px var(--primary);
   animation: scanline 2.2s ease-in-out infinite;
   pointer-events: none;
 }
+.scanner-line[hidden] { display: none; }
 @keyframes scanline {
-  0%, 100% { top: 13%; }
-  50% { top: 85%; }
+  0%, 100% { top: 10px; }
+  50% { bottom: 10px; top: auto; }
 }
 .scan-status {
   min-height: 22px;
@@ -2397,25 +2457,90 @@ select:disabled {
 }
 .scan-status.success { color: var(--success); }
 .scan-status.error { color: var(--danger); }
+.scan-status:empty { display: none; }
 .scan-controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-.scan-divider {
+
+/* ---------- Fullscreen scanner overlay (opened by "Tap to Scan QR") ----------
+   A true fullscreen camera viewfinder, same precedent as .lightbox-overlay:
+   covers the whole browser window rather than staying confined to the phone
+   frame on wide screens, since that's how a real device's camera UI works. */
+.scan-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(8, 9, 14, 0.94);
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  animation: overlayFade .15s ease both;
+}
+.scan-overlay[hidden] { display: none; }
+.scan-overlay-inner {
   width: 100%;
-  color: var(--muted-dim);
-  font-size: 11px;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: max(28px, env(safe-area-inset-top)) 24px calc(28px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+.scan-overlay-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
   text-transform: uppercase;
-  letter-spacing: .04em;
+  color: #fff;
+  margin: 0 0 28px;
 }
-.scan-divider::before, .scan-divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--border-strong);
+.scan-overlay-frame-wrap {
+  position: relative;
+  width: min(70vw, 260px);
+  aspect-ratio: 1 / 1;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 26px;
 }
-.scan-manual { display: flex; gap: 8px; width: 100%; }
-.scan-manual input { flex: 1; }
+.scan-corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--primary);
+  pointer-events: none;
+  transition: border-color .15s ease;
+}
+.scan-corner-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; border-radius: 10px 0 0 0; }
+.scan-corner-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; border-radius: 0 10px 0 0; }
+.scan-corner-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; border-radius: 0 0 0 10px; }
+.scan-corner-br { bottom: 10px; right: 10px; border-left: none; border-top: none; border-radius: 0 0 10px 0; }
+.scan-overlay-frame-wrap.found .scan-corner { border-color: var(--success); }
+.scan-overlay-heading { font-size: 18px; font-weight: 800; color: #fff; margin: 0 0 8px; }
+.scan-overlay-desc { font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, .62); margin: 0 0 24px; max-width: 300px; }
+.scan-overlay .scan-status {
+  background: rgba(255, 255, 255, .1);
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 13px;
+  min-height: 0;
+  color: rgba(255, 255, 255, .85);
+}
+.scan-overlay .scan-status.success { color: var(--success); }
+.scan-overlay .scan-status.error { color: #ff8a8a; }
+.scan-cancel-btn {
+  margin-top: 22px;
+  width: 100%;
+  max-width: 200px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+.scan-cancel-btn:hover { background: rgba(255, 255, 255, .18); }
 
 @media (max-width: 480px) {
   .scan-page { padding: 0 0 24px; }
