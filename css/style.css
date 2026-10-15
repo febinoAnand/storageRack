@@ -323,6 +323,87 @@ body {
   margin-top: 4px;
 }
 
+/* ---------- View chooser (mobile vs. web), shown before login ---------- */
+.view-choice-list { display: flex; flex-direction: column; gap: 12px; }
+.view-choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color .15s ease, background .15s ease, transform .15s ease;
+}
+.view-choice-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  transform: translateY(-1px);
+}
+.view-choice-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  font-size: 22px;
+}
+.view-choice-title { font-weight: 700; font-size: 15px; }
+.view-choice-desc { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.view-choice-arrow {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: var(--muted-dim);
+  font-size: 18px;
+  transition: color .15s ease, transform .15s ease;
+}
+.view-choice-btn:hover .view-choice-arrow { color: var(--primary); transform: translateX(2px); }
+
+/* ---------- View switching (shared by both /web and /mobile) ----------
+   .view-chip: the "Mobile view | Change" / "Web view | Change" pill shown
+   on each login screen, linking back to the root chooser (/index.html).
+   .view-switch: the plain dashed-border link used elsewhere in the app
+   (mobile's More menu, web's sidebar footer) to jump straight into the
+   other view. */
+.view-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 26px;
+}
+[data-theme="dark"] .view-chip { color: var(--primary-light); }
+.view-chip-sep { opacity: .4; }
+.view-chip-change { text-decoration: underline; }
+
+.view-switch {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--border-strong);
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+.view-switch:hover { color: var(--primary); border-color: var(--primary); }
+
 .login-form .field {
   margin-bottom: 18px;
 }
@@ -442,6 +523,7 @@ select:disabled {
   transform: translateY(-1px);
 }
 .btn-primary:active { transform: translateY(0); filter: brightness(.98); }
+.btn-primary[hidden] { display: none; }
 
 .hint {
   margin-top: 16px;
@@ -630,6 +712,7 @@ select:disabled {
 .main-area {
   flex: 1;
   min-width: 0;
+  container: app / inline-size;
 }
 
 .topbar {
@@ -662,6 +745,7 @@ select:disabled {
 
 .topbar-search {
   flex: 1;
+  min-width: 0;
   display: flex;
   gap: 10px;
   max-width: 480px;
@@ -669,6 +753,7 @@ select:disabled {
 
 .topbar-search input {
   flex: 1;
+  min-width: 0;
   padding: 9px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -2152,8 +2237,9 @@ select:disabled {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 900px) {
-  .stats-row { grid-template-columns: repeat(2, 1fr); }
-
+  /* The sidebar's off-canvas collapse is about actual window chrome/reach,
+     not content width, so it stays a real viewport media query. Mobile has
+     no .sidebar/.menu-toggle at all, so this block never applies there. */
   .menu-toggle { display: flex; }
 
   .sidebar {
@@ -2168,19 +2254,38 @@ select:disabled {
   .sidebar.open { transform: translateX(0); }
 }
 
-@media (max-width: 700px) {
+/* ---------- Content reflow: container queries, not viewport media queries ----------
+   These rules respond to the rendered width of the content area itself — the
+   "app" container declared on .main-area (web) and .m-shell (mobile) — not
+   the browser viewport. That distinction matters once the mobile view can be
+   shown as a constrained phone-width card on a wide desktop screen (see the
+   min-width:560px block in css/mobile.css): a viewport media query would
+   never fire there since the viewport itself is wide, leaving e.g. .rack-row
+   and .log-table stuck in their wide multi-column layouts inside a box too
+   narrow to hold them. Container queries fix that at the source, for both
+   views, the same way the reference app's own mobile/web split does. */
+@container app (max-width: 900px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+@container app (max-width: 700px) {
   .rack-row { grid-template-columns: 1fr; align-items: flex-start; gap: 8px; }
   .rack-row-progress { width: 100%; }
   .rack-row-meta { justify-content: space-between; width: 100%; }
 }
 
 @media (max-width: 560px) {
+  /* web-only: the topbar's own padding/search-width as the browser window
+     itself narrows — .topbar/.topbar-search don't exist on mobile. */
+  .topbar { padding: 12px 16px; }
+  .topbar-search { max-width: none; }
+}
+
+@container app (max-width: 560px) {
   .stats-row { grid-template-columns: 1fr; }
   .toolbar { flex-direction: column; align-items: flex-start; gap: 14px; }
   .btn-add { width: 100%; }
   .field-group { grid-template-columns: 1fr; }
-  .topbar { padding: 12px 16px; }
-  .topbar-search { max-width: none; }
   .dash-main { padding: 20px 16px 40px; }
   .filters-bar { flex-wrap: wrap; }
   .filters-bar input { min-width: 100%; }
@@ -2226,6 +2331,94 @@ select:disabled {
     flex-shrink: 0;
     text-align: left;
   }
+}
+
+/* ---------- Scan QR page ---------- */
+.scan-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 4px 0 32px;
+}
+.scan-intro { text-align: center; color: var(--muted); margin: 0; }
+.scanner-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #000;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scanner-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scanner-video[hidden] { display: none; }
+.scanner-placeholder {
+  width: 100%;
+  color: #8a8f9e;
+  font-size: 13px;
+  text-align: center;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+.scanner-frame {
+  position: absolute;
+  inset: 12%;
+  border: 3px solid rgba(255, 255, 255, .85);
+  border-radius: 16px;
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, .38);
+  pointer-events: none;
+}
+.scanner-frame.found { border-color: var(--success); }
+.scanner-line {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 12%;
+  height: 2px;
+  background: var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+  animation: scanline 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes scanline {
+  0%, 100% { top: 13%; }
+  50% { top: 85%; }
+}
+.scan-status {
+  min-height: 22px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text);
+}
+.scan-status.success { color: var(--success); }
+.scan-status.error { color: var(--danger); }
+.scan-controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.scan-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  color: var(--muted-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.scan-divider::before, .scan-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-strong);
+}
+.scan-manual { display: flex; gap: 8px; width: 100%; }
+.scan-manual input { flex: 1; }
+
+@media (max-width: 480px) {
+  .scan-page { padding: 0 0 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

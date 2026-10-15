@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Storage | All Storages (Mobile)</title>
+<script src="../js/theme.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/mobile.css">
+</head>
+<body class="dash-body m-view" data-page="storage">
+
+  <div class="m-shell">
+
+    <header class="m-topbar">
+      <div class="m-brand-row">
+        <span class="brand-icon small">📦</span>
+        <span class="m-brand-name">Storage</span>
+      </div>
+      <button type="button" class="user-chip" id="userChip" data-open-more title="Open menu"></button>
+    </header>
+
+    <main class="dash-main">
+
+
+        <div class="toolbar">
+          <div>
+            <h2>All Storages</h2>
+            <p class="muted">Every storage unit across all your locations</p>
+          </div>
+          <button type="button" class="btn-primary btn-add" id="addStorageBtn">+ Add Storage</button>
+        </div>
+
+        <div class="filters-bar">
+          <input type="text" id="filterSearch" placeholder="Search by name, ID or tag">
+          <select id="filterType">
+            <option value="all">All Types</option>
+          </select>
+          <select id="filterRoom">
+            <option value="all">All Locations</option>
+          </select>
+          <select id="filterSort">
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="createdAt-desc">Newest First</option>
+            <option value="createdAt-asc">Oldest First</option>
+            <option value="roomLabel-asc">Location (A-Z)</option>
+            <option value="typeLabel-asc">Type (A-Z)</option>
+            <option value="itemCount-desc">Items (most first)</option>
+            <option value="itemCount-asc">Items (fewest first)</option>
+          </select>
+          <button class="btn-secondary" id="filterReset">Reset</button>
+        </div>
+
+        <section class="rack-grid" id="rackGrid"></section>
+        <p class="empty-state" id="emptyState" hidden>No storages match your filters.</p>
+        <div class="pagination" id="storagePagination"></div>
+
+      
+    </main>
+
+    <nav class="m-bottom-nav">
+      <a href="dashboard.html" class="nav-item" data-route="overview">
+        <span class="nav-icon">🏠</span><span class="m-nav-label">Home</span>
+      </a>
+      <a href="items.html" class="nav-item" data-route="items">
+        <span class="nav-icon">🏷️</span><span class="m-nav-label">Items</span>
+      </a>
+      <a href="storage.html" class="nav-item" data-route="storage">
+        <span class="nav-icon">🗄️</span><span class="m-nav-label">Storages</span>
+      </a>
+      <a href="scan.html" class="nav-item" data-route="scan">
+        <span class="nav-icon">📷</span><span class="m-nav-label">Scan</span>
+      </a>
+      <button type="button" class="nav-item" data-route="more" data-open-more>
+        <span class="nav-icon">☰</span><span class="m-nav-label">More</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- More menu (shared across every mobile page) -->
+  <div class="modal-overlay" id="moreMenuOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Menu</h3>
+        <button type="button" class="modal-close" id="moreMenuClose">&times;</button>
+      </div>
+      <div class="modal-form m-menu-body">
+        <div class="m-search-row" style="margin-bottom:18px;">
+          <input type="text" id="idSearchInput" placeholder="Find a storage by ID, e.g. ST-1001">
+          <button type="button" class="m-icon-btn" id="idSearchBtn" title="Search">🔍</button>
+        </div>
+
+        <p class="m-more-section-label">Menu</p>
+        <nav class="m-menu-nav">
+          <a href="dashboard.html" class="nav-item m-menu-link" data-route="overview"><span class="nav-icon">🏠</span> Overview</a>
+          <a href="items.html" class="nav-item m-menu-link" data-route="items"><span class="nav-icon">🏷️</span> Items</a>
+          <a href="storage.html" class="nav-item m-menu-link" data-route="storage"><span class="nav-icon">🗄️</span> Storages</a>
+          <a href="scan.html" class="nav-item m-menu-link" data-route="scan"><span class="nav-icon">📷</span> Scan QR</a>
+          <a href="log.html" class="nav-item m-menu-link" data-route="log"><span class="nav-icon">🔄</span> IN/OUT Log</a>
+          <a href="storerooms.html" class="nav-item m-menu-link" data-route="rooms"><span class="nav-icon">🚪</span> Locations</a>
+        </nav>
+
+        <p class="m-more-section-label">Admin</p>
+        <nav class="m-menu-nav">
+          <a href="users.html" class="nav-item m-menu-link" data-route="users"><span class="nav-icon">👥</span> Users</a>
+          <a href="roles.html" class="nav-item m-menu-link" data-route="roles"><span class="nav-icon">🔐</span> Roles &amp; Permissions</a>
+        </nav>
+
+        <p class="m-more-section-label">Preferences</p>
+        <button type="button" class="theme-toggle" id="themeToggle" title="Toggle light/dark theme" style="width:100%;">
+          <span id="themeToggleLabel">Dark Mode</span>
+          <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+        </button>
+
+        <p class="m-more-section-label">Account</p>
+        <a href="../index.html" class="view-switch" style="display:block;margin-bottom:10px;">💻 Switch to Web View</a>
+        <button type="button" class="btn-secondary" id="logoutBtn" style="width:100%;">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Storage Unit Modal -->
+  <div class="modal-overlay" id="editModalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Storage</h3>
+        <button class="modal-close" id="editModalClose">&times;</button>
+      </div>
+      <form id="editRackForm" class="modal-form">
+        <div class="field-group">
+          <div class="field">
+            <label for="editRackId">Storage ID</label>
+            <input type="text" id="editRackId" disabled>
+          </div>
+          <div class="field">
+            <label for="editRackType">Type</label>
+            <input type="text" id="editRackType" disabled>
+          </div>
+        </div>
+        <div class="field">
+          <label for="editRackName">Storage Name</label>
+          <input type="text" id="editRackName" required>
+        </div>
+        <div class="field">
+          <label for="editRackRoom">Location</label>
+          <select id="editRackRoom" required></select>
+        </div>
+        <div class="field">
+          <label for="editRackTagText">Tags</label>
+          <div class="tag-input" id="editRackTagInput">
+            <div class="tag-input-chips" id="editRackTagChips"></div>
+            <input type="text" id="editRackTagText" placeholder="Type a tag and press Enter">
+          </div>
+        </div>
+        <div class="field">
+          <label for="editRackImageFile">Pictures</label>
+          <div class="image-input" id="editRackImageInput">
+            <div class="image-input-previews" id="editRackImagePreviews"></div>
+            <label class="image-input-add" for="editRackImageFile">
+              <span class="add-ghost-icon">+</span> Add Pictures
+            </label>
+            <input type="file" id="editRackImageFile" accept="image/*" multiple hidden>
+          </div>
+          <p class="field-hint">Up to 5 pictures, 2MB each.</p>
+        </div>
+        <p id="editRackError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="editRackCancel">Cancel</button>
+          <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="../js/vendor/qrcode.js"></script>
+<script src="../js/toast.js"></script>
+<script src="../js/common.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/more-menu.js"></script>
+</body>
+</html>

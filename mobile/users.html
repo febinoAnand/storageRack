@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Storage | Users (Mobile)</title>
+<script src="../js/theme.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/mobile.css">
+</head>
+<body class="dash-body m-view" data-page="users">
+
+  <div class="m-shell">
+
+    <header class="m-topbar">
+      <div class="m-brand-row">
+        <span class="brand-icon small">📦</span>
+        <span class="m-brand-name">Storage</span>
+      </div>
+      <button type="button" class="user-chip" id="userChip" data-open-more title="Open menu"></button>
+    </header>
+
+    <main class="dash-main">
+
+
+        <div class="toolbar">
+          <div>
+            <h2>Users</h2>
+            <p class="muted">Everyone with access, and the role they're assigned</p>
+          </div>
+          <button class="btn-primary btn-add" id="addUserBtn">+ Add User</button>
+        </div>
+
+        <div class="filters-bar">
+          <input type="text" id="userFilterSearch" placeholder="Search by name, username or email">
+          <select id="userFilterRole">
+            <option value="all">All Roles</option>
+          </select>
+          <button class="btn-secondary" id="userFilterReset">Reset</button>
+        </div>
+
+        <div class="panel">
+          <div class="log-table-wrap">
+            <table class="log-table">
+              <thead>
+                <tr>
+                  <th>Avatar</th>
+                  <th data-sort="name">User <span class="sort-arrow"></span></th>
+                  <th data-sort="username">Username / Email <span class="sort-arrow"></span></th>
+                  <th data-sort="roleLabel">Role <span class="sort-arrow"></span></th>
+                  <th data-sort="status">Status <span class="sort-arrow"></span></th>
+                  <th data-sort="createdAt">Added <span class="sort-arrow"></span></th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="userTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="empty-state" id="emptyState" hidden>No users match your filters.</p>
+        <div class="pagination" id="userPagination"></div>
+
+      
+    </main>
+
+    <nav class="m-bottom-nav">
+      <a href="dashboard.html" class="nav-item" data-route="overview">
+        <span class="nav-icon">🏠</span><span class="m-nav-label">Home</span>
+      </a>
+      <a href="items.html" class="nav-item" data-route="items">
+        <span class="nav-icon">🏷️</span><span class="m-nav-label">Items</span>
+      </a>
+      <a href="storage.html" class="nav-item" data-route="storage">
+        <span class="nav-icon">🗄️</span><span class="m-nav-label">Storages</span>
+      </a>
+      <a href="scan.html" class="nav-item" data-route="scan">
+        <span class="nav-icon">📷</span><span class="m-nav-label">Scan</span>
+      </a>
+      <button type="button" class="nav-item" data-route="more" data-open-more>
+        <span class="nav-icon">☰</span><span class="m-nav-label">More</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- More menu (shared across every mobile page) -->
+  <div class="modal-overlay" id="moreMenuOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Menu</h3>
+        <button type="button" class="modal-close" id="moreMenuClose">&times;</button>
+      </div>
+      <div class="modal-form m-menu-body">
+        <div class="m-search-row" style="margin-bottom:18px;">
+          <input type="text" id="idSearchInput" placeholder="Find a storage by ID, e.g. ST-1001">
+          <button type="button" class="m-icon-btn" id="idSearchBtn" title="Search">🔍</button>
+        </div>
+
+        <p class="m-more-section-label">Menu</p>
+        <nav class="m-menu-nav">
+          <a href="dashboard.html" class="nav-item m-menu-link" data-route="overview"><span class="nav-icon">🏠</span> Overview</a>
+          <a href="items.html" class="nav-item m-menu-link" data-route="items"><span class="nav-icon">🏷️</span> Items</a>
+          <a href="storage.html" class="nav-item m-menu-link" data-route="storage"><span class="nav-icon">🗄️</span> Storages</a>
+          <a href="scan.html" class="nav-item m-menu-link" data-route="scan"><span class="nav-icon">📷</span> Scan QR</a>
+          <a href="log.html" class="nav-item m-menu-link" data-route="log"><span class="nav-icon">🔄</span> IN/OUT Log</a>
+          <a href="storerooms.html" class="nav-item m-menu-link" data-route="rooms"><span class="nav-icon">🚪</span> Locations</a>
+        </nav>
+
+        <p class="m-more-section-label">Admin</p>
+        <nav class="m-menu-nav">
+          <a href="users.html" class="nav-item m-menu-link" data-route="users"><span class="nav-icon">👥</span> Users</a>
+          <a href="roles.html" class="nav-item m-menu-link" data-route="roles"><span class="nav-icon">🔐</span> Roles &amp; Permissions</a>
+        </nav>
+
+        <p class="m-more-section-label">Preferences</p>
+        <button type="button" class="theme-toggle" id="themeToggle" title="Toggle light/dark theme" style="width:100%;">
+          <span id="themeToggleLabel">Dark Mode</span>
+          <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+        </button>
+
+        <p class="m-more-section-label">Account</p>
+        <a href="../index.html" class="view-switch" style="display:block;margin-bottom:10px;">💻 Switch to Web View</a>
+        <button type="button" class="btn-secondary" id="logoutBtn" style="width:100%;">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add / Edit User Modal -->
+  <div class="modal-overlay" id="userModalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="userModalTitle">Add User</h3>
+        <button class="modal-close" id="userModalClose">&times;</button>
+      </div>
+      <form id="userForm" class="modal-form">
+        <input type="hidden" id="userId">
+        <div class="field">
+          <label for="userName">Full Name</label>
+          <input type="text" id="userName" placeholder="e.g. Jane Manager" required>
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <label for="userUsername">Username</label>
+            <input type="text" id="userUsername" placeholder="e.g. jane.m" required>
+          </div>
+          <div class="field">
+            <label for="userStatus">Status</label>
+            <select id="userStatus">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="userEmail">Email</label>
+          <input type="email" id="userEmail" placeholder="e.g. jane@example.com">
+        </div>
+        <div class="field">
+          <label for="userRole">Role</label>
+          <select id="userRole" required></select>
+          <p class="field-hint">No role yet? <a href="roles.html">Create one first →</a></p>
+        </div>
+        <p id="userError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="userCancel">Cancel</button>
+          <button type="submit" class="btn-primary" id="userSave">Add User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="../js/toast.js"></script>
+<script src="../js/common.js"></script>
+<script src="../js/users.js"></script>
+<script src="../js/more-menu.js"></script>
+</body>
+</html>
