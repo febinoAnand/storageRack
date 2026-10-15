@@ -206,6 +206,20 @@ const LOGIN_ICON_MOON = loginSvgIcon('<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 
 
 document.querySelector(".brand-icon").innerHTML = LOGIN_ICON_BOX;
 
+// ---------- Password visibility toggle (mobile login only — guarded since
+// the web login doesn't have this button) ----------
+const togglePasswordBtn = document.getElementById("togglePasswordBtn");
+if (togglePasswordBtn) {
+  togglePasswordBtn.addEventListener("click", function () {
+    const passwordInput = document.getElementById("password");
+    const showing = passwordInput.type === "text";
+    passwordInput.type = showing ? "password" : "text";
+    togglePasswordBtn.textContent = showing ? "👁" : "🙈";
+    togglePasswordBtn.title = showing ? "Show password" : "Hide password";
+    togglePasswordBtn.setAttribute("aria-label", togglePasswordBtn.title);
+  });
+}
+
 // ---------- Theme toggle ----------
 const themeFab = document.getElementById("themeFab");
 

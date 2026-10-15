@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Storage | Login (Mobile)</title>
+<script src="../js/theme.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/mobile.css">
+</head>
+<body class="login-body m-login-body m-view">
+
+  <button class="theme-fab" id="themeFab" title="Toggle light/dark theme">🌙</button>
+
+  <div class="m-login-shell">
+
+    <div class="m-login-header">
+      <div class="brand-icon small">📦</div>
+      <div class="m-login-header-text">
+        <h1>Storage</h1>
+        <p class="m-login-eyebrow">Warehouse Inventory Management</p>
+      </div>
+    </div>
+
+    <a href="../index.html" class="view-chip">
+      <span class="view-chip-icon">📱</span>
+      <span class="view-chip-label">Mobile view</span>
+      <span class="view-chip-sep">|</span>
+      <span class="view-chip-change">Change</span>
+    </a>
+
+    <div class="login-card m-login-card">
+      <h2 class="m-login-title">Welcome back</h2>
+      <p class="m-login-subtitle">Sign in to your account to continue</p>
+
+      <form id="loginForm" class="login-form" novalidate>
+        <div class="field m-input-field">
+          <label for="username">Username</label>
+          <div class="m-input-icon-wrap">
+            <span class="m-input-icon">👤</span>
+            <input type="text" id="username" name="username" placeholder="Enter your username" autocomplete="username" value="admin" required>
+          </div>
+        </div>
+
+        <div class="field m-input-field">
+          <label for="password">Password</label>
+          <div class="m-input-icon-wrap">
+            <span class="m-input-icon">🔒</span>
+            <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" value="admin123" required>
+            <button type="button" class="m-input-trailing-btn" id="togglePasswordBtn" title="Show password" aria-label="Show password">👁</button>
+          </div>
+        </div>
+
+        <div class="field-row" style="justify-content: flex-end;">
+          <a href="#" class="forgot-link" id="forgotLink">Forgot password?</a>
+        </div>
+
+        <p id="errorMsg" class="error-msg" hidden>Invalid username or password. Try admin / admin123.</p>
+
+        <button type="submit" class="btn-primary m-login-submit">Login <span class="m-login-submit-arrow">→</span></button>
+
+        <div class="m-demo-box">
+          Demo login — <strong>admin</strong> / <strong>admin123</strong>
+        </div>
+        <p class="hint" style="text-align:center;"><a href="#" class="forgot-link" id="resetDataLink">Reset all demo data →</a></p>
+      </form>
+    </div>
+
+    <p class="m-login-footer">© 2026 Storage · Warehouse Inventory Management</p>
+
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div class="modal-overlay" id="forgotModalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Reset Password</h3>
+        <button class="modal-close" id="forgotModalClose">&times;</button>
+      </div>
+
+      <!-- Step 1: request a reset code -->
+      <form id="forgotRequestForm" class="modal-form">
+        <div class="field">
+          <label for="forgotUsername">Username</label>
+          <input type="text" id="forgotUsername" placeholder="Enter your username" required>
+          <p class="field-hint">We'll email a verification code to the address on file for this account.</p>
+        </div>
+        <p id="forgotRequestError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="forgotCancel">Cancel</button>
+          <button type="submit" class="btn-primary">Send Code</button>
+        </div>
+      </form>
+
+      <!-- Step 2: enter the emailed code + new password -->
+      <form id="forgotResetForm" class="modal-form" hidden>
+        <p class="field-hint" id="forgotSentHint" style="margin-top: -4px; margin-bottom: 16px;"></p>
+        <div class="field">
+          <label for="forgotCode">Verification Code</label>
+          <input type="text" id="forgotCode" inputmode="numeric" maxlength="6" placeholder="6-digit code" required>
+        </div>
+        <div class="field">
+          <label for="forgotNewPassword">New Password</label>
+          <input type="password" id="forgotNewPassword" placeholder="At least 6 characters" required>
+        </div>
+        <div class="field">
+          <label for="forgotConfirmPassword">Confirm New Password</label>
+          <input type="password" id="forgotConfirmPassword" placeholder="Re-enter new password" required>
+        </div>
+        <p id="forgotResetError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="forgotBack">Back</button>
+          <button type="submit" class="btn-primary">Reset Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="../js/toast.js"></script>
+<script src="../js/login.js"></script>
+</body>
+</html>

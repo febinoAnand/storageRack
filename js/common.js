@@ -1746,8 +1746,14 @@ document.getElementById("idSearchInput").addEventListener("keydown", function (e
 // ---------- Sidebar (active nav + mobile toggle) ----------
 (function initSidebar() {
   const page = document.body.dataset.page;
+  // Mobile's bottom nav groups Log / Locations / Users / Roles under a single
+  // "More" tab (there's no room for 9 icons in a bottom bar) — so those four
+  // pages should still light up the "more" nav item, not leave nothing active.
+  const MORE_GROUP_PAGES = ["log", "rooms", "users", "roles"];
   document.querySelectorAll(".nav-item").forEach(function (a) {
-    a.classList.toggle("active", a.dataset.route === page);
+    const isDirectMatch = a.dataset.route === page;
+    const isMoreMatch = a.dataset.route === "more" && MORE_GROUP_PAGES.indexOf(page) !== -1;
+    a.classList.toggle("active", isDirectMatch || isMoreMatch);
   });
 
   const menuToggle = document.getElementById("menuToggle");

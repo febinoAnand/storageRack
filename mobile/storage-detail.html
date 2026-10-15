@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Storage | Storage Details (Mobile)</title>
+<script src="../js/theme.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/mobile.css">
+</head>
+<body class="dash-body m-view" data-page="storage">
+
+  <div class="m-shell">
+
+    <header class="m-topbar">
+      <div class="m-brand-row">
+        <span class="brand-icon small">📦</span>
+        <span class="m-brand-name">Storage</span>
+      </div>
+      <button type="button" class="user-chip" id="userChip" data-open-more title="Open menu"></button>
+    </header>
+
+    <main class="dash-main">
+
+        <div id="detailContent"></div>
+      
+    </main>
+
+    <nav class="m-bottom-nav">
+      <a href="dashboard.html" class="nav-item" data-route="overview">
+        <span class="nav-icon">🏠</span><span class="m-nav-label">Home</span>
+      </a>
+      <a href="items.html" class="nav-item" data-route="items">
+        <span class="nav-icon">🏷️</span><span class="m-nav-label">Items</span>
+      </a>
+      <a href="storage.html" class="nav-item" data-route="storage">
+        <span class="nav-icon">🗄️</span><span class="m-nav-label">Storages</span>
+      </a>
+      <a href="scan.html" class="nav-item" data-route="scan">
+        <span class="nav-icon">📷</span><span class="m-nav-label">Scan</span>
+      </a>
+      <button type="button" class="nav-item" data-route="more" data-open-more>
+        <span class="nav-icon">☰</span><span class="m-nav-label">More</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- More menu (shared across every mobile page) -->
+  <div class="modal-overlay" id="moreMenuOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Menu</h3>
+        <button type="button" class="modal-close" id="moreMenuClose">&times;</button>
+      </div>
+      <div class="modal-form m-menu-body">
+        <div class="m-search-row" style="margin-bottom:18px;">
+          <input type="text" id="idSearchInput" placeholder="Find a storage by ID, e.g. ST-1001">
+          <button type="button" class="m-icon-btn" id="idSearchBtn" title="Search">🔍</button>
+        </div>
+
+        <p class="m-more-section-label">Menu</p>
+        <nav class="m-menu-nav">
+          <a href="dashboard.html" class="nav-item m-menu-link" data-route="overview"><span class="nav-icon">🏠</span> Overview</a>
+          <a href="items.html" class="nav-item m-menu-link" data-route="items"><span class="nav-icon">🏷️</span> Items</a>
+          <a href="storage.html" class="nav-item m-menu-link" data-route="storage"><span class="nav-icon">🗄️</span> Storages</a>
+          <a href="scan.html" class="nav-item m-menu-link" data-route="scan"><span class="nav-icon">📷</span> Scan QR</a>
+          <a href="log.html" class="nav-item m-menu-link" data-route="log"><span class="nav-icon">🔄</span> IN/OUT Log</a>
+          <a href="storerooms.html" class="nav-item m-menu-link" data-route="rooms"><span class="nav-icon">🚪</span> Locations</a>
+        </nav>
+
+        <p class="m-more-section-label">Admin</p>
+        <nav class="m-menu-nav">
+          <a href="users.html" class="nav-item m-menu-link" data-route="users"><span class="nav-icon">👥</span> Users</a>
+          <a href="roles.html" class="nav-item m-menu-link" data-route="roles"><span class="nav-icon">🔐</span> Roles &amp; Permissions</a>
+        </nav>
+
+        <p class="m-more-section-label">Preferences</p>
+        <button type="button" class="theme-toggle" id="themeToggle" title="Toggle light/dark theme" style="width:100%;">
+          <span id="themeToggleLabel">Dark Mode</span>
+          <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+        </button>
+
+        <p class="m-more-section-label">Account</p>
+        <a href="../index.html" class="view-switch" style="display:block;margin-bottom:10px;">💻 Switch to Web View</a>
+        <button type="button" class="btn-secondary" id="logoutBtn" style="width:100%;">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add / Edit Item Modal -->
+  <div class="modal-overlay" id="addItemModalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="addItemModalTitle">Add Item</h3>
+        <button class="modal-close" id="addItemModalClose">&times;</button>
+      </div>
+      <form id="addItemPageForm" class="modal-form">
+        <input type="hidden" id="placeItemEditingId">
+        <div class="field-group">
+          <div class="field">
+            <label for="placeItemName">Item Name <span class="req">*</span></label>
+            <div class="item-picker">
+              <input type="text" id="placeItemName" placeholder="e.g. Circuit Boards - Box 12" required autocomplete="off">
+              <div class="item-picker-dropdown" id="addItemExistingDropdown" hidden></div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="placeItemId">Item ID <span class="optional-tag">(optional)</span></label>
+            <input type="text" id="placeItemId" placeholder="Auto-generated if left blank">
+          </div>
+        </div>
+        <p class="field-hint" style="margin-top:-10px;">Matching an existing item while typing lets you move it into the Storage below instead of creating a new one.</p>
+        <div class="field">
+          <label for="placeItemTagText">Item Tags</label>
+          <div class="tag-input" id="placeItemTagInput">
+            <div class="tag-input-chips" id="placeItemTagChips"></div>
+            <input type="text" id="placeItemTagText" placeholder="Type a tag and press Enter">
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <label for="placeItemQuantity">Quantity <span class="req">*</span></label>
+            <input type="number" id="placeItemQuantity" min="1" placeholder="e.g. 5" required>
+          </div>
+          <div class="field">
+            <label for="placeRackSelect">Storage <span class="optional-tag">(optional)</span></label>
+            <div class="select-with-add">
+              <select id="placeRackSelect">
+                <option value="">— Unassigned —</option>
+              </select>
+              <button type="button" class="btn-secondary" id="placeRackAddBtn" title="Add a new storage">+ New</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="placeItemRemarks">Remarks</label>
+          <textarea id="placeItemRemarks" rows="2" placeholder="Any notes about this item"></textarea>
+        </div>
+        <div class="field">
+          <label for="placeItemImageFile">Pictures</label>
+          <div class="image-input" id="placeItemImageInput">
+            <div class="image-input-previews" id="placeItemImagePreviews"></div>
+            <label class="image-input-add" for="placeItemImageFile">
+              <span class="add-ghost-icon">+</span> Add Pictures
+            </label>
+            <input type="file" id="placeItemImageFile" accept="image/*" multiple hidden>
+          </div>
+          <p class="field-hint">Up to 5 pictures, 2MB each.</p>
+        </div>
+        <p id="addItemPageError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="addItemPageCancel">Cancel</button>
+          <button type="submit" class="btn-primary" id="addItemPageSubmit">Add Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Move / Use Item Modal -->
+  <div class="modal-overlay" id="moveItemModalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Move / Use Item</h3>
+        <button class="modal-close" id="moveItemModalClose">&times;</button>
+      </div>
+      <form id="moveItemForm" class="modal-form">
+        <p class="field-hint" id="moveItemContext" style="margin-top: -4px;"></p>
+        <div class="field">
+          <label for="moveItemQuantity">Quantity <span class="req">*</span></label>
+          <input type="number" id="moveItemQuantity" min="1" required>
+          <p class="field-hint">Taking less than the full amount splits it off as its own entry.</p>
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <label for="moveItemStorage">Move To</label>
+            <select id="moveItemStorage">
+              <option value="">— Unassigned —</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="moveItemStatus">Status</label>
+            <select id="moveItemStatus">
+              <option value="in_store">In Store</option>
+              <option value="in_use">In Use</option>
+            </select>
+          </div>
+        </div>
+        <p id="moveItemError" class="error-msg" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="moveItemCancel">Cancel</button>
+          <button type="submit" class="btn-primary" id="moveItemSave">Confirm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Printable QR label (shown only when printing) -->
+  <div id="qrPrintArea">
+    <div class="qr-print-label">
+      <div class="qr-code-box" id="qrPrintCodeBox"></div>
+      <div class="qr-code-id" id="qrPrintId"></div>
+      <div class="qr-code-name" id="qrPrintName"></div>
+    </div>
+  </div>
+
+<script src="../js/vendor/qrcode.js"></script>
+<script src="../js/toast.js"></script>
+<script src="../js/common.js"></script>
+<script src="../js/storage-detail.js"></script>
+<script src="../js/more-menu.js"></script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Storage | Overview (Mobile)</title>
+<script src="../js/theme.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/mobile.css">
+</head>
+<body class="dash-body m-view" data-page="overview">
+
+  <div class="m-shell">
+
+    <header class="m-topbar">
+      <div class="m-brand-row">
+        <span class="brand-icon small">📦</span>
+        <span class="m-brand-name">Storage</span>
+      </div>
+      <button type="button" class="user-chip" id="userChip" data-open-more title="Open menu"></button>
+    </header>
+
+    <main class="dash-main">
+
+      <div class="view-head">
+        <h2>Overview</h2>
+        <p class="muted">A snapshot of your entire storage network</p>
+      </div>
+
+      <section class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon c-blue" id="statIconRacks"></div>
+          <div>
+            <div class="stat-value" id="statRacks">0</div>
+            <div class="stat-label">Total Storages</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon c-violet" id="statIconRooms"></div>
+          <div>
+            <div class="stat-value" id="statRooms">0</div>
+            <div class="stat-label">Locations</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon c-amber" id="statIconItems"></div>
+          <div>
+            <div class="stat-value" id="statItems">0</div>
+            <div class="stat-label">Items Stored</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon c-green" id="statIconTypes"></div>
+          <div>
+            <div class="stat-value" id="statTypes">0</div>
+            <div class="stat-label">Storage Types in Use</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Empty Storage Units</h3>
+          <a href="storage.html" class="link-more">View all storages →</a>
+        </div>
+        <div id="attentionList" class="rack-row-list"></div>
+        <p class="empty-state" id="attentionEmpty" hidden>Every storage unit has at least one item.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Recently Added</h3>
+          <a href="storage.html" class="link-more">View all storages →</a>
+        </div>
+        <div id="recentList" class="rack-row-list"></div>
+      </div>
+
+    </main>
+
+    <nav class="m-bottom-nav">
+      <a href="dashboard.html" class="nav-item" data-route="overview">
+        <span class="nav-icon">🏠</span><span class="m-nav-label">Home</span>
+      </a>
+      <a href="items.html" class="nav-item" data-route="items">
+        <span class="nav-icon">🏷️</span><span class="m-nav-label">Items</span>
+      </a>
+      <a href="storage.html" class="nav-item" data-route="storage">
+        <span class="nav-icon">🗄️</span><span class="m-nav-label">Storages</span>
+      </a>
+      <a href="scan.html" class="nav-item" data-route="scan">
+        <span class="nav-icon">📷</span><span class="m-nav-label">Scan</span>
+      </a>
+      <button type="button" class="nav-item" data-route="more" data-open-more>
+        <span class="nav-icon">☰</span><span class="m-nav-label">More</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- More menu (shared across every mobile page) -->
+  <div class="modal-overlay" id="moreMenuOverlay" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Menu</h3>
+        <button type="button" class="modal-close" id="moreMenuClose">&times;</button>
+      </div>
+      <div class="modal-form m-menu-body">
+        <div class="m-search-row" style="margin-bottom:18px;">
+          <input type="text" id="idSearchInput" placeholder="Find a storage by ID, e.g. ST-1001">
+          <button type="button" class="m-icon-btn" id="idSearchBtn" title="Search">🔍</button>
+        </div>
+
+        <p class="m-more-section-label">Menu</p>
+        <nav class="m-menu-nav">
+          <a href="dashboard.html" class="nav-item m-menu-link" data-route="overview"><span class="nav-icon">🏠</span> Overview</a>
+          <a href="items.html" class="nav-item m-menu-link" data-route="items"><span class="nav-icon">🏷️</span> Items</a>
+          <a href="storage.html" class="nav-item m-menu-link" data-route="storage"><span class="nav-icon">🗄️</span> Storages</a>
+          <a href="scan.html" class="nav-item m-menu-link" data-route="scan"><span class="nav-icon">📷</span> Scan QR</a>
+          <a href="log.html" class="nav-item m-menu-link" data-route="log"><span class="nav-icon">🔄</span> IN/OUT Log</a>
+          <a href="storerooms.html" class="nav-item m-menu-link" data-route="rooms"><span class="nav-icon">🚪</span> Locations</a>
+        </nav>
+
+        <p class="m-more-section-label">Admin</p>
+        <nav class="m-menu-nav">
+          <a href="users.html" class="nav-item m-menu-link" data-route="users"><span class="nav-icon">👥</span> Users</a>
+          <a href="roles.html" class="nav-item m-menu-link" data-route="roles"><span class="nav-icon">🔐</span> Roles &amp; Permissions</a>
+        </nav>
+
+        <p class="m-more-section-label">Preferences</p>
+        <button type="button" class="theme-toggle" id="themeToggle" title="Toggle light/dark theme" style="width:100%;">
+          <span id="themeToggleLabel">Dark Mode</span>
+          <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+        </button>
+
+        <p class="m-more-section-label">Account</p>
+        <a href="../index.html" class="view-switch" style="display:block;margin-bottom:10px;">💻 Switch to Web View</a>
+        <button type="button" class="btn-secondary" id="logoutBtn" style="width:100%;">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+
+<script src="../js/toast.js"></script>
+<script src="../js/common.js"></script>
+<script src="../js/overview.js"></script>
+<script src="../js/more-menu.js"></script>
+</body>
+</html>
