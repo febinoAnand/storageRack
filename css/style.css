@@ -484,6 +484,24 @@ select:disabled {
   line-height: 1.4;
 }
 
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.field-label-row label { margin-bottom: 0; }
+
+.field-label-link {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.field-label-link:hover { color: var(--primary-hover, var(--primary)); }
+
 .field-row {
   display: flex;
   align-items: center;
@@ -2191,6 +2209,12 @@ select:disabled {
 }
 
 .modal-header h3 { font-size: 16px; font-weight: 700; }
+
+.modal-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
 
 .modal-close {
   border: none;

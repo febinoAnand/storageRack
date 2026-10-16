@@ -71,12 +71,17 @@ function buildUserTableRow(entry) {
     <td data-label="Status">${statusBadgeHtml(user.status)}</td>
     <td data-label="Added" class="muted">${new Date(user.createdAt).toLocaleDateString()}</td>
     <td data-label="Actions">
+      <button class="icon-btn reset-password-btn" title="${user.password ? "Reset password" : "Set password"}">${ICONS.key}</button>
       <button class="icon-btn edit-btn" title="Edit">${ICONS.edit}</button>
       <button class="icon-btn delete delete-btn" title="Delete">${ICONS.trash}</button>
     </td>
   `;
 
   row.addEventListener("click", function () { openUserModal(user); });
+  row.querySelector(".reset-password-btn").addEventListener("click", function (e) {
+    e.stopPropagation();
+    requestPasswordReset(user);
+  });
   row.querySelector(".edit-btn").addEventListener("click", function (e) {
     e.stopPropagation();
     openUserModal(user);
@@ -173,6 +178,7 @@ function openUserModal(user) {
   document.getElementById("userName").value = user ? user.name : "";
   document.getElementById("userUsername").value = user ? user.username : "";
   document.getElementById("userEmail").value = user ? user.email || "" : "";
+  document.getElementById("userPhone").value = user ? user.phone || "" : "";
   document.getElementById("userStatus").value = user ? user.status : "active";
 
   const roleSelect = document.getElementById("userRole");
@@ -208,11 +214,12 @@ userForm.addEventListener("submit", function (e) {
   const name = document.getElementById("userName").value.trim();
   const username = document.getElementById("userUsername").value.trim();
   const email = document.getElementById("userEmail").value.trim();
+  const phone = document.getElementById("userPhone").value.trim();
   const status = document.getElementById("userStatus").value;
   const roleId = document.getElementById("userRole").value;
 
-  if (!name || !username || !roleId) {
-    userError.textContent = "Please fill in name, username, and role.";
+  if (!name || !username || !roleId || !email) {
+    userError.textContent = "Please fill in name, username, email, and role.";
     userError.hidden = false;
     return;
   }
@@ -231,12 +238,13 @@ userForm.addEventListener("submit", function (e) {
     user.name = name;
     user.username = username;
     user.email = email;
+    user.phone = phone;
     user.status = status;
     user.roleId = roleId;
     showToast(`"${name}" updated`, "success");
   } else {
     users.push({
-      id: nextUserId(), name: name, username: username, email: email,
+      id: nextUserId(), name: name, username: username, email: email, phone: phone,
       status: status, roleId: roleId, createdAt: Date.now(),
     });
     showToast(`"${name}" added`, "success");
@@ -245,6 +253,73 @@ userForm.addEventListener("submit", function (e) {
   saveUsers(users);
   closeUserModal();
   applyUserFilters();
+});
+
+// ---------- Password reset (invite) ----------
+// Shared by the table's key icon (existing users) and the Add/Edit modal's
+// "Send Invite" button. Setting the actual password happens on the
+// recipient's end, via the link in their email — this admin-side action
+// only sends it; it's never shown here.
+function requestPasswordReset(user) {
+  if (!user.email) {
+    showToast("Add an email address for this user first.", "danger");
+    openUserModal(user);
+    return;
+  }
+  confirmDialog(`Send a password reset link to ${user.name}?`, function () {
+    closeUserModal();
+    showToast(`Invitation sent to ${user.email}`, "success");
+  }, { confirmLabel: "Send Link", danger: false });
+}
+
+// "Send Invite" saves the user first (so a brand-new user from the Add form
+// has a real record before the invite references it), then sends the same
+// password-reset invite the table's key icon uses.
+document.getElementById("userSendInvite").addEventListener("click", function () {
+  const name = document.getElementById("userName").value.trim();
+  const username = document.getElementById("userUsername").value.trim();
+  const email = document.getElementById("userEmail").value.trim();
+  const phone = document.getElementById("userPhone").value.trim();
+  const status = document.getElementById("userStatus").value;
+  const roleId = document.getElementById("userRole").value;
+
+  if (!name || !username || !roleId || !email) {
+    userError.textContent = "Please fill in name, username, email, and role before sending an invite.";
+    userError.hidden = false;
+    return;
+  }
+
+  const usernameTaken = users.some(function (u) {
+    return u.username.toLowerCase() === username.toLowerCase() && u.id !== editingUserId;
+  });
+  if (usernameTaken) {
+    userError.textContent = `Username "${username}" is already taken.`;
+    userError.hidden = false;
+    return;
+  }
+
+  userError.hidden = true;
+
+  let user;
+  if (editingUserId) {
+    user = findUser(editingUserId);
+    user.name = name;
+    user.username = username;
+    user.email = email;
+    user.phone = phone;
+    user.status = status;
+    user.roleId = roleId;
+  } else {
+    user = {
+      id: nextUserId(), name: name, username: username, email: email, phone: phone,
+      status: status, roleId: roleId, createdAt: Date.now(),
+    };
+    users.push(user);
+  }
+  saveUsers(users);
+  applyUserFilters();
+
+  requestPasswordReset(user);
 });
 
 applyUserFilters();

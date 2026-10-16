@@ -5,6 +5,28 @@ function getCurrentPassword() {
   return localStorage.getItem("srPassword") || DEFAULT_PASSWORD;
 }
 
+// Users invited from the Users page (js/users.js) get a real password set via
+// its "Set Password" flow, stored on their own record in srUsersV1 — this
+// page doesn't load common.js, so it reads that key directly rather than
+// pulling in the shared data layer just for a login lookup.
+function loadDemoUsers() {
+  try {
+    return JSON.parse(localStorage.getItem("srUsersV1")) || [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function findLoginUser(username, password) {
+  const users = loadDemoUsers();
+  return users.find(function (u) {
+    return u.password &&
+      u.status === "active" &&
+      u.username.toLowerCase() === username.toLowerCase() &&
+      u.password === password;
+  });
+}
+
 const loginForm = document.getElementById("loginForm");
 const errorMsg = document.getElementById("errorMsg");
 
@@ -24,10 +46,17 @@ loginForm.addEventListener("submit", function (e) {
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value;
 
+  const matchedUser = findLoginUser(username, password);
+
   if (username === VALID_USERNAME && password === getCurrentPassword()) {
     sessionStorage.setItem("srLoggedIn", "true");
     sessionStorage.setItem("srUser", username);
     setFlashMessage(`Welcome back, ${username}!`, "success");
+    window.location.href = POST_LOGIN_PAGE;
+  } else if (matchedUser) {
+    sessionStorage.setItem("srLoggedIn", "true");
+    sessionStorage.setItem("srUser", matchedUser.username);
+    setFlashMessage(`Welcome back, ${matchedUser.name}!`, "success");
     window.location.href = POST_LOGIN_PAGE;
   } else {
     errorMsg.hidden = false;
