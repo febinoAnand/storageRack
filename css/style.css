@@ -939,9 +939,24 @@ select:disabled {
   gap: 6px;
 }
 
+.rack-row-header {
+  display: grid;
+  grid-template-columns: 74px 1fr 120px 150px 150px;
+  gap: 16px;
+  padding: 0 14px 8px;
+  margin-top: -4px;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--muted);
+}
+.rack-row-header span:last-child { text-align: right; }
+.rack-row-header[hidden] { display: none; }
+
 .rack-row {
   display: grid;
-  grid-template-columns: 1fr 170px 240px;
+  grid-template-columns: 74px 1fr 120px 150px 150px;
   align-items: center;
   gap: 16px;
   padding: 11px 14px;
@@ -956,12 +971,7 @@ select:disabled {
 
 .rack-row:hover { background: var(--primary-soft); border-color: var(--border-strong); transform: translateX(2px); }
 
-.rack-row-main {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
+.rack-row-id { min-width: 0; }
 
 .rack-row-progress {
   display: flex;
@@ -970,11 +980,19 @@ select:disabled {
   gap: 6px;
 }
 
-.rack-row-name { font-weight: 600; font-size: 14px; }
+.rack-row-name {
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .rack-row-loc {
   font-size: 12px;
   color: var(--muted);
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1107,6 +1125,9 @@ select:disabled {
   font-weight: 700;
   letter-spacing: .03em;
   padding: 2px 8px;
+  min-width: 58px; /* ~7 monospace chars, matching the common ST-1008-style ID length, so a shorter custom ID doesn't shrink the badge and misalign whatever follows it in a row */
+  text-align: center;
+  box-sizing: border-box;
   border-radius: 20px;
   background: var(--primary-soft);
   border: 1px solid var(--border-strong);
@@ -2272,6 +2293,7 @@ select:disabled {
   .rack-row { grid-template-columns: 1fr; align-items: flex-start; gap: 8px; }
   .rack-row-progress { width: 100%; }
   .rack-row-meta { justify-content: space-between; width: 100%; }
+  .rack-row-header { display: none; } /* rows stack to one column here, so 3 aligned headers no longer apply */
 }
 
 @media (max-width: 560px) {

@@ -17,8 +17,10 @@ const empty = racks.filter(function (r) { return unitItemCount(r) === 0; });
 
 const attentionList = document.getElementById("attentionList");
 const attentionEmpty = document.getElementById("attentionEmpty");
+const attentionHeader = document.getElementById("attentionHeader");
 if (empty.length === 0) {
   attentionEmpty.hidden = false;
+  if (attentionHeader) attentionHeader.hidden = true;
 } else {
   attentionEmpty.hidden = true;
   empty.forEach(function (r) { attentionList.appendChild(buildRackRow(r)); });
