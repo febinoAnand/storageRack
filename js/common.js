@@ -1616,11 +1616,9 @@ function buildRackRow(rack) {
   row.className = "rack-row";
   row.style.borderLeftColor = getCategoryColor(rackTags(rack)[0] || "").solid;
   row.innerHTML = `
-    <div class="rack-row-main">
-      <span class="rack-id-badge">${escapeHtml(rack.id)}</span>
-      <span class="rack-row-name">${escapeHtml(rack.name)}</span>
-      <span class="rack-row-loc">${escapeHtml(roomLabel(rack.storeRoomId))}</span>
-    </div>
+    <span class="rack-row-id"><span class="rack-id-badge">${escapeHtml(rack.id)}</span></span>
+    <span class="rack-row-name">${escapeHtml(rack.name)}</span>
+    <span class="rack-row-loc">${escapeHtml(roomLabel(rack.storeRoomId))}</span>
     <div class="rack-row-progress">
       ${typeBadgeHtml(rack.type)}
     </div>
