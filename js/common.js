@@ -37,6 +37,7 @@ const ICONS = {
   print: svgIcon('<polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect>'),
   chevronLeft: svgIcon('<polyline points="15 18 9 12 15 6"></polyline>'),
   chevronRight: svgIcon('<polyline points="9 18 15 12 9 6"></polyline>'),
+  key: svgIcon('<circle cx="8" cy="15" r="4"></circle><path d="M11 12l9-9"></path><path d="M16 7l3 3"></path><path d="M13 10l2.5 2.5"></path>'),
 };
 
 const NAV_ICONS = { overview: "home", storage: "archive", items: "tag", log: "repeat", rooms: "door", users: "users", roles: "shield" };

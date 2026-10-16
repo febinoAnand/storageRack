@@ -129,40 +129,52 @@
   <div class="modal-overlay" id="userModalOverlay" hidden>
     <div class="modal">
       <div class="modal-header">
-        <h3 id="userModalTitle">Add User</h3>
+        <div>
+          <h3 id="userModalTitle">Add User</h3>
+          <p class="modal-subtitle">Email is required to send invites and password resets. This is a UI-only demo — no real email is ever sent.</p>
+        </div>
         <button class="modal-close" id="userModalClose">&times;</button>
       </div>
       <form id="userForm" class="modal-form">
         <input type="hidden" id="userId">
         <div class="field">
-          <label for="userName">Full Name</label>
+          <label for="userName">Full Name <span class="req">*</span></label>
           <input type="text" id="userName" placeholder="e.g. Jane Manager" required>
         </div>
         <div class="field-group">
           <div class="field">
-            <label for="userUsername">Username</label>
-            <input type="text" id="userUsername" placeholder="e.g. jane.m" required>
+            <div class="field-label-row">
+              <label for="userRole">Role</label>
+              <a href="roles.html" class="field-label-link">+ New Role</a>
+            </div>
+            <select id="userRole" required></select>
           </div>
           <div class="field">
-            <label for="userStatus">Status</label>
-            <select id="userStatus">
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+            <label for="userUsername">Username</label>
+            <input type="text" id="userUsername" placeholder="e.g. ramesh.babu" required>
+          </div>
+        </div>
+        <div class="field-group">
+          <div class="field">
+            <label for="userPhone">Phone</label>
+            <input type="tel" id="userPhone" placeholder="e.g. 98765 43210">
+          </div>
+          <div class="field">
+            <label for="userEmail">Email <span class="req">*</span></label>
+            <input type="email" id="userEmail" placeholder="e.g. jane@example.com" required>
           </div>
         </div>
         <div class="field">
-          <label for="userEmail">Email</label>
-          <input type="email" id="userEmail" placeholder="e.g. jane@example.com">
-        </div>
-        <div class="field">
-          <label for="userRole">Role</label>
-          <select id="userRole" required></select>
-          <p class="field-hint">No role yet? <a href="roles.html">Create one first →</a></p>
+          <label for="userStatus">Status</label>
+          <select id="userStatus">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
         <p id="userError" class="error-msg" hidden></p>
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="userCancel">Cancel</button>
+          <button type="button" class="btn-secondary" id="userSendInvite">Send Invite</button>
           <button type="submit" class="btn-primary" id="userSave">Add User</button>
         </div>
       </form>
